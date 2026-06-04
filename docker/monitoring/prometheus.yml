@@ -1,0 +1,72 @@
+# TARCOIN Prometheus Configuration
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - "alerts/*.yml"
+
+scrape_configs:
+  - job_name: 'tarcoin-node'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['tarcoind:19332']
+        labels:
+          service: 'blockchain-node'
+
+  - job_name: 'tarcoin-explorer'
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['explorer:4000']
+        labels:
+          service: 'explorer'
+
+  - job_name: 'tarcoin-api'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['api:5000']
+        labels:
+          service: 'api-server'
+
+  - job_name: 'tarcoin-pool'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['mining-pool:3001']
+        labels:
+          service: 'mining-pool'
+
+  - job_name: 'tarcoin-website'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['website:3000']
+        labels:
+          service: 'website'
+
+  - job_name: 'node-exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'system-metrics'
+
+  - job_name: 'redis-exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['redis:6379']
+        labels:
+          service: 'redis-cache'
+
+  - job_name: 'postgres-exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['postgres:5432']
+        labels:
+          service: 'postgres-database'

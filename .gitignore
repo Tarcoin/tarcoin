@@ -1,0 +1,62 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Next.js build output
+.next/
+out/
+
+# C++ Build artifacts (tarcoind) - too large for GitHub
+blockchain_core/tarcoin-core/build/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.dll
+
+# Large binary packages - hosted on GitHub Releases instead
+tarcoin-linux-final.tar.gz
+libs.zip
+*.tar.gz
+*.zip
+fix_downloads.sh
+decode_bech32.py
+
+# Website download binaries (hosted on GitHub Releases)
+website/public/downloads/*.tar.gz
+website/public/downloads/*.zip
+website/public/downloads/*.dmg
+
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+docker/.env
+
+# Docker data volumes
+docker/data/
+docker/postgres-data/
+docker/redis-data/
+docker/nginx/ssl/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.log
+tmp/
+temp/
+
+# Python scripts (dev tools)
+*.py
+audit.sh
+rebrand.sh
+rebrand2.sh
+python_miner.py
+blockchain_core/tarcoin-core/*.sh
+blockchain_core/tarcoin-core/*.py

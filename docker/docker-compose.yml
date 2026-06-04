@@ -1,0 +1,290 @@
+# TARCOIN Full Stack Docker Compose
+# Deploys: blockchain node, explorer, API, mining pool, website, monitoring
+
+version: '3.8'
+
+networks:
+  tarcoin-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  tarcoin-data:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+services:
+  # ====== TARCOIN Blockchain Node ======
+  tarcoind:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.tarcoind
+    container_name: tarcoind
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "19333:19333"   # P2P
+      - "19332:19332"   # RPC
+    volumes:
+      - tarcoin-data:/home/tarcoin/.tarcoin
+      - ./config/tarcoin.conf:/home/tarcoin/.tarcoin/tarcoin.conf:ro
+    environment:
+      - TARCOIN_VERSION=1.0.0
+    healthcheck:
+      test: ["CMD", "tarcoin-cli", "-rpcuser=tarcoin", "-rpcpassword=tarcoin", "getblockcount"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ====== Redis Cache ======
+  redis:
+    image: redis:7-alpine
+    container_name: tarcoin-redis
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ====== PostgreSQL Database ======
+  postgres:
+    image: postgres:15-alpine
+    container_name: tarcoin-postgres
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: tarcoin
+      POSTGRES_USER: tarcoin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tarcoin_secure_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tarcoin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ====== Blockchain Explorer API ======
+  explorer:
+    build:
+      context: ../explorer
+      dockerfile: ../docker/Dockerfile.explorer
+    container_name: tarcoin-explorer
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "4000:4000"
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=4000
+      - RPC_HOST=tarcoind
+      - RPC_PORT=19332
+      - RPC_USER=tarcoin
+      - RPC_PASSWORD=tarcoin
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=https://tarcoin.org
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ====== Explorer Frontend UI ======
+  explorer-frontend:
+    build:
+      context: ../explorer/frontend
+      dockerfile: ../../docker/Dockerfile.explorer-frontend
+    container_name: tarcoin-explorer-frontend
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "4001:4001"
+    depends_on:
+      - explorer
+    environment:
+      - NEXT_PUBLIC_EXPLORER_API=http://explorer:4000
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ====== REST API Server ======
+  api:
+    build:
+      context: ../api
+      dockerfile: ../docker/Dockerfile.api
+    container_name: tarcoin-api
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "5000:5000"
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=5000
+      - RPC_HOST=tarcoind
+      - RPC_PORT=19332
+      - RPC_USER=tarcoin
+      - RPC_PASS=tarcoin
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=https://tarcoin.org
+
+  # ====== Mining Pool ======
+  mining-pool:
+    build:
+      context: ../mining_pool
+      dockerfile: ../docker/Dockerfile.pool
+    container_name: tarcoin-mining-pool
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "3001:3001"  # HTTP API
+      - "3333:3333"  # Stratum
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=3001
+      - RPC_HOST=tarcoind
+      - RPC_PORT=19332
+      - RPC_USER=tarcoin
+      - RPC_PASS=tarcoin
+      - REDIS_URL=redis://redis:6379
+      - POOL_WALLET=${POOL_WALLET}
+      - POOL_FEE=1
+
+  # ====== TARCOIN Website ======
+  website:
+    build:
+      context: ../website
+      dockerfile: ../docker/Dockerfile.website
+    container_name: tarcoin-website
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.tarcoin.org
+      - NEXT_PUBLIC_EXPLORER_URL=https://explorer.tarcoin.org
+      - NEXT_PUBLIC_POOL_URL=https://pool.tarcoin.org
+
+  # ====== Nginx Reverse Proxy ======
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: tarcoin-nginx
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/sites:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./www:/var/www:ro
+    depends_on:
+      - website
+      - explorer
+      - api
+      - mining-pool
+
+  # ====== Monitoring Stack ======
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tarcoin-prometheus
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tarcoin-grafana
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+
+  loki:
+    image: grafana/loki:latest
+    container_name: tarcoin-loki
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: tarcoin-node-exporter
+    restart: unless-stopped
+    networks:
+      - tarcoin-net
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'

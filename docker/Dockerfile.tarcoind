@@ -1,0 +1,100 @@
+# TARCOIN Blockchain Node - Docker Build
+# Multi-stage build for deterministic, reproducible binaries
+
+# Stage 1: Build dependencies
+FROM ubuntu:22.04 AS builder
+
+LABEL maintainer="tarcoin-dev"
+LABEL description="TARCOIN Blockchain Core Daemon"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TARCOIN_VERSION=1.0.0
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libtool \
+    autotools-dev \
+    automake \
+    pkg-config \
+    libssl-dev \
+    libevent-dev \
+    bsdmainutils \
+    libboost-system-dev \
+    libboost-filesystem-dev \
+    libboost-chrono-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libboost-thread-dev \
+    libminiupnpc-dev \
+    libzmq3-dev \
+    libsqlite3-dev \
+    libdb-dev \
+    libdb++-dev \
+    python3 \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+# Clone TARCOIN source (built from forked Bitcoin Core)
+# In production, replace with: git clone https://github.com/tarcoin/tarcoin.git
+COPY blockchain_core/ ./tarcoin/
+
+WORKDIR /src/tarcoin
+
+# Build tarcoind (Bitcoin-compatible build)
+RUN ./autogen.sh && \
+    ./configure \
+    --disable-wallet \
+    --disable-gui-tests \
+    --disable-tests \
+    --with-incompatible-bdb \
+    CXXFLAGS="-O2 -march=x86-64" \
+    && make -j$(nproc) \
+    && strip src/tarcoind src/tarcoin-cli src/tarcoin-tx
+
+# Stage 2: Production image
+FROM ubuntu:22.04
+
+LABEL maintainer="tarcoin-dev"
+LABEL description="TARCOIN Node Runtime"
+
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    libevent-2.1-7 \
+    libboost-system1.74.0 \
+    libboost-filesystem1.74.0 \
+    libboost-chrono1.74.0 \
+    libboost-program-options1.74.0 \
+    libboost-thread1.74.0 \
+    libminiupnpc17 \
+    libzmq5 \
+    libsqlite3-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create tarcoin user
+RUN groupadd -r tarcoin && useradd -r -m -g tarcoin tarcoin
+
+# Copy binaries from builder
+COPY --from=builder /src/tarcoin/src/tarcoind /usr/local/bin/
+COPY --from=builder /src/tarcoin/src/tarcoin-cli /usr/local/bin/
+COPY --from=builder /src/tarcoin/src/tarcoin-tx /usr/local/bin/
+
+# Create data directory
+RUN mkdir -p /home/tarcoin/.tarcoin && \
+    chown -R tarcoin:tarcoin /home/tarcoin/.tarcoin
+
+VOLUME ["/home/tarcoin/.tarcoin"]
+
+EXPOSE 19333 19332
+
+USER tarcoin
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD tarcoin-cli -rpcuser=tarcoin -rpcpassword=tarcoin getblockcount || exit 1
+
+ENTRYPOINT ["tarcoind"]
+CMD ["-printtoconsole", "-rpcbind=0.0.0.0", "-rpcallowip=0.0.0.0/0", "-rpcuser=tarcoin", "-rpcpassword=tarcoin"]

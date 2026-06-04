@@ -1,0 +1,34 @@
+# TARCOIN — Crontab Example
+# Install: crontab -e  (as user 'tarcoin' or root)
+# Or:      crontab /opt/tarcoin/devops/cron/crontab.example
+
+TARCOIN_DIR=/opt/tarcoin
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_HERE
+LOG_DIR=/var/log/tarcoin
+
+# ── Health checks every 5 minutes ─────────────────────────────────────────────
+*/5 * * * * bash $TARCOIN_DIR/devops/scripts/health-check.sh >> $LOG_DIR/health.log 2>&1
+
+# ── Node monitoring every 30 minutes ──────────────────────────────────────────
+*/30 * * * * bash $TARCOIN_DIR/devops/scripts/monitor-node.sh >> $LOG_DIR/monitor.log 2>&1
+
+# ── Daily backup at 3:00 AM ───────────────────────────────────────────────────
+0 3 * * * bash $TARCOIN_DIR/devops/scripts/backup.sh >> $LOG_DIR/backup.log 2>&1
+
+# ── SSL certificate renewal at 3:30 AM daily ──────────────────────────────────
+30 3 * * * certbot renew --quiet && cd $TARCOIN_DIR/docker && docker compose restart nginx >> $LOG_DIR/certbot.log 2>&1
+
+# ── Prune old Docker images weekly (Sunday 4 AM) ──────────────────────────────
+0 4 * * 0 docker image prune -af --filter "until=168h" >> $LOG_DIR/docker-prune.log 2>&1
+
+# ── Prune old Docker volumes weekly ───────────────────────────────────────────
+30 4 * * 0 docker volume prune -f >> $LOG_DIR/docker-prune.log 2>&1
+
+# ── Monthly log rotation ───────────────────────────────────────────────────────
+0 5 1 * * logrotate /etc/logrotate.d/tarcoin >> $LOG_DIR/logrotate.log 2>&1
+
+# ── Check for updates daily at midnight (dry-run — review before applying) ────
+0 0 * * * cd $TARCOIN_DIR && git fetch --quiet && git log HEAD..origin/main --oneline >> $LOG_DIR/updates-available.log 2>&1
+
+# ── Metrics JSON cleanup — keep last 30 days ──────────────────────────────────
+0 6 * * * find $LOG_DIR -name "node-metrics.log" -size +100M -exec truncate -s 0 {} \;

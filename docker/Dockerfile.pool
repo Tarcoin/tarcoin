@@ -1,0 +1,29 @@
+# TARCOIN Mining Pool - Node.js Stratum Server
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY mining_pool/package.json mining_pool/package-lock.json* ./
+RUN npm ci
+
+COPY mining_pool/ .
+
+# Production image  
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 appuser
+RUN adduser --system --uid 1001 appuser
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/package.json ./
+
+USER appuser
+
+EXPOSE 3001 3333
+
+CMD ["node", "src/pool.js"]

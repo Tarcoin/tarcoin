@@ -1,0 +1,86 @@
+groups:
+  - name: tarcoin.node
+    rules:
+      - alert: NodeDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is DOWN"
+          description: "{{ $labels.job }} has been unreachable for 2+ minutes."
+
+      - alert: BlockchainStuck
+        expr: increase(tarcoin_block_height[20m]) == 0
+        for: 20m
+        labels:
+          severity: warning
+        annotations:
+          summary: "TARCOIN blockchain is not progressing"
+          description: "Block height has not changed in 20 minutes. Current: {{ $value }}"
+
+      - alert: HighMempool
+        expr: tarcoin_mempool_size > 500
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Mempool size is high: {{ $value }} transactions"
+
+      - alert: DiskSpaceWarning
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space low on {{ $labels.instance }}"
+          description: "Available disk: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space CRITICAL on {{ $labels.instance }}"
+          description: "Less than 10% disk remaining. Immediate action required."
+
+      - alert: HighCPU
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis is unreachable — services running without cache"
+
+      - alert: MiningPoolNoWorkers
+        expr: tarcoin_pool_active_workers == 0
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "Mining pool has no active workers for 1 hour"
+
+      - alert: SSLCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 24 * 3600
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage high on {{ $labels.instance }}: {{ $value | printf \"%.1f\" }}%"

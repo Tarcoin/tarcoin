@@ -1,0 +1,267 @@
+# TARCOIN CI/CD Pipeline
+# Automated build, test, security audit, and deployment
+
+name: TARCOIN CI/CD
+
+on:
+  push:
+    branches: [main, develop, 'release/*']
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE_TARCOIND: ${{ github.repository }}/tarcoind
+  DOCKER_IMAGE_WEBSITE: ${{ github.repository }}/website
+  DOCKER_IMAGE_EXPLORER: ${{ github.repository }}/explorer
+  DOCKER_IMAGE_API: ${{ github.repository }}/api
+  DOCKER_IMAGE_POOL: ${{ github.repository }}/mining-pool
+
+jobs:
+  # ====== Security Audit ======
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript, cpp
+          queries: security-extended
+
+      - name: Run dependency security audit
+        run: |
+          cd website && npm audit --production || true
+          cd ../api && npm audit --production || true
+
+  # ====== Blockchain Core Build & Test ======
+  blockchain-core:
+    name: Blockchain Core
+    runs-on: ubuntu-latest
+    needs: security-audit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libtool autotools-dev automake \
+            pkg-config libssl-dev libevent-dev bsdmainutils libboost-all-dev \
+            libminiupnpc-dev libzmq3-dev libsqlite3-dev libdb-dev libdb++-dev
+
+      - name: Build tarcoind
+        run: |
+          cd blockchain_core
+          ./autogen.sh
+          ./configure --disable-wallet --disable-gui-tests --with-incompatible-bdb
+          make -j$(nproc)
+
+      - name: Run unit tests
+        run: |
+          cd blockchain_core
+          make check -j$(nproc)
+
+      - name: Verify genesis block
+        run: |
+          cd blockchain_core
+          src/tarcoind -regtest -daemon
+          sleep 5
+          src/tarcoin-cli -regtest getblockchaininfo
+          src/tarcoin-cli -regtest stop
+
+      - name: Docker build tarcoind
+        run: |
+          docker build -f docker/Dockerfile.tarcoind -t ${{ env.DOCKER_IMAGE_TARCOIND }}:${{ github.sha }} .
+          docker tag ${{ env.DOCKER_IMAGE_TARCOIND }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_TARCOIND }}:latest
+
+  # ====== Website Build ======
+  website:
+    name: Website
+    runs-on: ubuntu-latest
+    needs: security-audit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        run: cd website && npm ci
+
+      - name: Lint
+        run: cd website && npm run lint
+
+      - name: Build
+        run: cd website && npm run build
+
+      - name: Docker build website
+        run: |
+          docker build -f docker/Dockerfile.website -t ${{ env.DOCKER_IMAGE_WEBSITE }}:${{ github.sha }} .
+          docker tag ${{ env.DOCKER_IMAGE_WEBSITE }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_WEBSITE }}:latest
+
+  # ====== Explorer & API Build ======
+  explorer-api:
+    name: Explorer & API
+    runs-on: ubuntu-latest
+    needs: security-audit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Explorer Backend
+        run: |
+          cd explorer
+          npm ci
+          npm run build
+
+      - name: Build Explorer Frontend
+        run: |
+          cd explorer/frontend
+          npm ci
+          npm run build
+
+      - name: Build API
+        run: |
+          cd api
+          npm ci
+          npm run build
+
+      - name: Docker build explorer
+        run: |
+          docker build -f docker/Dockerfile.explorer -t ${{ env.DOCKER_IMAGE_EXPLORER }}:${{ github.sha }} .
+          docker tag ${{ env.DOCKER_IMAGE_EXPLORER }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_EXPLORER }}:latest
+
+      - name: Docker build API
+        run: |
+          docker build -f docker/Dockerfile.api -t ${{ env.DOCKER_IMAGE_API }}:${{ github.sha }} .
+          docker tag ${{ env.DOCKER_IMAGE_API }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_API }}:latest
+
+  # ====== Mining Pool Build ======
+  mining-pool:
+    name: Mining Pool
+    runs-on: ubuntu-latest
+    needs: security-audit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: cd mining_pool && npm ci
+
+      - name: Docker build pool
+        run: |
+          docker build -f docker/Dockerfile.pool -t ${{ env.DOCKER_IMAGE_POOL }}:${{ github.sha }} .
+          docker tag ${{ env.DOCKER_IMAGE_POOL }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_POOL }}:latest
+
+  # ====== Integration Tests ======
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [blockchain-core, website, explorer-api, mining-pool]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Docker Compose
+        run: |
+          cd docker
+          docker compose pull
+          docker compose up -d
+          sleep 30
+
+      - name: Health check all services
+        run: |
+          for service in tarcoind website explorer api mining-pool; do
+            docker compose -f docker/docker-compose.yml ps -q $service | xargs docker inspect --format='{{.State.Health.Status}}' | grep -q healthy || echo "$service not healthy"
+          done
+
+      - name: Verify blockchain RPC
+        run: |
+          curl -s --user tarcoin:tarcoin http://localhost:9332 -H 'content-type: application/json' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"getblockchaininfo","params":[]}' | grep -q "chain"
+
+      - name: Verify website
+        run: curl -s http://localhost:3000 | grep -q "TARCOIN"
+
+      - name: Verify API
+        run: curl -s http://localhost:5000/health | grep -q "ok"
+
+      - name: Tear down
+        run: docker compose -f docker/docker-compose.yml down
+
+  # ====== Docker Image Publish ======
+  publish:
+    name: Publish Docker Images
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+    needs: [integration-tests]
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push images
+        run: |
+          docker push ${{ env.DOCKER_IMAGE_TARCOIND }}:latest
+          docker push ${{ env.DOCKER_IMAGE_WEBSITE }}:latest
+          docker push ${{ env.DOCKER_IMAGE_EXPLORER }}:latest
+          docker push ${{ env.DOCKER_IMAGE_API }}:latest
+          docker push ${{ env.DOCKER_IMAGE_POOL }}:latest
+
+  # ====== Deployment ======
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: [publish]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/tarcoin
+            git fetch --tags && git checkout ${{ github.ref_name }}
+            chmod +x devops/scripts/deploy.sh
+            ./devops/scripts/deploy.sh --env production --service all
+
+      - name: Post-deploy health checks
+        run: |
+          sleep 30
+          curl -sf https://api.tarcoin.org/health && echo "API ✅"
+          curl -sf https://explorer.tarcoin.org/api/health && echo "Explorer ✅"
+          curl -sf https://tarcoin.org && echo "Website ✅"
+        # Required GitHub Secrets:
+        # SERVER_IP          - VPS IP address
+        # SERVER_USER        - SSH username (e.g. deploy)
+        # SSH_PRIVATE_KEY    - Private key for SSH access
+        # DISCORD_WEBHOOK    - Discord notification webhook URL

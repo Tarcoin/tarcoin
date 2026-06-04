@@ -1,0 +1,142 @@
+{
+  "dashboard": {
+    "title": "TARCOIN Node Dashboard",
+    "description": "Blockchain node health, mining stats, and network monitoring",
+    "tags": ["tarcoin", "blockchain"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Block Height",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+        "options": {
+          "fieldOptions": {"values": false},
+          "colorMode": "none",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        },
+        "targets": [
+          {"expr": "tarcoin_block_height", "legendFormat": "Height"}
+        ]
+      },
+      {
+        "title": "Network Hashrate",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+        "options": {
+          "fieldOptions": {"values": false},
+          "colorMode": "none",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        },
+        "targets": [
+          {"expr": "tarcoin_hashrate", "legendFormat": "Hashrate"}
+        ]
+      },
+      {
+        "title": "Current Difficulty",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+        "options": {
+          "fieldOptions": {"values": false},
+          "colorMode": "none",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        },
+        "targets": [
+          {"expr": "tarcoin_difficulty", "legendFormat": "Difficulty"}
+        ]
+      },
+      {
+        "title": "Connected Peers",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+        "targets": [
+          {"expr": "tarcoin_peers", "legendFormat": "Peers"}
+        ]
+      },
+      {
+        "title": "Mempool Size",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
+        "targets": [
+          {"expr": "tarcoin_mempool_size", "legendFormat": "Transactions"}
+        ]
+      },
+      {
+        "title": "Node Uptime",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
+        "targets": [
+          {"expr": "tarcoin_uptime", "legendFormat": "Uptime"}
+        ]
+      },
+      {
+        "title": "Block Height Over Time",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {"expr": "tarcoin_block_height", "legendFormat": "Block Height"}
+        ]
+      },
+      {
+        "title": "Difficulty Over Time",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {"expr": "tarcoin_difficulty", "legendFormat": "Difficulty"}
+        ]
+      },
+      {
+        "title": "System CPU Usage",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 12},
+        "targets": [
+          {"expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "CPU %"}
+        ]
+      },
+      {
+        "title": "System Memory Usage",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 12},
+        "targets": [
+          {"expr": "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))", "legendFormat": "Memory %"}
+        ]
+      },
+      {
+        "title": "Disk Usage",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 12},
+        "targets": [
+          {"expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/home/tarcoin/.tarcoin\"} / node_filesystem_size_bytes{mountpoint=\"/home/tarcoin/.tarcoin\"}) * 100)", "legendFormat": "Disk %"}
+        ]
+      },
+      {
+        "title": "Network Traffic",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 12},
+        "targets": [
+          {"expr": "rate(node_network_receive_bytes_total{device=\"eth0\"}[5m])", "legendFormat": "In"},
+          {"expr": "rate(node_network_transmit_bytes_total{device=\"eth0\"}[5m])", "legendFormat": "Out"}
+        ]
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1
+  }
+}

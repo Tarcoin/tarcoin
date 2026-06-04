@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --gold: #D4A843;
+  --gold-light: #F0D080;
+  --gold-dark: #B8860B;
+  --black: #0A0A0A;
+  --black-2: #121212;
+  --black-3: #1A1A2E;
+  --cyan: #00D4FF;
+  --neon: #00FF88;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--black);
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* Cyberpunk Grid Background */
+.cyber-bg {
+  background-image:
+    linear-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 168, 67, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  position: relative;
+}
+
+.cyber-bg::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(212, 168, 67, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glow Effects */
+.glow-gold {
+  box-shadow: 0 0 10px rgba(212, 168, 67, 0.3), 0 0 20px rgba(212, 168, 67, 0.1);
+}
+
+.glow-gold-hover:hover {
+  box-shadow: 0 0 20px rgba(212, 168, 67, 0.5), 0 0 40px rgba(212, 168, 67, 0.2);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(212, 168, 67, 0.5), 0 0 20px rgba(212, 168, 67, 0.3);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+/* Scanline Effect */
+.scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(26, 26, 46, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 168, 67, 0.1);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 168, 67, 0.08);
+}
+
+/* Animated Border */
+.animated-border {
+  position: relative;
+}
+
+.animated-border::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--black-2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid rgba(212, 168, 67, 0.1);
+  border-top: 3px solid var(--gold);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Card Styles */
+.card {
+  @apply glass rounded-xl p-6 transition-all duration-300;
+}
+
+.card:hover {
+  @apply glow-gold;
+  transform: translateY(-2px);
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply relative overflow-hidden px-8 py-3 rounded-lg font-orbitron font-bold
+         text-tarcoin-black bg-gradient-to-r from-tarcoin-gold to-tarcoin-gold-light
+         transition-all duration-300 hover:from-tarcoin-gold-light hover:to-tarcoin-gold
+         glow-gold-hover;
+}
+
+.btn-secondary {
+  @apply relative overflow-hidden px-8 py-3 rounded-lg font-orbitron font-bold
+         text-tarcoin-gold border-2 border-tarcoin-gold/30
+         transition-all duration-300 hover:border-tarcoin-gold/60 hover:bg-tarcoin-gold/5;
+}
+
+.btn-ghost {
+  @apply px-6 py-2 rounded-lg font-orbitron font-medium
+         text-tarcoin-gold/70 hover:text-tarcoin-gold
+         transition-all duration-300 hover:bg-tarcoin-gold/5;
+}
+
+/* Input Styles */
+.input-cyber {
+  @apply w-full px-4 py-3 rounded-lg
+         bg-tarcoin-black-2 border border-tarcoin-gold/20
+         text-white font-mono
+         focus:outline-none focus:border-tarcoin-gold/50 focus:ring-1 focus:ring-tarcoin-gold/30
+         transition-all duration-300;
+}
+
+/* Stats Card */
+.stat-card {
+  @apply glass rounded-xl p-6 text-center;
+}
+
+.stat-value {
+  @apply text-sm sm:text-base md:text-xs lg:text-xs xl:text-sm font-orbitron font-bold text-tarcoin-gold;
+}
+
+.stat-label {
+  @apply text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-2 font-space;
+}
+
+/* Timeline */
+.timeline-item {
+  @apply relative pl-8 pb-8 border-l-2 border-tarcoin-gold/20;
+}
+
+.timeline-item::before {
+  content: '';
+  @apply absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-tarcoin-gold;
+}
+
+/* Particle overlay */
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Tokenomics card value text - gradient text */
+.tokenomics-value {
+  @apply font-orbitron font-bold bg-clip-text text-transparent text-lg sm:text-xl md:text-lg lg:text-base xl:text-lg;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .stat-value {
+    @apply text-xs;
+  }
+}
