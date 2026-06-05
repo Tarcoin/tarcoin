@@ -38,7 +38,7 @@ export const SUPPLY = {
   MINING: 40_000_000_000,           // 40 billion TAR
   BLOCK_REWARD_ERA1: 50_000,        // 50,000 TAR per block (Era 1)
   HALVING_INTERVAL: 400_000,        // Blocks between halvings
-  SATOSHIS_PER_TAR: 100_000_000,    // 1 TAR = 100,000,000 TarSats
+  SATOSHIS_PER_TAR: 100_000_000,    // 1 TAR = 100,000,000 Tar
 } as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -421,12 +421,12 @@ export class TarcoinWallet {
     };
   }
 
-  /** Convert TAR to TarSats */
+  /** Convert TAR to Tar */
   static toSatoshis(tar: number): number {
     return Math.round(tar * SUPPLY.SATOSHIS_PER_TAR);
   }
 
-  /** Convert TarSats to TAR */
+  /** Convert Tar to TAR */
   static fromSatoshis(satoshis: number): number {
     return satoshis / SUPPLY.SATOSHIS_PER_TAR;
   }
