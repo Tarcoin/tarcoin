@@ -296,7 +296,7 @@ export default function MempoolPage() {
         }}
       >
         <Link href="/" style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: '1rem', color: 'var(--gold)', textDecoration: 'none', textShadow: '0 0 12px var(--gold)' }}>
-          ₮ TARCOIN
+          <img src="https://tarcoin.org/logo.png" alt="TARCOIN" style={{ width: '24px', height: '24px', display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '8px' }} /> TARCOIN
         </Link>
         <span style={{ color: 'var(--border)' }}>›</span>
         <span style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-dim)', fontSize: '0.875rem' }}>Explorer</span>

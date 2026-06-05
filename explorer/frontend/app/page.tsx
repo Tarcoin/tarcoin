@@ -156,7 +156,7 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
             textShadow: '0 0 18px var(--gold)',
           }}
         >
-          ₮ TARCOIN
+          <img src="https://tarcoin.org/logo.png" alt="TARCOIN" style={{ width: '24px', height: '24px', display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '8px' }} /> TARCOIN
         </span>
         <span
           style={{
