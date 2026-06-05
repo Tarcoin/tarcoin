@@ -26,7 +26,7 @@ const footerLinks = {
     { name: "API Docs", href: "/api" },
     { name: "GitHub", href: "https://github.com/tarcoin" },
     { name: "RPC Reference", href: "/api/rpc" },
-    { name: "Source Code", href: "https://github.com/tarcoin/tarcoin" },
+    { name: "Source Code", href: "https://github.com/Tarcoin/tarcoin" },
   ],
   resources: [
     { name: "FAQ", href: "/faq" },
