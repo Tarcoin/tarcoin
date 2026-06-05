@@ -61,7 +61,7 @@ const swaggerSpec = swaggerJsdoc({
   apis: ['./src/routes/*.ts'],
 });
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
+  customCss: '.swagger-ui .topbar { display: none !important; }',
   customSiteTitle: 'TARCOIN API'
 }));
 

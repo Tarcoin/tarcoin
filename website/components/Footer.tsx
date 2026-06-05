@@ -57,7 +57,7 @@ export default function Footer() {
               <a href="https://twitter.com/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
                 <BsTwitter size={18} />
               </a>
-              <a href="https://discord.gg/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
+              <a href="https://discord.gg/QXm4CxDzJC" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
                 <BsDiscord size={18} />
               </a>
               <a href="https://t.me/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
