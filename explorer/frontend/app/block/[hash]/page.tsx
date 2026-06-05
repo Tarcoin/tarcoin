@@ -80,7 +80,7 @@ export default function BlockPage() {
         backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100,
       }}>
         <Link href="/" style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--gold)', textDecoration: 'none', textShadow: '0 0 14px var(--gold)' }}>
-          ₮ TARCOIN
+          <img src="https://tarcoin.org/logo.png" alt="TARCOIN" style={{ width: '24px', height: '24px', display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '8px' }} /> TARCOIN
         </Link>
         <span style={{ color: 'var(--border)', fontSize: '1.2rem' }}>›</span>
         <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.75rem', color: 'var(--text-dim)', letterSpacing: '0.1em' }}>BLOCK</span>

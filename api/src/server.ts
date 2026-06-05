@@ -60,7 +60,10 @@ const swaggerSpec = swaggerJsdoc({
   },
   apis: ['./src/routes/*.ts'],
 });
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'TARCOIN API'
+}));
 
 // Health check
 app.get('/health', (req, res) => {
