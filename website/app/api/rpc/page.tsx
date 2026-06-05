@@ -61,7 +61,7 @@ export default function ApiRpcPage() {
               </div>
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }} className="text-center mt-12">
-              <a href="http://localhost:5000/api/docs" target="_blank" rel="noopener noreferrer" className="btn-primary text-base px-8 py-3.5 mr-4">API Documentation</a>
+              <a href="https://api.tarcoin.org/api/docs" target="_blank" rel="noopener noreferrer" className="btn-primary text-base px-8 py-3.5 mr-4">API Documentation</a>
               <Link href="/" className="btn-ghost text-base px-8 py-3.5">Back to Home</Link>
             </motion.div>
           </div>

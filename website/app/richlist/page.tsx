@@ -30,7 +30,7 @@ export default function RichListPage() {
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-wrap justify-center gap-4 mb-12">
-              <a href="http://localhost:4000" target="_blank" rel="noopener noreferrer" className="btn-primary text-base px-8 py-3.5">
+              <a href="https://explorer.tarcoin.org" target="_blank" rel="noopener noreferrer" className="btn-primary text-base px-8 py-3.5">
                 View in Explorer
               </a>
               <Link href="/" className="btn-ghost text-base px-8 py-3.5">Back to Home</Link>

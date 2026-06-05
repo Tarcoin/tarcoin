@@ -49,7 +49,7 @@ const nextConfig = {
       // Main API proxy
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:5000/api/v1/:path*',
+        destination: 'http://localhost:5555/api/v1/:path*',
       },
       // Mining pool API proxy
       {
