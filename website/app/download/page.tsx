@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 
 const VERSION = "v1.0.0";
-const GITHUB_RELEASE     = `https://github.com/tarcoin/tarcoin/releases/tag/${VERSION}`;
-const GITHUB_RELEASE_DL  = `https://github.com/tarcoin/tarcoin/releases/download/${VERSION}`;
+const GITHUB_REPO        = `https://github.com/Tarcoin/tarcoin`;
+const GITHUB_RELEASE     = `https://github.com/Tarcoin/tarcoin/releases/tag/${VERSION}`;
+const GITHUB_RELEASE_DL  = `https://github.com/Tarcoin/tarcoin/releases/download/${VERSION}`;
 
 interface Download {
   id: string;
@@ -23,29 +24,20 @@ interface Download {
 const downloads: Download[] = [
   {
     id: "windows",
-    title: "Windows Wallet",
+    title: "Windows CLI Tools",
     icon: "🪟",
-    desc: "Windows 10/11 64-bit",
+    desc: "Windows 10/11 64-bit · tarcoind.exe + tarcoin-cli.exe",
     file: "tarcoin-wallet-win64.zip",
-    size: "~28 MB",
-    source: "github",
-  },
-  {
-    id: "macos",
-    title: "macOS Wallet",
-    icon: "🍎",
-    desc: "macOS 12+ (Intel & Apple Silicon)",
-    file: "tarcoin-wallet-macos.dmg",
-    size: "~32 MB",
-    source: "github",
+    size: "~9.4 MB",
+    source: "local",
   },
   {
     id: "linux",
     title: "Linux Full Package",
     icon: "🐧",
-    desc: "Ubuntu / Debian 22.04+",
+    desc: "Ubuntu / Debian 22.04+ · tarcoind + tarcoin-cli + tarcoin-qt",
     file: "tarcoin-linux-full.tar.gz",
-    size: "~114 MB",
+    size: "~248 MB",
     source: "local",
   },
   {
@@ -54,7 +46,7 @@ const downloads: Download[] = [
     icon: "⌨️",
     desc: "Ubuntu / Debian 22.04+ · tarcoind + tarcoin-cli (server only, no GUI)",
     file: "tarcoin-linux-daemon.tar.gz",
-    size: "~114 MB",
+    size: "~115 MB",
     source: "local",
   },
 ];
@@ -63,6 +55,9 @@ function DownloadButton({ d }: { d: Download }) {
   const [state, setState] = useState<"idle" | "downloading" | "done">("idle");
 
   const handleClick = () => {
+    if (state !== "idle") return;
+
+
     setState("downloading");
 
     const href =
@@ -213,7 +208,7 @@ export default function DownloadPage() {
               className="glass rounded-xl p-6 border border-tarcoin-gold/10 mb-6 text-left max-w-3xl mx-auto">
               <h3 className="text-sm font-orbitron text-tarcoin-gold mb-3 tracking-wider">⚙ BUILD FROM SOURCE</h3>
               <p className="text-xs text-gray-400 mb-3 font-space">TARCOIN is fully open source. Build for any platform:</p>
-              <pre className="text-xs font-mono bg-black/40 rounded-lg p-3 overflow-x-auto text-gray-300 border border-white/5">{`git clone https://github.com/tarcoin/tarcoin.git
+              <pre className="text-xs font-mono bg-black/40 rounded-lg p-3 overflow-x-auto text-gray-300 border border-white/5">{`git clone https://github.com/Tarcoin/tarcoin.git
 cd tarcoin/blockchain_core/tarcoin-core
 cmake -B build && cmake --build build -j$(nproc)
 ./build/bin/tarcoind -printtoconsole`}</pre>

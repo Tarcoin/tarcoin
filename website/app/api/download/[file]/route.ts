@@ -5,7 +5,7 @@ import fs from 'fs';
 // Map of download IDs to their actual file locations
 // Priority: 1. /public/downloads/  2. GitHub Releases redirect
 const RELEASE_VERSION = 'v1.0.0';
-const GITHUB_RELEASE_BASE = `https://github.com/tarcoin/tarcoin/releases/download/${RELEASE_VERSION}`;
+const GITHUB_RELEASE_BASE = `https://github.com/Tarcoin/tarcoin/releases/download/${RELEASE_VERSION}`;
 
 const FILE_MAP: Record<string, {
   filename: string;
