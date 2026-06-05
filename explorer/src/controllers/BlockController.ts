@@ -49,7 +49,7 @@ export class BlockController {
       for (let i = 0; i < Math.min(count, 100); i++) {
         const hash = await this.rpc.getBlockHash(currentHeight - i);
         const block = await this.rpc.getBlock(hash, 1);
-        blocks.push(block);
+        if (block) blocks.push(block);
       }
 
       await this.cache.set(this.cache.recentBlocksKey(), blocks, 15);

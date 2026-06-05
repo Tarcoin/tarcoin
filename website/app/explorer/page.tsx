@@ -51,7 +51,7 @@ export default function ExplorerPage() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-wrap justify-center gap-4"
             >
-              <a href="http://localhost:4000" target="_blank" rel="noopener noreferrer" className="btn-primary text-base px-8 py-3.5 inline-flex items-center gap-2">
+              <a href="https://explorer.tarcoin.org" target="_blank" rel="noopener noreferrer" className="btn-primary text-base px-8 py-3.5 inline-flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
