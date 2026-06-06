@@ -354,6 +354,28 @@ async function processPayouts() {
 cron.schedule('0 * * * *', processPayouts);
 
 // ====== HTTP API ======
+app.get('/', (_req, res) => {
+  res.json({
+    message: 'Welcome to TARCOIN Mining Pool',
+    status: 'Online',
+    stratum: 'stratum+tcp://pool.tarcoin.org:3333',
+    algorithm: 'SHA256d',
+    fee: `${poolState.fee}%`,
+    payout: 'Proportional',
+    endpoints: {
+      stats: '/api/pool/stats',
+      miners: '/api/pool/miners',
+      hashrate: '/api/pool/hashrate',
+      blocks: '/api/pool/blocks'
+    },
+    instructions: {
+      step1: 'Get a wallet address from tarcoin-cli or TARCOIN Wallet',
+      step2: 'Download a CPU miner like cpuminer',
+      step3: 'Run: minerd -a sha256d -o stratum+tcp://pool.tarcoin.org:3333 -u YOUR_WALLET_ADDRESS -p x'
+    }
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tarcoin-mining-pool', timestamp: Date.now() });
 });
