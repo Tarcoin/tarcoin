@@ -5,18 +5,56 @@
 
 import * as bip39 from 'bip39';
 import axios from 'axios';
+import * as bitcoin from 'bitcoinjs-lib';
+import { BIP32Factory, BIP32Interface } from 'bip32';
+import * as ecc from 'tiny-secp256k1';
 
-// ─── TARCOIN Network Constants ───────────────────────────────────────────────
+// Initialize BIP32 with secp256k1
+const bip32 = BIP32Factory(ecc);
+
+// Initialize bitcoinjs-lib ECC library
+bitcoin.initEccLib(ecc);
+
+// ─── TARCOIN Network Constants ────────────────────────────────────────────────
+
+/**
+ * TARCOIN Mainnet network parameters for bitcoinjs-lib.
+ * bech32 prefix 'tar' produces tar1... addresses (P2WPKH).
+ * pubKeyHash 0x41 produces T... addresses (P2PKH / Base58Check).
+ */
+export const TARCOIN_NETWORK: bitcoin.Network = {
+  messagePrefix: '\x18Tarcoin Signed Message:\n',
+  bech32: 'tar',           // → tar1... addresses
+  bip32: {
+    public:  0x0488B21E,   // xpub  (same as Bitcoin mainnet)
+    private: 0x0488ADE4,   // xprv  (same as Bitcoin mainnet)
+  },
+  pubKeyHash: 0x41,        // → T... Base58 addresses
+  scriptHash: 0x05,        // → 3... P2SH addresses
+  wif: 0x80,               // WIF private key prefix
+};
+
+export const TARCOIN_TESTNET_NETWORK: bitcoin.Network = {
+  messagePrefix: '\x18Tarcoin Signed Message:\n',
+  bech32: 'tar',
+  bip32: {
+    public:  0x043587CF,
+    private: 0x04358394,
+  },
+  pubKeyHash: 0x6f,
+  scriptHash: 0xc4,
+  wif: 0xef,
+};
 
 export const TARCOIN_MAINNET = {
   name: 'mainnet',
   bech32Prefix: 'tar',          // Produces tar1... addresses
   base58Prefix: 0x41,           // 0x41 = 'T' address prefix
-  wifPrefix: 0x80,              // WIF private key prefix (same as Bitcoin mainnet)
+  wifPrefix: 0x80,
   p2pPort: 19333,
   rpcPort: 19332,
   magic: 0xfabfb5da,
-  bip44CoinType: 1337,          // Custom coin type for BIP44 path m/44'/1337'
+  bip44CoinType: 1337,          // BIP44 path m/44'/1337'
   genesisHash: '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0',
   genesisMerkleRoot: '1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749',
 };
@@ -30,26 +68,38 @@ export const TARCOIN_TESTNET = {
   rpcPort: 29332,
 };
 
-// ─── Supply Constants ────────────────────────────────────────────────────────
+// BIP44 coin type for TARCOIN
+const COIN_TYPE = 1337;
+
+// ─── Supply Constants ─────────────────────────────────────────────────────────
 
 export const SUPPLY = {
-  MAX: 50_000_000_000,              // 50 billion TAR
-  ECOSYSTEM_TREASURY: 10_000_000_000, // 10 billion TAR
-  MINING: 40_000_000_000,           // 40 billion TAR
-  BLOCK_REWARD_ERA1: 50_000,        // 50,000 TAR per block (Era 1)
-  HALVING_INTERVAL: 400_000,        // Blocks between halvings
-  SATOSHIS_PER_TAR: 100_000_000,    // 1 TAR = 100,000,000 Tar
+  MAX: 50_000_000_000,
+  ECOSYSTEM_TREASURY: 10_000_000_000,
+  MINING: 40_000_000_000,
+  BLOCK_REWARD_ERA1: 50_000,
+  HALVING_INTERVAL: 400_000,
+  SATOSHIS_PER_TAR: 100_000_000,   // 1 TAR = 100,000,000 Tar
 } as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type NetworkType = 'mainnet' | 'testnet' | 'regtest';
+export type AddressType = 'bech32' | 'base58' | 'p2sh';
 
 export interface WalletConfig {
   network: NetworkType;
   encryptionEnabled: boolean;
   seedPhrase: string;
-  rpcUrl?: string;   // For node connectivity (optional)
+  rpcUrl?: string;
+}
+
+export interface DerivedAddress {
+  address: string;
+  type: AddressType;
+  path: string;
+  index: number;
+  publicKey: string;
 }
 
 export interface Transaction {
@@ -126,6 +176,88 @@ export interface BlockRewardInfo {
   blocksUntilHalving: number;
 }
 
+// ─── Address Derivation Helpers ───────────────────────────────────────────────
+
+/**
+ * Returns the bitcoinjs-lib Network object for a given NetworkType.
+ */
+function getNetwork(network: NetworkType): bitcoin.Network {
+  return network === 'testnet' ? TARCOIN_TESTNET_NETWORK : TARCOIN_NETWORK;
+}
+
+/**
+ * Derive a P2WPKH (native SegWit) tar1... address from a BIP32 root node.
+ * BIP44 path: m/44'/{COIN_TYPE}'/0'/{chain}/{index}
+ *   chain = 0 → external (receive)
+ *   chain = 1 → internal (change)
+ */
+function deriveP2WPKH(
+  root: BIP32Interface,
+  chain: 0 | 1,
+  index: number,
+  network: bitcoin.Network
+): DerivedAddress {
+  const path = `m/44'/${COIN_TYPE}'/0'/${chain}/${index}`;
+  const child = root.derivePath(path);
+  const pubkey = Buffer.from(child.publicKey);
+  const { address } = bitcoin.payments.p2wpkh({ pubkey, network });
+  if (!address) throw new Error(`Failed to derive P2WPKH address at path ${path}`);
+  return {
+    address,
+    type: 'bech32',
+    path,
+    index,
+    publicKey: pubkey.toString('hex'),
+  };
+}
+
+/**
+ * Derive a P2PKH (legacy Base58) T... address from a BIP32 root node.
+ */
+function deriveP2PKH(
+  root: BIP32Interface,
+  chain: 0 | 1,
+  index: number,
+  network: bitcoin.Network
+): DerivedAddress {
+  const path = `m/44'/${COIN_TYPE}'/0'/${chain}/${index}`;
+  const child = root.derivePath(path);
+  const pubkey = Buffer.from(child.publicKey);
+  const { address } = bitcoin.payments.p2pkh({ pubkey, network });
+  if (!address) throw new Error(`Failed to derive P2PKH address at path ${path}`);
+  return {
+    address,
+    type: 'base58',
+    path,
+    index,
+    publicKey: pubkey.toString('hex'),
+  };
+}
+
+/**
+ * Derive a P2SH-P2WPKH (wrapped SegWit) address from a BIP32 root node.
+ */
+function deriveP2SHP2WPKH(
+  root: BIP32Interface,
+  chain: 0 | 1,
+  index: number,
+  network: bitcoin.Network
+): DerivedAddress {
+  const path = `m/49'/${COIN_TYPE}'/0'/${chain}/${index}`;
+  const child = root.derivePath(path);
+  const pubkey = Buffer.from(child.publicKey);
+  const p2wpkh = bitcoin.payments.p2wpkh({ pubkey, network });
+  const { address } = bitcoin.payments.p2sh({ redeem: p2wpkh, network });
+  if (!address) throw new Error(`Failed to derive P2SH address at path ${path}`);
+  return {
+    address,
+    type: 'p2sh',
+    path,
+    index,
+    publicKey: pubkey.toString('hex'),
+  };
+}
+
 // ─── Main Wallet Class ────────────────────────────────────────────────────────
 
 export class TarcoinWallet {
@@ -133,11 +265,15 @@ export class TarcoinWallet {
   private _balance: WalletBalance = { confirmed: 0, unconfirmed: 0, total: 0, unit: 'TAR' };
   private _utxos: Utxo[] = [];
   private _transactions: Transaction[] = [];
-  private _addresses: string[] = [];
-  private isEncrypted: boolean = false;
-  private isLocked: boolean = true;
+  private _receiveAddresses: DerivedAddress[] = [];
+  private _changeAddresses: DerivedAddress[] = [];
   private _receiveIndex: number = 0;
   private _changeIndex: number = 0;
+  private isEncrypted: boolean = false;
+  private isLocked: boolean = true;
+
+  // Cached BIP32 root node (set on unlock or generate)
+  private _root: BIP32Interface | null = null;
 
   constructor(config: WalletConfig) {
     this.config = config;
@@ -148,12 +284,15 @@ export class TarcoinWallet {
   /** Generate a new 24-word BIP39 HD wallet */
   static generate(opts: Partial<WalletConfig> = {}): TarcoinWallet {
     const seedPhrase = bip39.generateMnemonic(256); // 24-word seed
-    return new TarcoinWallet({
+    const wallet = new TarcoinWallet({
       network: opts.network || 'mainnet',
       encryptionEnabled: opts.encryptionEnabled ?? true,
       seedPhrase,
       rpcUrl: opts.rpcUrl,
     });
+    // Auto-unlock for fresh wallets so addresses can be generated immediately
+    wallet.isLocked = false;
+    return wallet;
   }
 
   /** Restore wallet from existing BIP39 seed phrase */
@@ -161,24 +300,141 @@ export class TarcoinWallet {
     if (!bip39.validateMnemonic(seedPhrase)) {
       throw new Error('Invalid BIP39 mnemonic seed phrase');
     }
-    return new TarcoinWallet({
+    const wallet = new TarcoinWallet({
       network: opts.network || 'mainnet',
       encryptionEnabled: opts.encryptionEnabled ?? true,
       seedPhrase,
       rpcUrl: opts.rpcUrl,
     });
+    wallet.isLocked = false;
+    return wallet;
   }
 
-  /** Restore from raw seed bytes (hex) */
-  static fromSeedHex(seedHex: string, opts: Partial<WalletConfig> = {}): TarcoinWallet {
-    const dummy = 'abandon '.repeat(11) + 'about'; // placeholder — seed is stored raw
-    const wallet = new TarcoinWallet({
-      network: opts.network || 'mainnet',
-      encryptionEnabled: opts.encryptionEnabled ?? true,
-      seedPhrase: dummy,
-      rpcUrl: opts.rpcUrl,
-    });
-    return wallet;
+  // ─── Internal Root Node ───────────────────────────────────────────────────
+
+  /**
+   * Derives and caches the BIP32 root node from the mnemonic seed.
+   * Must be called after unlock.
+   */
+  private async _getRoot(): Promise<BIP32Interface> {
+    if (this._root) return this._root;
+    if (this.isLocked && this.isEncrypted) {
+      throw new Error('Wallet is locked — call unlock() first');
+    }
+    const seedBytes = await bip39.mnemonicToSeed(this.config.seedPhrase);
+    const network = getNetwork(this.config.network);
+    this._root = bip32.fromSeed(seedBytes, network);
+    return this._root;
+  }
+
+  // ─── Address Generation ───────────────────────────────────────────────────
+
+  /**
+   * Get a new receiving address (native SegWit, tar1...).
+   * Derives from BIP44 path: m/44'/1337'/0'/0/{index}
+   */
+  async getNewReceiveAddress(type: AddressType = 'bech32'): Promise<DerivedAddress> {
+    const root = await this._getRoot();
+    const network = getNetwork(this.config.network);
+    let derived: DerivedAddress;
+
+    if (type === 'base58') {
+      derived = deriveP2PKH(root, 0, this._receiveIndex, network);
+    } else if (type === 'p2sh') {
+      derived = deriveP2SHP2WPKH(root, 0, this._receiveIndex, network);
+    } else {
+      // Default: bech32 (tar1...)
+      derived = deriveP2WPKH(root, 0, this._receiveIndex, network);
+    }
+
+    this._receiveIndex++;
+    this._receiveAddresses.push(derived);
+    return derived;
+  }
+
+  /**
+   * Get a change address for internal use.
+   * Derives from BIP44 path: m/44'/1337'/0'/1/{index}
+   */
+  async getChangeAddress(type: AddressType = 'bech32'): Promise<DerivedAddress> {
+    const root = await this._getRoot();
+    const network = getNetwork(this.config.network);
+    let derived: DerivedAddress;
+
+    if (type === 'base58') {
+      derived = deriveP2PKH(root, 1, this._changeIndex, network);
+    } else if (type === 'p2sh') {
+      derived = deriveP2SHP2WPKH(root, 1, this._changeIndex, network);
+    } else {
+      derived = deriveP2WPKH(root, 1, this._changeIndex, network);
+    }
+
+    this._changeIndex++;
+    this._changeAddresses.push(derived);
+    return derived;
+  }
+
+  /**
+   * Batch-derive multiple receive addresses at once.
+   * Useful for wallet sync / gap limit scanning.
+   */
+  async deriveReceiveAddresses(count: number, type: AddressType = 'bech32'): Promise<DerivedAddress[]> {
+    const results: DerivedAddress[] = [];
+    for (let i = 0; i < count; i++) {
+      results.push(await this.getNewReceiveAddress(type));
+    }
+    return results;
+  }
+
+  /**
+   * Derive an address at a specific BIP44 path index without advancing the counter.
+   * Useful for address lookup or verification.
+   */
+  async deriveAddressAt(chain: 0 | 1, index: number, type: AddressType = 'bech32'): Promise<DerivedAddress> {
+    const root = await this._getRoot();
+    const network = getNetwork(this.config.network);
+    if (type === 'base58') return deriveP2PKH(root, chain, index, network);
+    if (type === 'p2sh') return deriveP2SHP2WPKH(root, chain, index, network);
+    return deriveP2WPKH(root, chain, index, network);
+  }
+
+  /**
+   * Get the current receive address without advancing the index.
+   * Returns the address a miner should use for pool mining payouts.
+   */
+  async getCurrentReceiveAddress(type: AddressType = 'bech32'): Promise<DerivedAddress> {
+    return this.deriveAddressAt(0, this._receiveIndex, type);
+  }
+
+  /**
+   * Validate a TARCOIN address format (static, no key needed).
+   */
+  static validateAddress(address: string): AddressInfo {
+    const isBech32 = address.startsWith('tar1') && address.length >= 42;
+    const isBase58 = address.startsWith('T') && address.length >= 26 && address.length <= 35;
+    const isTestnet = address.startsWith('m') || address.startsWith('n');
+
+    // Try deeper validation via bitcoinjs-lib
+    if (isBech32) {
+      try {
+        bitcoin.address.fromBech32(address);
+      } catch {
+        return { address, type: 'unknown', isValid: false, network: 'mainnet' };
+      }
+    } else if (isBase58) {
+      try {
+        bitcoin.address.fromBase58Check(address);
+      } catch {
+        return { address, type: 'unknown', isValid: false, network: 'mainnet' };
+      }
+    }
+
+    return {
+      address,
+      type: isBech32 ? 'bech32' : isBase58 ? 'base58' : 'unknown',
+      isValid: isBech32 || isBase58,
+      network: isBech32 || isBase58 ? 'mainnet' : isTestnet ? 'testnet' : 'mainnet',
+    };
   }
 
   // ─── Seed & Key Access ────────────────────────────────────────────────────
@@ -204,47 +460,18 @@ export class TarcoinWallet {
     return bip39.mnemonicToSeed(this.config.seedPhrase, passphrase);
   }
 
+  /** Get xpub (extended public key) for the BIP44 account */
+  async getXPub(): Promise<string> {
+    const root = await this._getRoot();
+    const network = getNetwork(this.config.network);
+    const accountPath = `m/44'/${COIN_TYPE}'/0'`;
+    const accountNode = root.derivePath(accountPath);
+    return accountNode.neutered().toBase58();
+  }
+
   /** Get word list count from mnemonic */
   getWordCount(): number {
     return this.config.seedPhrase.split(' ').filter(Boolean).length;
-  }
-
-  // ─── Address Generation ───────────────────────────────────────────────────
-
-  /**
-   * Get a new receiving address.
-   * In production: derive from BIP32 path m/44'/1337'/0'/0/{index}
-   * Requires bitcoinjs-lib with TARCOIN network params for proper bech32/base58.
-   */
-  getNewReceiveAddress(): string {
-    // Production implementation would use:
-    // const node = bip32.fromSeed(seed, TARCOIN_MAINNET_BIP32)
-    // const child = node.derivePath(`m/44'/1337'/0'/0/${this._receiveIndex++}`)
-    // return payments.p2wpkh({ pubkey: child.publicKey, network: TARCOIN_MAINNET_BIP32 }).address
-    //
-    // Placeholder: returns address format indicator
-    this._receiveIndex++;
-    return `tar1q_receive_addr_${this._receiveIndex - 1}`;
-  }
-
-  /** Get a change address (BIP44 internal chain m/44'/1337'/0'/1/{index}) */
-  getChangeAddress(): string {
-    this._changeIndex++;
-    return `tar1q_change_addr_${this._changeIndex - 1}`;
-  }
-
-  /** Validate a TARCOIN address format */
-  static validateAddress(address: string): AddressInfo {
-    const isBech32 = address.startsWith('tar1') && address.length >= 42;
-    const isBase58 = address.startsWith('T') && address.length >= 26 && address.length <= 35;
-    const isTestnet = address.startsWith('m') || address.startsWith('n');
-
-    return {
-      address,
-      type: isBech32 ? 'bech32' : isBase58 ? 'base58' : 'unknown',
-      isValid: isBech32 || isBase58,
-      network: isBech32 || isBase58 ? 'mainnet' : isTestnet ? 'testnet' : 'mainnet',
-    };
   }
 
   // ─── Encryption & Locking ─────────────────────────────────────────────────
@@ -258,6 +485,7 @@ export class TarcoinWallet {
     // Production: AES-256-GCM encrypt the seed phrase before storing
     this.isEncrypted = true;
     this.isLocked = true;
+    this._root = null; // Clear cached root on lock
     return true;
   }
 
@@ -271,6 +499,7 @@ export class TarcoinWallet {
     this.isLocked = false;
     setTimeout(() => {
       this.isLocked = true;
+      this._root = null; // Clear cached root on auto-lock
     }, timeoutSeconds * 1000);
     return true;
   }
@@ -278,6 +507,7 @@ export class TarcoinWallet {
   /** Lock the wallet */
   lock(): void {
     this.isLocked = true;
+    this._root = null; // Clear cached root on lock
   }
 
   get locked(): boolean { return this.isLocked; }
@@ -300,50 +530,135 @@ export class TarcoinWallet {
   // ─── Transaction Creation ─────────────────────────────────────────────────
 
   /**
-   * Create and sign a transaction.
-   * Production: selects UTXOs via coin selection, builds tx with bitcoinjs-lib,
-   * signs with secp256k1 ECDSA from derived BIP32 key.
+   * Create and sign a P2WPKH transaction.
+   * Selects UTXOs, builds tx with bitcoinjs-lib, signs with secp256k1 ECDSA.
+   * Returns raw signed transaction hex ready to broadcast.
    */
-  createTransaction(
+  async createTransaction(
     toAddress: string,
     amountTar: number,
     feeTar: number = 0.0001
-  ): string | null {
+  ): Promise<string> {
     if (this.isLocked && this.isEncrypted) {
       throw new Error('Wallet is locked. Call unlock() first.');
-    }
-    if (amountTar > this._balance.confirmed) {
-      throw new Error(`Insufficient balance: have ${this._balance.confirmed}, need ${amountTar}`);
     }
     if (amountTar <= 0) throw new Error('Amount must be positive');
 
     const addrInfo = TarcoinWallet.validateAddress(toAddress);
     if (!addrInfo.isValid) throw new Error(`Invalid TARCOIN address: ${toAddress}`);
 
-    // Production implementation:
-    // 1. Select UTXOs (coin selection algorithm — e.g., branch-and-bound)
-    // 2. Build transaction inputs from UTXOs
-    // 3. Build outputs (recipient + change)
-    // 4. Sign inputs with ECDSA secp256k1 using BIP32-derived keys
-    // 5. Return raw hex
+    const amountSats = TarcoinWallet.toSatoshis(amountTar);
+    const feeSats = TarcoinWallet.toSatoshis(feeTar);
+    const totalNeeded = amountSats + feeSats;
 
-    return null; // placeholder until bitcoinjs-lib integration
+    if (TarcoinWallet.toSatoshis(this._balance.confirmed) < totalNeeded) {
+      throw new Error(
+        `Insufficient balance: have ${this._balance.confirmed} TAR, need ${amountTar + feeTar} TAR`
+      );
+    }
+
+    const root = await this._getRoot();
+    const network = getNetwork(this.config.network);
+    const psbt = new bitcoin.Psbt({ network });
+
+    // ── Coin selection (simple: pick UTXOs until we have enough) ─────────────
+    let inputTotal = 0;
+    const selectedUtxos: Utxo[] = [];
+    for (const utxo of this._utxos) {
+      if (!utxo.spendable) continue;
+      selectedUtxos.push(utxo);
+      inputTotal += TarcoinWallet.toSatoshis(utxo.amount);
+      if (inputTotal >= totalNeeded) break;
+    }
+
+    if (inputTotal < totalNeeded) {
+      throw new Error('Not enough spendable UTXOs');
+    }
+
+    // ── Build inputs ──────────────────────────────────────────────────────────
+    for (const utxo of selectedUtxos) {
+      // Find the key that controls this UTXO
+      const derived = this._receiveAddresses.find(a => a.address === utxo.address)
+        || this._changeAddresses.find(a => a.address === utxo.address);
+      if (!derived) throw new Error(`Cannot find key for address ${utxo.address}`);
+
+      const child = root.derivePath(derived.path);
+      const pubkey = Buffer.from(child.publicKey);
+      const p2wpkh = bitcoin.payments.p2wpkh({ pubkey, network });
+
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        witnessUtxo: {
+          script: p2wpkh.output!,
+          value: BigInt(TarcoinWallet.toSatoshis(utxo.amount)),
+        },
+      });
+    }
+
+    // ── Build outputs ─────────────────────────────────────────────────────────
+    psbt.addOutput({
+      address: toAddress,
+      value: BigInt(amountSats),
+    });
+
+    // Change output (if any)
+    const changeSats = inputTotal - amountSats - feeSats;
+    if (changeSats > 546) { // dust threshold
+      const changeAddr = await this.getChangeAddress('bech32');
+      psbt.addOutput({
+        address: changeAddr.address,
+        value: BigInt(changeSats),
+      });
+    }
+
+    // ── Sign all inputs ───────────────────────────────────────────────────────
+    for (let i = 0; i < selectedUtxos.length; i++) {
+      const utxo = selectedUtxos[i];
+      const derived = this._receiveAddresses.find(a => a.address === utxo.address)
+        || this._changeAddresses.find(a => a.address === utxo.address);
+      if (!derived) throw new Error(`Cannot find key for address ${utxo.address}`);
+
+      const child = root.derivePath(derived.path);
+      const keyPair = {
+        publicKey: Buffer.from(child.publicKey),
+        sign: (hash: Buffer) => {
+          const sig = ecc.sign(hash, child.privateKey!);
+          return Buffer.from(sig);
+        },
+      };
+      psbt.signInput(i, keyPair);
+    }
+
+    psbt.finalizeAllInputs();
+    return psbt.extractTransaction().toHex();
   }
 
-  /** Sign a message with the wallet's private key (for address ownership proof) */
-  signMessage(message: string, address: string): string {
+  /** Sign a message with the wallet's private key (proves address ownership) */
+  async signMessage(message: string, addressIndex: number = 0): Promise<string> {
     if (this.isLocked && this.isEncrypted) {
       throw new Error('Wallet is locked');
     }
-    // Production: ECDSA sign message hash with private key
-    throw new Error('Message signing requires bitcoinjs-lib integration');
+    const root = await this._getRoot();
+    const path = `m/44'/${COIN_TYPE}'/0'/0/${addressIndex}`;
+    const child = root.derivePath(path);
+
+    const messagePrefix = TARCOIN_NETWORK.messagePrefix;
+    const msgBuffer = Buffer.from(message, 'utf8');
+    const prefix = Buffer.from(messagePrefix, 'utf8');
+    const lenBuffer = Buffer.allocUnsafe(1);
+    lenBuffer.writeUInt8(msgBuffer.length, 0);
+    const fullMsg = Buffer.concat([prefix, lenBuffer, msgBuffer]);
+
+    const hash = bitcoin.crypto.hash256(fullMsg);
+    const sig = ecc.sign(hash, child.privateKey!);
+    return Buffer.from(sig).toString('base64');
   }
 
   /** Verify a signed message against an address */
   static verifyMessage(address: string, signature: string, message: string): boolean {
-    // Production: ECDSA verify signature
     const addrInfo = TarcoinWallet.validateAddress(address);
-    return addrInfo.isValid; // placeholder
+    return addrInfo.isValid; // Full ECDSA verify requires additional secp256k1 recovery
   }
 
   // ─── Node RPC Sync ────────────────────────────────────────────────────────
@@ -352,8 +667,11 @@ export class TarcoinWallet {
   async sync(addresses?: string[]): Promise<void> {
     const rpcUrl = this.config.rpcUrl || 'http://127.0.0.1:19332';
     try {
-      // Fetch UTXOs for addresses
-      const syncAddresses = addresses || this._addresses;
+      const syncAddresses = addresses
+        || [
+          ...this._receiveAddresses.map(a => a.address),
+          ...this._changeAddresses.map(a => a.address),
+        ];
       if (syncAddresses.length === 0) return;
 
       const response = await axios.post(rpcUrl, {
@@ -387,7 +705,7 @@ export class TarcoinWallet {
 
   // ─── Backup & Export ──────────────────────────────────────────────────────
 
-  /** Export wallet data for backup (encrypted) */
+  /** Export wallet data for backup */
   exportBackup(passphrase: string): Record<string, any> {
     if (this.isLocked && this.isEncrypted) {
       throw new Error('Wallet is locked');
@@ -397,7 +715,16 @@ export class TarcoinWallet {
       network: this.config.network,
       encrypted: this.isEncrypted,
       seedPhrase: this.isEncrypted ? '[encrypted]' : this.config.seedPhrase,
-      addresses: this._addresses,
+      receiveAddresses: this._receiveAddresses.map(a => ({
+        address: a.address,
+        path: a.path,
+        type: a.type,
+      })),
+      changeAddresses: this._changeAddresses.map(a => ({
+        address: a.address,
+        path: a.path,
+        type: a.type,
+      })),
       receiveIndex: this._receiveIndex,
       changeIndex: this._changeIndex,
       exportedAt: new Date().toISOString(),
@@ -421,12 +748,12 @@ export class TarcoinWallet {
     };
   }
 
-  /** Convert TAR to Tar */
+  /** Convert TAR to Tar (satoshis) */
   static toSatoshis(tar: number): number {
     return Math.round(tar * SUPPLY.SATOSHIS_PER_TAR);
   }
 
-  /** Convert Tar to TAR */
+  /** Convert Tar (satoshis) to TAR */
   static fromSatoshis(satoshis: number): number {
     return satoshis / SUPPLY.SATOSHIS_PER_TAR;
   }
@@ -441,7 +768,8 @@ export class TarcoinWallet {
   getNetwork(): NetworkType { return this.config.network; }
   getReceiveIndex(): number { return this._receiveIndex; }
   getChangeIndex(): number { return this._changeIndex; }
-  getAddresses(): string[] { return [...this._addresses]; }
+  getReceiveAddresses(): DerivedAddress[] { return [...this._receiveAddresses]; }
+  getChangeAddresses(): DerivedAddress[] { return [...this._changeAddresses]; }
 }
 
 export default TarcoinWallet;
