@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARCOIN — New Miner Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff;
+      color: #1a1a2e;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 40px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at center, rgba(99,102,241,0.15) 0%, transparent 70%);
+    }
+    .logo {
+      font-size: 42px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -1px;
+      position: relative;
+    }
+    .logo span {
+      background: linear-gradient(90deg, #818cf8, #a78bfa, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .tagline {
+      color: #a5b4fc;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 6px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+    }
+    .guide-title {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      position: relative;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(129,140,248,0.2);
+      border: 1px solid rgba(129,140,248,0.4);
+      color: #a5b4fc;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-top: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    /* ── What You Need Box ── */
+    .requirements {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+    .requirements h3 {
+      color: #166534;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .req-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      color: #15803d;
+      font-weight: 500;
+      font-size: 13.5px;
+    }
+    .req-icon { font-size: 16px; }
+
+    /* ── Steps ── */
+    .step {
+      margin-bottom: 28px;
+      page-break-inside: avoid;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+    .step-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .step-body {
+      padding-left: 50px;
+    }
+    .step-body p {
+      color: #374151;
+      margin-bottom: 10px;
+      font-size: 13.5px;
+    }
+
+    /* ── Code blocks ── */
+    .code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 12.5px;
+      margin: 10px 0;
+      word-break: break-all;
+      border-left: 3px solid #6366f1;
+    }
+    .code-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .highlight { color: #a6e3a1; }
+    .comment { color: #6c7086; }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    thead {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+    }
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f9fafb; }
+    .tag-required { color: #059669; font-weight: 700; }
+    .tag-anything { color: #6b7280; }
+
+    /* ── Flow diagram ── */
+    .flow {
+      background: linear-gradient(135deg, #0f0c29, #1e1b4b);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .flow-step {
+      display: inline-block;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(129,140,248,0.3);
+      color: #e0e7ff;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 4px;
+    }
+    .flow-arrow {
+      color: #6366f1;
+      font-size: 18px;
+      font-weight: 900;
+      display: block;
+      margin: 2px 0;
+    }
+
+    /* ── Warning/Info boxes ── */
+    .info-box {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+    .info-box.warning {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      color: #92400e;
+    }
+    .info-box.tip {
+      background: #eff6ff;
+      border: 1.5px solid #93c5fd;
+      color: #1e40af;
+    }
+    .info-box strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Supported miners ── */
+    .miners-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .miner-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .miner-icon { font-size: 20px; }
+    .miner-name { font-weight: 700; font-size: 13px; color: #1e293b; }
+    .miner-sub { font-size: 11px; color: #64748b; }
+
+    /* ── FAQ ── */
+    .faq-item {
+      border-bottom: 1px solid #f3f4f6;
+      padding: 12px 0;
+    }
+    .faq-q {
+      font-weight: 700;
+      color: #1a1a2e;
+      font-size: 13.5px;
+      margin-bottom: 4px;
+    }
+    .faq-a {
+      color: #4b5563;
+      font-size: 13px;
+    }
+    .faq-a .yes { color: #059669; font-weight: 700; }
+    .faq-a .no { color: #dc2626; font-weight: 700; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .footer-link {
+      color: #6366f1;
+      font-weight: 600;
+      font-size: 12.5px;
+      text-decoration: none;
+    }
+    .footer-copy {
+      color: #9ca3af;
+      font-size: 11px;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+      margin: 28px 0;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { padding: 20px; }
+      .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-number { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .flow { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .code { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">TAR<span>COIN</span></div>
+    <div class="tagline">Decentralized · SHA-256 · Proof of Work</div>
+    <div class="guide-title">⛏️ New Miner Setup Guide</div>
+    <div class="badge">Step-by-Step · ASIC Mining</div>
+  </div>
+
+  <!-- Requirements -->
+  <div class="requirements">
+    <h3>✅ What You Need Before Starting</h3>
+    <div class="req-item"><span class="req-icon">⚙️</span> SHA-256 ASIC miner (Antminer S19/S21, Whatsminer M50/M60, Avalonminer A12+)</div>
+    <div class="req-item"><span class="req-icon">🔌</span> Power supply unit + stable internet connection (ethernet recommended)</div>
+    <div class="req-item"><span class="req-icon">💻</span> A computer, tablet, or phone to set up your wallet</div>
+    <div class="req-item"><span class="req-icon">❌</span> You do NOT need GitHub, coding skills, or technical knowledge</div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-number">1</div>
+      <div class="step-title">Get a TAR Wallet Address</div>
+    </div>
+    <div class="step-body">
+      <p>Download the official Tarcoin wallet from the website. This generates your personal TAR address where mining rewards are sent.</p>
+
+      <div class="code-label">Download from</div>
+      <div class="code">https://tarcoin.org/download</div>
+
+      <table>
+        <thead><tr><th>Your OS</th><th>File to Download</th></tr></thead>
+        <tbody>
+          <tr><td>Windows</td><td><code>tarcoin-qt-win64.exe</code></td></tr>
+          <tr><td>macOS</td><td><code>tarcoin-qt-macos.dmg</code></td></tr>
+          <tr><td>Linux</td><td><code>tarcoin-qt-linux.tar.gz</code></td></tr>
+        </tbody>
+      </table>
+
+      <p>Install it → Open it → Your wallet address is automatically generated and shown on screen. It will look like:</p>
+      <div class="code"><span class="highlight">tar1qt509uycayxx9t55hfkvmzrefurkr4pdf74lgp3</span>  <span class="comment">← your TAR address (yours will be different)</span></div>
+
+      <div class="info-box tip">
+        <strong>💡 Tip</strong>
+        Copy and save your wallet address somewhere safe. Also back up your 24-word seed phrase — it is the only way to recover your wallet if your computer is lost.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Step 2 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-number">2</div>
+      <div class="step-title">Access Your ASIC Miner Settings</div>
+    </div>
+    <div class="step-body">
+      <p>Every ASIC miner has a built-in web interface you access through your browser.</p>
+      <p><strong>1.</strong> Plug your miner into your router with an ethernet cable<br>
+         <strong>2.</strong> Power on the miner and wait ~2 minutes for it to boot<br>
+         <strong>3.</strong> Find the miner's IP address — check your router admin page (usually <code>192.168.1.1</code>)<br>
+         <strong>4.</strong> Open your browser and go to that IP address (e.g. <code>192.168.1.100</code>)<br>
+         <strong>5.</strong> Login with default credentials:</p>
+      <div class="code"><span class="comment">Username:</span> <span class="highlight">root</span>   <span class="comment">Password:</span> <span class="highlight">root</span>
+<span class="comment">(or)</span>  <span class="comment">Username:</span> <span class="highlight">admin</span>  <span class="comment">Password:</span> <span class="highlight">admin</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Step 3 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-number">3</div>
+      <div class="step-title">Configure Pool Settings on Your Miner</div>
+    </div>
+    <div class="step-body">
+      <p>Go to <strong>Miner Configuration → Pool Settings</strong> and enter the following:</p>
+
+      <table>
+        <thead><tr><th>Field</th><th>Value to Enter</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Pool URL 1 (Main)</td>
+            <td><code>stratum+tcp://pool.tarcoin.org:3333</code></td>
+          </tr>
+          <tr>
+            <td>Pool URL 2 (Backup)</td>
+            <td><code>stratum+tcp://pool2.tarcoin.org:3333</code></td>
+          </tr>
+          <tr>
+            <td>Worker / Username</td>
+            <td><span class="tag-required">Your TAR wallet address</span> (e.g. tar1q...)</td>
+          </tr>
+          <tr>
+            <td>Password</td>
+            <td><span class="tag-anything">Anything — type <code>x</code></span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Click <strong>Save & Apply</strong>. The miner will restart and connect to the pool automatically.</p>
+
+      <div class="info-box warning">
+        <strong>⚠️ Important</strong>
+        Use YOUR OWN wallet address as the username. If you use someone else's address, your TAR rewards will go to them — not you.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Step 4 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-number">4</div>
+      <div class="step-title">Verify Your Miner is Working</div>
+    </div>
+    <div class="step-body">
+      <p>After saving settings, check the miner's dashboard — you should see:</p>
+      <ul style="padding-left: 20px; color: #374151; margin-top: 8px;">
+        <li style="margin-bottom:6px;">✅ Pool status: <strong>Connected</strong></li>
+        <li style="margin-bottom:6px;">✅ Hashrate showing (e.g. 100 TH/s)</li>
+        <li style="margin-bottom:6px;">✅ Shares accepted (increasing over time)</li>
+      </ul>
+
+      <p style="margin-top:12px;">Also check the pool dashboard:</p>
+      <div class="code">https://pool.tarcoin.org</div>
+      <p>Enter your TAR wallet address to see your live hashrate, shares, and balance.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Step 5 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-number">5</div>
+      <div class="step-title">Receive TAR Rewards</div>
+    </div>
+    <div class="step-body">
+      <p>The mining pool automatically pays out TAR to your wallet address when you reach the minimum payout threshold. Open your tarcoin-qt wallet to see your balance.</p>
+      <p>Payouts happen automatically — no action required on your part.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Supported Miners -->
+  <h2 style="font-size:16px; font-weight:800; margin-bottom:14px; color:#1a1a2e;">⚙️ Supported ASIC Miners</h2>
+  <div class="miners-grid">
+    <div class="miner-card">
+      <span class="miner-icon">🔧</span>
+      <div>
+        <div class="miner-name">Antminer S19 / S21</div>
+        <div class="miner-sub">Bitmain · SHA-256</div>
+      </div>
+    </div>
+    <div class="miner-card">
+      <span class="miner-icon">🔧</span>
+      <div>
+        <div class="miner-name">Whatsminer M50 / M60</div>
+        <div class="miner-sub">MicroBT · SHA-256</div>
+      </div>
+    </div>
+    <div class="miner-card">
+      <span class="miner-icon">🔧</span>
+      <div>
+        <div class="miner-name">Avalonminer A12+</div>
+        <div class="miner-sub">Canaan · SHA-256</div>
+      </div>
+    </div>
+    <div class="miner-card">
+      <span class="miner-icon">🔧</span>
+      <div>
+        <div class="miner-name">Any SHA-256 ASIC</div>
+        <div class="miner-sub">Bitcoin-compatible miners</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Mining Flow -->
+  <h2 style="font-size:16px; font-weight:800; margin-bottom:14px; color:#1a1a2e;">🔄 How Mining Works</h2>
+  <div class="flow">
+    <div class="flow-step">⚙️ ASIC Miner</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-step">🌐 pool.tarcoin.org:3333 (Stratum)</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-step">📊 Shares Accepted → TAR Earned</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-step">💸 Auto Payout to tar1q... Address</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-step">👛 Open Wallet → See Balance ✅</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- FAQ -->
+  <h2 style="font-size:16px; font-weight:800; margin-bottom:14px; color:#1a1a2e;">❓ Common Questions</h2>
+
+  <div class="faq-item">
+    <div class="faq-q">Do I need to download anything from GitHub?</div>
+    <div class="faq-a"><span class="no">No.</span> Just download the wallet from tarcoin.org/download.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Do I need to run my own blockchain node?</div>
+    <div class="faq-a"><span class="no">No.</span> The mining pool handles the blockchain connection for you.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Can I use my Bitcoin ASIC miner?</div>
+    <div class="faq-a"><span class="yes">Yes.</span> Tarcoin uses SHA-256 — the same algorithm as Bitcoin. Any Bitcoin ASIC works.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">When do I receive my TAR?</div>
+    <div class="faq-a">Automatically when your balance reaches the minimum payout threshold. Check pool.tarcoin.org for your stats.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What if the main pool is down?</div>
+    <div class="faq-a">Your miner automatically switches to the backup pool URL (<code>pool2.tarcoin.org:3333</code>) if the main pool is unavailable.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What is the block reward?</div>
+    <div class="faq-a"><span class="yes">50,000 TAR</span> per block. Halving every 400,000 blocks (~7.6 years). Total supply: 50 billion TAR.</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-links">
+      <a class="footer-link" href="https://tarcoin.org">tarcoin.org</a>
+      <a class="footer-link" href="https://pool.tarcoin.org">pool.tarcoin.org</a>
+      <a class="footer-link" href="https://explorer.tarcoin.org">explorer.tarcoin.org</a>
+      <a class="footer-link" href="https://api.tarcoin.org">api.tarcoin.org</a>
+    </div>
+    <div class="footer-copy">TARCOIN (TAR) · SHA-256 Proof of Work · Decentralized · MIT Licensed<br>Modelled after Bitcoin Core · Immutable after launch</div>
+  </div>
+
+</body>
+</html>
