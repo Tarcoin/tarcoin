@@ -14,22 +14,22 @@ const FILE_MAP: Record<string, {
   githubAsset: string;
 }> = {
   // Linux full package: tarcoind + tarcoin-cli + tarcoin-qt (GUI wallet)
-  'tarcoin-linux-full.tar.gz': {
-    filename: 'tarcoin-linux-full.tar.gz',
-    contentType: 'application/gzip',
+  'tarcoin-linux-full.zip': {
+    filename: 'tarcoin-linux-full.zip',
+    contentType: 'application/zip',
     localPaths: [
-      'public/downloads/tarcoin-linux-full.tar.gz',
+      'public/downloads/tarcoin-linux-full.zip',
     ],
-    githubAsset: 'tarcoin-linux-full.tar.gz',
+    githubAsset: 'tarcoin-linux-full.zip',
   },
   // Linux server-only package: tarcoind + tarcoin-cli (no GUI)
-  'tarcoin-linux-daemon.tar.gz': {
-    filename: 'tarcoin-linux-daemon.tar.gz',
-    contentType: 'application/gzip',
+  'tarcoin-linux-daemon.zip': {
+    filename: 'tarcoin-linux-daemon.zip',
+    contentType: 'application/zip',
     localPaths: [
-      'public/downloads/tarcoin-linux-daemon.tar.gz',
+      'public/downloads/tarcoin-linux-daemon.zip',
     ],
-    githubAsset: 'tarcoin-linux-daemon.tar.gz',
+    githubAsset: 'tarcoin-linux-daemon.zip',
   },
   // Windows wallet (future release)
   'tarcoin-wallet-win64.zip': {

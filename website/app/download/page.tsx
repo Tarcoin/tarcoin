@@ -29,25 +29,25 @@ const downloads: Download[] = [
     desc: "Windows 10/11 64-bit · tarcoind.exe + tarcoin-cli.exe",
     file: "tarcoin-wallet-win64.zip",
     size: "~9.4 MB",
-    source: "local",
+    source: "github",
   },
   {
     id: "linux",
     title: "Linux Full Package",
     icon: "🐧",
     desc: "Ubuntu / Debian 22.04+ · tarcoind + tarcoin-cli + tarcoin-qt",
-    file: "tarcoin-linux-full.tar.gz",
+    file: "tarcoin-linux-full.zip",
     size: "~248 MB",
-    source: "local",
+    source: "github",
   },
   {
     id: "cli",
     title: "Linux Server Node",
     icon: "⌨️",
     desc: "Ubuntu / Debian 22.04+ · tarcoind + tarcoin-cli (server only, no GUI)",
-    file: "tarcoin-linux-daemon.tar.gz",
+    file: "tarcoin-linux-daemon.zip",
     size: "~115 MB",
-    source: "local",
+    source: "github",
   },
 ];
 
@@ -221,7 +221,7 @@ cmake -B build && cmake --build build -j$(nproc)
               <p className="text-sm text-gray-400 font-space mb-3">
                 All releases are signed with GPG and include SHA256 checksums.
               </p>
-              <pre className="text-xs font-mono bg-black/40 rounded-lg p-3 overflow-x-auto text-gray-300 border border-white/5">{`sha256sum tarcoin-linux-full.tar.gz
+              <pre className="text-xs font-mono bg-black/40 rounded-lg p-3 overflow-x-auto text-gray-300 border border-white/5">{`sha256sum tarcoin-linux-full.zip
 # compare against SHA256SUMS in the GitHub release`}</pre>
               <a href={`${GITHUB_RELEASE_DL}/SHA256SUMS`} target="_blank" rel="noopener noreferrer"
                 className="inline-block mt-3 text-xs text-tarcoin-gold hover:text-white transition-colors">
