@@ -299,9 +299,9 @@ export default function MempoolPage() {
           <img src="https://tarcoin.org/logo.png" alt="TARCOIN" style={{ width: '24px', height: '24px', display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '8px' }} /> TARCOIN
         </Link>
         <span style={{ color: 'var(--border)' }}>›</span>
-        <span style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-dim)', fontSize: '0.875rem' }}>Explorer</span>
+        <Link href="/" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text-dim)', fontSize: '0.875rem', textDecoration: 'none' }}>Explorer</Link>
         <span style={{ color: 'var(--border)' }}>›</span>
-        <span style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text)', fontSize: '0.875rem' }}>Mempool</span>
+        <Link href="/mempool" style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text)', fontSize: '0.875rem', textDecoration: 'none' }}>Mempool</Link>
       </div>
 
       <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
