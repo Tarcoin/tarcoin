@@ -27,6 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          submodules: recursive
+        with:
           fetch-depth: 0
 
       - name: Run Gitleaks
@@ -52,6 +54,10 @@ jobs:
     needs: security-audit
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+        with:
+          submodules: recursive
 
       - name: Install build dependencies
         run: |
@@ -92,6 +98,8 @@ jobs:
     needs: security-audit
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -121,6 +129,8 @@ jobs:
     needs: security-audit
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -162,6 +172,8 @@ jobs:
     needs: security-audit
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -183,6 +195,8 @@ jobs:
     needs: [blockchain-core, website, explorer-api, mining-pool]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Start Docker Compose
         run: |
@@ -241,6 +255,8 @@ jobs:
     needs: [publish]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
