@@ -334,7 +334,7 @@ export default function HomePage() {
   const difficulty = stats.difficulty ?? (blocks[0]?.difficulty ?? 0);
   const mempoolSize = stats.mempoolSize ?? stats.mempoolCount ?? 0;
   const totalSupply = stats.totalSupply ?? 50_000_000_000;
-  const circulatingSupply = stats.circulatingSupply ?? Math.floor(blockHeight * 50);
+  const circulatingSupply = stats.circulatingSupply ?? Math.floor(blockHeight * 50000);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--black)', color: 'var(--text)' }}>
