@@ -101,7 +101,7 @@ export class RpcClient {
   }
 
   async getNetworkHashrate(): Promise<number> {
-    return this.call('getnetworkhashrate');
+    return this.call('getnetworkhashps');
   }
 
   // Supply methods
