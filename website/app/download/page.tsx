@@ -49,6 +49,15 @@ const downloads: Download[] = [
     size: "~115 MB",
     source: "github",
   },
+  {
+    id: "macos",
+    title: "macOS Wallet",
+    icon: "🍎",
+    desc: "macOS 12+ (Intel & Apple Silicon) · tarcoind + tarcoin-cli + tarcoin-qt",
+    file: "tarcoin-macos.dmg",
+    size: "~45 MB",
+    source: "github",
+  },
 ];
 
 function DownloadButton({ d }: { d: Download }) {
