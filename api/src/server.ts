@@ -39,8 +39,8 @@ app.use(express.json({ limit: '1mb' }));
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
-  message: { error: 'Rate limit exceeded' },
+  max: 5000,
+  message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
