@@ -49,18 +49,21 @@ export class SupplyController {
       const cached = await this.cache.get(this.cache.networkStatsKey());
       if (cached) return res.json(cached);
 
-      const [info, difficulty, hashrate, mempool, network] = await Promise.all([
+      const [info, difficulty, hashrate, mempool, network, txoutset] = await Promise.all([
         this.rpc.getBlockchainInfo(),
         this.rpc.getDifficulty(),
         this.rpc.getNetworkHashrate(),
         this.rpc.getMempoolInfo(),
         this.rpc.getNetworkInfo(),
+        this.rpc.getTxOutSetInfo(),
       ]);
 
       const stats = {
         blockHeight: info.blocks,
         difficulty,
         hashrate,
+        totalSupply: 50000000000,
+        circulating: Math.max(0, Math.floor(txoutset.total_amount || 10000000000) - 10000000000),
         mempool: {
           size: mempool.size,
           bytes: mempool.bytes,
