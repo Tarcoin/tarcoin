@@ -35,9 +35,9 @@ jobs:
       - name: Package Linux Binaries
         run: |
           mkdir tarcoin-linux
-          cp blockchain_core/tarcoin-core/build/src/tarcoind tarcoin-linux/
-          cp blockchain_core/tarcoin-core/build/src/tarcoin-cli tarcoin-linux/
-          cp blockchain_core/tarcoin-core/build/src/qt/tarcoin-qt tarcoin-linux/
+          cp blockchain_core/tarcoin-core/build/bin/tarcoind tarcoin-linux/
+          cp blockchain_core/tarcoin-core/build/bin/tarcoin-cli tarcoin-linux/
+          cp blockchain_core/tarcoin-core/build/bin/tarcoin-qt tarcoin-linux/
           zip -r tarcoin-linux.zip tarcoin-linux/
 
       - name: Upload Linux Artifact
@@ -83,9 +83,9 @@ jobs:
       - name: Package Windows Binaries
         run: |
           mkdir tarcoin-windows
-          cp blockchain_core/tarcoin-core/build/src/tarcoind.exe tarcoin-windows/
-          cp blockchain_core/tarcoin-core/build/src/tarcoin-cli.exe tarcoin-windows/
-          cp blockchain_core/tarcoin-core/build/src/qt/tarcoin-qt.exe tarcoin-windows/
+          cp blockchain_core/tarcoin-core/build/bin/tarcoind.exe tarcoin-windows/
+          cp blockchain_core/tarcoin-core/build/bin/tarcoin-cli.exe tarcoin-windows/
+          cp blockchain_core/tarcoin-core/build/bin/tarcoin-qt.exe tarcoin-windows/
           zip -r tarcoin-windows.zip tarcoin-windows/
 
       - name: Upload Windows Artifact

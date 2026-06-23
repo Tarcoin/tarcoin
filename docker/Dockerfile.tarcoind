@@ -49,7 +49,7 @@ WORKDIR /src/tarcoin/tarcoin-core
 RUN touch contrib/filter-lcov.py || true && \
     cmake -B build -DBUILD_GUI=OFF -DBUILD_WALLET=OFF -DENABLE_IPC=OFF -DBUILD_TESTS=OFF && \
     cmake --build build -j$(nproc) && \
-    strip build/src/tarcoind build/src/tarcoin-cli build/src/tarcoin-tx
+    strip build/bin/tarcoind build/bin/tarcoin-cli build/bin/tarcoin-tx
 
 # Stage 2: Production image
 FROM ubuntu:22.04
@@ -74,9 +74,9 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd -r tarcoin && useradd -r -m -g tarcoin tarcoin
 
 # Copy binaries from builder
-COPY --from=builder /src/tarcoin/tarcoin-core/build/src/tarcoind /usr/local/bin/
-COPY --from=builder /src/tarcoin/tarcoin-core/build/src/tarcoin-cli /usr/local/bin/
-COPY --from=builder /src/tarcoin/tarcoin-core/build/src/tarcoin-tx /usr/local/bin/
+COPY --from=builder /src/tarcoin/tarcoin-core/build/bin/tarcoind /usr/local/bin/
+COPY --from=builder /src/tarcoin/tarcoin-core/build/bin/tarcoin-cli /usr/local/bin/
+COPY --from=builder /src/tarcoin/tarcoin-core/build/bin/tarcoin-tx /usr/local/bin/
 
 # Create data directory
 RUN mkdir -p /home/tarcoin/.tarcoin && \
