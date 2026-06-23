@@ -63,9 +63,9 @@ jobs:
       - name: Build tarcoind
         run: |
           cd blockchain_core/tarcoin-core
-          ./autogen.sh
-          ./configure --disable-wallet --disable-gui-tests --with-incompatible-bdb
-          make -j$(nproc)
+          touch contrib/filter-lcov.py
+          cmake -B build -DBUILD_GUI=OFF -DBUILD_WALLET=OFF -DENABLE_IPC=OFF
+          cmake --build build -j$(nproc)
 
       - name: Run unit tests
         run: |
