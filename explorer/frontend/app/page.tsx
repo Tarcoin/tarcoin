@@ -76,6 +76,7 @@ interface NetworkStats {
   mempoolCount?: number;
   totalSupply?: number;
   circulatingSupply?: number;
+  circulating?: number;
   connections?: number;
 }
 
