@@ -24,7 +24,7 @@ jobs:
           brew install qt
           brew link qt --force
           pip3 install ds_store mac_alias --break-system-packages
-          brew install miniupnpc zeromq
+          brew install miniupnpc zeromq qrencode
 
       - name: Configure CMake
         run: |
