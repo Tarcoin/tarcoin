@@ -40,14 +40,14 @@ const FILE_MAP: Record<string, {
     ],
     githubAsset: 'tarcoin-wallet-win64.zip',
   },
-  // macOS wallet (future release)
-  'tarcoin-wallet-macos.dmg': {
-    filename: 'tarcoin-wallet-macos.dmg',
-    contentType: 'application/octet-stream',
+  // macOS wallet
+  'tarcoin-macos-app.zip': {
+    filename: 'tarcoin-macos-app.zip',
+    contentType: 'application/zip',
     localPaths: [
-      'public/downloads/tarcoin-wallet-macos.dmg',
+      'public/downloads/tarcoin-macos-app.zip',
     ],
-    githubAsset: 'tarcoin-wallet-macos.dmg',
+    githubAsset: 'tarcoin-macos-app.zip',
   },
 };
 

@@ -54,7 +54,7 @@ const downloads: Download[] = [
     title: "macOS Wallet",
     icon: "🍎",
     desc: "macOS 12+ (Intel & Apple Silicon) · tarcoind + tarcoin-cli + tarcoin-qt",
-    file: "tarcoin-macos.dmg",
+    file: "tarcoin-macos-app.zip",
     size: "~45 MB",
     source: "github",
   },
