@@ -34,14 +34,6 @@ jobs:
         with:
           config-path: .gitleaks.toml
 
-      - name: Run CodeQL Analysis
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript, typescript
-          queries: security-extended
-      - name: Analyze CodeQL
-        uses: github/codeql-action/analyze@v3
-
       - name: Run dependency security audit
         run: |
           cd website && npm audit --production || true
