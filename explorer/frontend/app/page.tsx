@@ -334,7 +334,7 @@ export default function HomePage() {
   const difficulty = stats.difficulty ?? (blocks[0]?.difficulty ?? 0);
   const mempoolSize = stats.mempoolSize ?? stats.mempoolCount ?? 0;
   const totalSupply = stats.totalSupply ?? 50_000_000_000;
-  const circulatingSupply = stats.circulatingSupply ?? Math.floor(blockHeight * 50000);
+  const circulatingSupply = stats.circulating ?? 10_000_000_000;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--black)', color: 'var(--text)' }}>
@@ -483,8 +483,8 @@ export default function HomePage() {
           <StatCard label="Network Hashrate" value={formatHashrate(hashrate)} loading={loadingStats} />
           <StatCard label="Difficulty" value={difficulty ? difficulty.toFixed(4) : '—'} loading={loadingStats} />
           <StatCard label="Mempool TXs" value={formatNumber(mempoolSize)} loading={loadingStats} />
-          <StatCard label="Total Supply" value="50,000,000,000" loading={false} />
-          <StatCard label="Circulating" value={formatNumber(circulatingSupply)} loading={loadingStats} />
+          <StatCard label="Max Supply" value="50 Billion" loading={false} />
+          <StatCard label="Circulating Supply" value={circulatingSupply >= 1000000000 ? `${(circulatingSupply / 1000000000).toFixed(2)} Billion` : formatNumber(circulatingSupply)} loading={loadingStats} />
         </div>
 
         {/* ── live indicator ────────────────────────────────────────────── */}
