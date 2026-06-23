@@ -48,7 +48,7 @@ jobs:
   # ====== Blockchain Core Build & Test ======
   blockchain-core:
     name: Blockchain Core
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: security-audit
     steps:
       - uses: actions/checkout@v4

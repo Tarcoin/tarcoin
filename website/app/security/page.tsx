@@ -22,7 +22,7 @@ export default function SecurityPage() {
                 <span className="text-tarcoin-gold text-glow">Overview</span>
               </h1>
               <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-base">
-                TARCOIN inherits Bitcoin Core's battle-tested security model and adds additional protections specific to the network.
+                TARCOIN inherits Bitcoin Core&apos;s battle-tested security model and adds additional protections specific to the network.
               </p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
