@@ -31,7 +31,7 @@ jobs:
           cd blockchain_core/tarcoin-core
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
                 -DWITH_ZMQ=ON -DWITH_UPNP=ON \
-                -DBUILD_GUI=ON
+                -DBUILD_GUI=ON -DENABLE_IPC=OFF -DBUILD_TESTS=OFF
 
       - name: Compile and Package DMG
         run: |
