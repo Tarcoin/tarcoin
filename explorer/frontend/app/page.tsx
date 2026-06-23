@@ -485,7 +485,8 @@ export default function HomePage() {
           <StatCard label="Difficulty" value={difficulty ? difficulty.toFixed(4) : '—'} loading={loadingStats} />
           <StatCard label="Mempool TXs" value={formatNumber(mempoolSize)} loading={loadingStats} />
           <StatCard label="Max Supply" value="50 Billion" loading={false} />
-          <StatCard label="Circulating Supply" value={circulatingSupply >= 1000000000 ? `${(circulatingSupply / 1000000000).toFixed(2)} Billion` : formatNumber(circulatingSupply)} loading={loadingStats} />
+          <StatCard label="Reserved (Cold Storage)" value="10.00 Billion" loading={false} />
+          <StatCard label="Circulating Supply" value={circulatingSupply >= 1000000 ? `${(circulatingSupply / 1000000000).toFixed(6)} Billion` : formatNumber(circulatingSupply)} loading={loadingStats} />
         </div>
 
         {/* ── live indicator ────────────────────────────────────────────── */}

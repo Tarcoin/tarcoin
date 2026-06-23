@@ -20,7 +20,7 @@ export class SupplyController {
         totalSupply: 50000000000,
         ecosystemTreasuryAllocation: 10000000000,
         publicMiningSupply: 40000000000,
-        circulating: Math.floor(txoutset.total_amount || 10000000000),
+        circulating: Math.max(0, Math.floor(txoutset.total_amount || 10000000000) - 10000000000),
         blockHeight: info.blocks,
         lastUpdated: Date.now(),
       };
@@ -36,7 +36,7 @@ export class SupplyController {
     try {
       const txoutset = await this.rpc.getTxOutSetInfo();
       res.json({
-        circulating: Math.floor(txoutset.total_amount || 10000000000),
+        circulating: Math.max(0, Math.floor(txoutset.total_amount || 10000000000) - 10000000000),
         units: 'TAR',
       });
     } catch (error: any) {
