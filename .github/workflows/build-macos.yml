@@ -31,7 +31,9 @@ jobs:
           cd blockchain_core/tarcoin-core
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
                 -DWITH_ZMQ=ON -DWITH_UPNP=ON \
-                -DBUILD_GUI=ON -DENABLE_IPC=OFF -DBUILD_TESTS=OFF
+                -DBUILD_GUI=ON -DENABLE_IPC=OFF -DBUILD_TESTS=OFF 2> cmake_errors.txt || true
+          cat cmake_errors.txt
+          if [ -s cmake_errors.txt ] && grep -q "CMake Error" cmake_errors.txt; then exit 1; fi
 
       - name: Compile and Package DMG
         run: |
