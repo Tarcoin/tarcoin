@@ -62,14 +62,14 @@ jobs:
 
       - name: Build tarcoind
         run: |
-          cd blockchain_core
+          cd blockchain_core/tarcoin-core
           ./autogen.sh
           ./configure --disable-wallet --disable-gui-tests --with-incompatible-bdb
           make -j$(nproc)
 
       - name: Run unit tests
         run: |
-          cd blockchain_core
+          cd blockchain_core/tarcoin-core
           # make check -j$(nproc) - Disabled because Tarcoin parameters fail Bitcoin unit tests
 
       - name: Verify genesis block
