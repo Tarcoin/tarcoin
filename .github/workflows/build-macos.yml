@@ -41,14 +41,14 @@ jobs:
           cmake --build build -j$(sysctl -n hw.ncpu)
           cmake --build build --target deploy
 
-      - name: Upload DMG Artifact
+      - name: Upload macOS Zip Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tarcoin-macos
-          path: blockchain_core/tarcoin-core/build/tarcoin-*.dmg
+          path: blockchain_core/tarcoin-core/build/tarcoin-macos-app.zip
 
       - name: Upload to Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          files: blockchain_core/tarcoin-core/build/tarcoin-*.dmg
+          files: blockchain_core/tarcoin-core/build/tarcoin-macos-app.zip
