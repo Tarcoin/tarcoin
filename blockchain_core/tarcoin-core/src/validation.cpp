@@ -4080,9 +4080,9 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
     const int nHeight = pindexPrev->nHeight + 1;
 
     // Hardcode Tarcoin Block 1 premine
-    // if (chainman.GetParams().GetChainType() == ChainType::MAIN && nHeight == 1 && block.GetHash() != uint256::FromHex("0000d25586a2d89e23d1938e18a47c1ddfb3bc26c802a602fe99468c22cfaf92").value()) {
-    //     return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-block-1-checkpoint", "Block 1 must match the official 10B TAR genesis premine hash");
-    // }
+    if (chainman.GetParams().GetChainType() == ChainType::MAIN && nHeight == 1 && block.GetHash() != uint256::FromHex("00002a8effcc4422d6d3d6db933a9e1201d6b23d009817651136c156805e7d3c").value()) {
+        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-block-1-checkpoint", "Block 1 must match the official 10B TAR genesis premine hash");
+    }
     // Check proof of work
     const Consensus::Params& consensusParams = chainman.GetConsensus();
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
