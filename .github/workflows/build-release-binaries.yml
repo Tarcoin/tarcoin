@@ -1,0 +1,95 @@
+name: Build Release Binaries
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config cmake libevent-dev libboost-dev libsqlite3-dev qtbase5-dev qttools5-dev qttools5-dev-tools zip
+
+      - name: Configure CMake
+        run: |
+          cd blockchain_core/tarcoin-core
+          touch contrib/filter-lcov.py || true
+          cmake -B build -DBUILD_GUI=ON -DENABLE_IPC=OFF -DBUILD_TESTS=OFF
+
+      - name: Compile Linux Binaries
+        run: |
+          cd blockchain_core/tarcoin-core
+          cmake --build build -j$(nproc)
+
+      - name: Package Linux Binaries
+        run: |
+          mkdir tarcoin-linux
+          cp blockchain_core/tarcoin-core/build/src/tarcoind tarcoin-linux/
+          cp blockchain_core/tarcoin-core/build/src/tarcoin-cli tarcoin-linux/
+          cp blockchain_core/tarcoin-core/build/src/qt/tarcoin-qt tarcoin-linux/
+          zip -r tarcoin-linux.zip tarcoin-linux/
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarcoin-linux
+          path: tarcoin-linux.zip
+
+  build-windows:
+    name: Build Windows Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config cmake libevent-dev libboost-dev libsqlite3-dev
+          sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev python3 zip
+
+      - name: Cache Windows Dependencies
+        uses: actions/cache@v3
+        with:
+          path: blockchain_core/tarcoin-core/depends/built
+          key: ${{ runner.os }}-depends-x86_64-w64-mingw32-${{ hashFiles('blockchain_core/tarcoin-core/depends/packages/*.mk') }}
+
+      - name: Build Windows Dependencies
+        run: |
+          cd blockchain_core/tarcoin-core/depends
+          make HOST=x86_64-w64-mingw32 -j$(nproc)
+
+      - name: Configure CMake for Windows
+        run: |
+          cd blockchain_core/tarcoin-core
+          touch contrib/filter-lcov.py || true
+          cmake -B build --toolchain depends/x86_64-w64-mingw32/toolchain.cmake -DBUILD_GUI=ON -DENABLE_IPC=OFF -DBUILD_TESTS=OFF
+
+      - name: Compile Windows Binaries
+        run: |
+          cd blockchain_core/tarcoin-core
+          cmake --build build -j$(nproc)
+
+      - name: Package Windows Binaries
+        run: |
+          mkdir tarcoin-windows
+          cp blockchain_core/tarcoin-core/build/src/tarcoind.exe tarcoin-windows/
+          cp blockchain_core/tarcoin-core/build/src/tarcoin-cli.exe tarcoin-windows/
+          cp blockchain_core/tarcoin-core/build/src/qt/tarcoin-qt.exe tarcoin-windows/
+          zip -r tarcoin-windows.zip tarcoin-windows/
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarcoin-windows
+          path: tarcoin-windows.zip
