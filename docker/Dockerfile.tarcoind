@@ -47,6 +47,7 @@ WORKDIR /src/tarcoin/tarcoin-core
 
 # Build tarcoind (Bitcoin-compatible build)
 RUN touch contrib/filter-lcov.py || true && \
+    rm -rf build && \
     cmake -B build -DBUILD_GUI=OFF -DBUILD_WALLET=OFF -DENABLE_IPC=OFF -DBUILD_TESTS=OFF -DBUILD_TX=ON && \
     cmake --build build -j$(nproc) && \
     strip build/bin/tarcoind build/bin/tarcoin-cli build/bin/tarcoin-tx

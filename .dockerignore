@@ -1,0 +1,3 @@
+build/
+blockchain_core/tarcoin-core/build/
+blockchain_core/tarcoin-core/CMakeCache.txt
