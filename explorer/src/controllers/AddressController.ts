@@ -14,20 +14,21 @@ export class AddressController {
       const cached = await this.cache.get(this.cache.addressKey(address));
       if (cached) return res.json(cached);
 
-      const info = await this.rpc.getAddressInfo(address);
-      const txoutset = await this.rpc.getTxOutSetInfo();
+      const info = await this.rpc.validateAddress(address);
+      if (!info.isvalid) {
+        return res.status(404).json({ error: 'Address not found', message: 'Invalid address' });
+      }
       
       const result = {
         address,
-        balance: info.balance || 0,
-        totalReceived: info.totalReceived || 0,
-        totalSent: info.totalSent || 0,
-        unconfirmedBalance: info.unconfirmedBalance || 0,
-        txCount: info.txCount || 0,
-        scriptType: info.scriptType,
-        isWatchOnly: info.isWatchOnly,
+        balance: 0, // Need an indexer to get real balance
+        totalReceived: 0,
+        totalSent: 0,
+        unconfirmedBalance: 0,
+        txCount: 0,
+        scriptType: info.isscript ? 'script' : 'pubkey',
+        isWatchOnly: info.iswatchonly || false,
         isMine: info.ismine || false,
-        hdKeyPath: info.hdKeyPath,
       };
 
       await this.cache.set(this.cache.addressKey(address), result, 30);
