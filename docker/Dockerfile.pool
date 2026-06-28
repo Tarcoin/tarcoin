@@ -3,10 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY mining_pool/package.json mining_pool/package-lock.json* ./
+COPY package.json package-lock.json* ./
 RUN npm ci
 
-COPY mining_pool/ .
+COPY . .
 
 # Production image  
 FROM node:20-alpine AS runner

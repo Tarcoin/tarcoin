@@ -141,12 +141,12 @@ jobs:
 
       - name: Docker build explorer
         run: |
-          docker build -f docker/Dockerfile.explorer -t ${{ env.DOCKER_IMAGE_EXPLORER }}:${{ github.sha }} .
+          docker build -f docker/Dockerfile.explorer -t ${{ env.DOCKER_IMAGE_EXPLORER }}:${{ github.sha }} explorer/
           docker tag ${{ env.DOCKER_IMAGE_EXPLORER }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_EXPLORER }}:latest
 
       - name: Docker build API
         run: |
-          docker build -f docker/Dockerfile.api -t ${{ env.DOCKER_IMAGE_API }}:${{ github.sha }} .
+          docker build -f docker/Dockerfile.api -t ${{ env.DOCKER_IMAGE_API }}:${{ github.sha }} api/
           docker tag ${{ env.DOCKER_IMAGE_API }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_API }}:latest
 
   # ====== Mining Pool Build ======
@@ -167,7 +167,7 @@ jobs:
 
       - name: Docker build pool
         run: |
-          docker build -f docker/Dockerfile.pool -t ${{ env.DOCKER_IMAGE_POOL }}:${{ github.sha }} .
+          docker build -f docker/Dockerfile.pool -t ${{ env.DOCKER_IMAGE_POOL }}:${{ github.sha }} mining_pool/
           docker tag ${{ env.DOCKER_IMAGE_POOL }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_POOL }}:latest
 
   # ====== Integration Tests ======
