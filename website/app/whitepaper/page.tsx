@@ -54,7 +54,7 @@ function WhitepaperHero() {
         >
           <span className="w-2 h-2 rounded-full bg-tarcoin-gold animate-pulse" />
           <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase">
-            Technical Whitepaper v1.0.0 · Mainnet Live
+            Technical Whitepaper v1.0.0 · Mainnet Live · Mining Active ⛏️
           </span>
         </motion.div>
 
@@ -93,8 +93,8 @@ function WhitepaperHero() {
         >
           {[
             { label: "Version", value: "1.0.0" },
-            { label: "Status", value: "Live ✓" },
-            { label: "Date", value: "May 2026" },
+            { label: "Status", value: "Mining ✓" },
+            { label: "Date", value: "June 2026" },
             { label: "License", value: "MIT" },
             { label: "Genesis", value: "000074c6..." },
           ].map((s) => (
@@ -647,7 +647,146 @@ function InfrastructureSection() {
   );
 }
 
-// ─── Section 6: PDF Preview / Download ──────────────────────────────────────
+// ─── Section 6: Launch Checklist ─────────────────────────────────────────────
+
+const preLaunchItems = [
+  "Genesis block mined and verified (000074c6...f44bd7e0)",
+  "TARCOIN Core v31.x compiled and running",
+  "Mainnet node boots and passes PoW validation",
+  "powLimit aligned with genesis nBits (0x1f00ffff)",
+  "Genesis hash and merkle root assert() verified on startup",
+  "CLIENT_VERSION_IS_RELEASE = true set",
+  "Seed nodes deployed (DNS seeds live)",
+  "Explorer backend verified",
+  "Wallet binaries built and signed",
+  "Mining pool configured and tested",
+  "Infrastructure stress-tested",
+  "Monitoring stack operational",
+  "DNS records configured",
+  "SSL certificates issued",
+  "Cloudflare configured",
+  "CI/CD pipeline validated",
+  "Deterministic builds confirmed",
+  "Source code publicly released on GitHub",
+];
+
+const launchItems = [
+  "Seed nodes online",
+  "Explorer online",
+  "Mining pool activated",
+  "Wallet downloads available",
+  "Website published",
+  "API operational",
+  "Social media announcements",
+  "Mining campaigns began",
+];
+
+const postLaunchItems = [
+  "Network monitoring active",
+  "Community support channels live",
+  "Bug bounty program launched",
+  "Ongoing security audits in progress",
+];
+
+function ChecklistPhase({ title, items, count }: { title: string; items: string[]; count: string }) {
+  return (
+    <div className="glass rounded-2xl p-6 border border-tarcoin-gold/10">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-base font-orbitron font-bold text-white">{title}</h3>
+        <span className="flex items-center gap-1.5 text-xs font-mono text-tarcoin-neon bg-tarcoin-neon/10 border border-tarcoin-neon/20 rounded-full px-3 py-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-tarcoin-neon animate-pulse" />
+          {count} Complete
+        </span>
+      </div>
+      <ul className="space-y-2.5">
+        {items.map((item) => (
+          <li key={item} className="flex items-start gap-3">
+            <span className="mt-0.5 w-5 h-5 min-w-[20px] rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-[10px] font-black text-black shadow-[0_0_8px_rgba(0,255,136,0.4)]">
+              ✓
+            </span>
+            <span className="text-sm text-gray-300 font-space leading-relaxed">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function LaunchChecklistSection() {
+  return (
+    <section id="checklist" className="py-24 relative bg-tarcoin-black-2/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.3em] uppercase inline-block mb-3">
+            Status
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-orbitron font-bold text-white mb-4">
+            Launch <span className="text-tarcoin-gold">Checklist</span>
+          </h2>
+          <p className="text-gray-400 max-w-2xl mx-auto font-space text-base sm:text-lg">
+            All pre-launch, launch, and post-launch milestones have been completed.
+            TARCOIN is live on GitHub, running on a DigitalOcean Droplet, and mining is active.
+          </p>
+
+          {/* Overall progress badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="inline-flex items-center gap-3 mt-6 px-6 py-3 rounded-full border border-tarcoin-neon/30 bg-tarcoin-neon/5"
+          >
+            <span className="text-2xl">🚀</span>
+            <span className="text-sm font-orbitron text-tarcoin-neon tracking-wider">30 / 30 MILESTONES COMPLETE</span>
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid lg:grid-cols-3 gap-6"
+        >
+          <motion.div variants={itemVariants}>
+            <ChecklistPhase title="Pre-Launch" items={preLaunchItems} count="18 / 18" />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <ChecklistPhase title="Launch" items={launchItems} count="8 / 8" />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <ChecklistPhase title="Post-Launch" items={postLaunchItems} count="4 / 4" />
+          </motion.div>
+        </motion.div>
+
+        {/* Transparency note */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-10 glass rounded-2xl p-6 border border-tarcoin-gold/10 text-center"
+        >
+          <p className="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase mb-2">
+            Transparency Statement
+          </p>
+          <p className="text-sm text-gray-400 font-space max-w-3xl mx-auto">
+            All critical network parameters, supply allocations, genesis data, and consensus rules are publicly
+            documented and independently verifiable from the TARCOIN source code on GitHub.
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Section 7: PDF Preview / Download ──────────────────────────────────────
 
 function PDFPreviewSection() {
   return (
@@ -667,8 +806,8 @@ function PDFPreviewSection() {
             Full <span className="text-tarcoin-gold">Whitepaper</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto font-space text-base sm:text-lg">
-            Download the complete TARCOIN Technical Whitepaper (PDF) — 12 sections covering architecture,
-            consensus, security, infrastructure, and launch roadmap.
+            Download the complete TARCOIN Technical Whitepaper (PDF) — 13 sections covering architecture,
+            consensus, security, infrastructure, and fully completed launch checklist.
           </p>
         </motion.div>
 
@@ -691,10 +830,10 @@ function PDFPreviewSection() {
               TARCOIN_WHITEPAPER_v1.0.0.pdf
             </h3>
             <p className="text-sm text-gray-400 font-space mb-2">
-              Version 1.0.0 · May 2026 · 12 Sections
+              Version 1.0.0 · June 2026 · 13 Sections · ~2.2 MB
             </p>
             <p className="text-xs text-gray-500 font-mono mb-8">
-              SHA256d · UTXO · secp256k1 · SegWit · 50B Supply · ASIC Mining
+              SHA256d · UTXO · secp256k1 · SegWit · 50B Supply · ASIC Mining · ✅ All 30 Milestones Complete
             </p>
 
             <div className="flex flex-wrap justify-center gap-4">
@@ -840,6 +979,7 @@ export default function WhitepaperPage() {
       <NetworkParameters />
       <SecuritySection />
       <InfrastructureSection />
+      <LaunchChecklistSection />
       <PDFPreviewSection />
       <FinalCTA />
 
@@ -847,7 +987,7 @@ export default function WhitepaperPage() {
       <footer className="border-t border-tarcoin-gold/10 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs text-gray-500 font-space">
-            TARCOIN — Technical Whitepaper v1.0.0 · May 2026 · Released under the MIT License
+            TARCOIN — Technical Whitepaper v1.0.0 · June 2026 · Released under the MIT License
           </p>
           <p className="text-[10px] text-gray-600 font-space mt-1">
             This whitepaper is for informational purposes only and does not constitute financial advice.

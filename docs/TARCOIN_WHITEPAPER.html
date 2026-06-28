@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARCOIN Technical Whitepaper v1.0.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #FFD700;
+      --gold-light: #FFE44D;
+      --gold-dark: #B8860B;
+      --gold-glow: rgba(255, 215, 0, 0.15);
+      --bg-deep: #020408;
+      --bg-dark: #050C14;
+      --bg-card: #080F1A;
+      --bg-card2: #0A1220;
+      --text-primary: #F0F4FF;
+      --text-secondary: #8A9BC0;
+      --text-muted: #4A5A78;
+      --accent-cyan: #00D4FF;
+      --accent-green: #00FF88;
+      --border: rgba(255, 215, 0, 0.18);
+      --border-subtle: rgba(255, 215, 0, 0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      line-height: 1.75;
+      font-size: 10pt;
+    }
+
+    /* ── COVER PAGE ─────────────────────────────────── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(255,215,0,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%,  rgba(0,212,255,0.06) 0%, transparent 60%),
+        linear-gradient(170deg, #020408 0%, #030810 40%, #020408 100%);
+      page-break-after: always;
+      padding: 60px 40px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg,   transparent, transparent 39px, rgba(255,215,0,0.03) 40px),
+        repeating-linear-gradient(90deg,  transparent, transparent 39px, rgba(255,215,0,0.03) 40px);
+      pointer-events: none;
+    }
+
+    .cover-logo {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 0 0 3px rgba(255,215,0,0.3),
+        0 0 40px rgba(255,215,0,0.5),
+        0 0 90px rgba(255,215,0,0.2);
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .cover-logo img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid rgba(0,255,136,0.35);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 9pt;
+      color: var(--accent-green);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cover-badge::before {
+      content: '●';
+      font-size: 8px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .cover h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 52pt;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      line-height: 1.0;
+      background: linear-gradient(135deg, #FFE44D 0%, #FFD700 40%, #FFA500 70%, #FF8C00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 30px rgba(255,215,0,0.5));
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cover-ticker {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18pt;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      letter-spacing: 0.35em;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cover-subtitle {
+      font-size: 11pt;
+      color: var(--text-secondary);
+      max-width: 580px;
+      line-height: 1.6;
+      font-weight: 300;
+      margin-bottom: 48px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cover-meta {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      margin-bottom: 48px;
+    }
+
+    .cover-meta-item {
+      text-align: center;
+    }
+
+    .cover-meta-label {
+      font-size: 7.5pt;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 5px;
+    }
+
+    .cover-meta-value {
+      font-size: 10pt;
+      color: var(--gold);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .cover-divider {
+      width: 320px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 40px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cover-stats {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cover-stat {
+      background: rgba(255,215,0,0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 24px;
+      text-align: center;
+      min-width: 130px;
+    }
+
+    .cover-stat-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14pt;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1.1;
+    }
+
+    .cover-stat-label {
+      font-size: 7.5pt;
+      color: var(--text-muted);
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ── PAGE LAYOUT ──────────────────────────────── */
+    .page-content {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 50px 48px;
+    }
+
+    /* ── SECTION BREAKS ───────────────────────────── */
+    .section-break { page-break-before: always; }
+
+    /* ── SECTION HEADERS ──────────────────────────── */
+    .section-header {
+      margin: 0 -48px 36px;
+      padding: 24px 48px;
+      background: linear-gradient(90deg, rgba(255,215,0,0.07) 0%, transparent 80%);
+      border-left: 4px solid var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      page-break-after: avoid;
+    }
+
+    .section-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9pt;
+      font-weight: 700;
+      color: var(--gold-dark);
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16pt;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── SUB HEADERS ──────────────────────────────── */
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin: 28px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      letter-spacing: 0.02em;
+      page-break-after: avoid;
+    }
+
+    h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 10pt;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      margin: 20px 0 8px;
+      letter-spacing: 0.03em;
+      page-break-after: avoid;
+    }
+
+    /* ── PARAGRAPHS ───────────────────────────────── */
+    p {
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ── TABLES ───────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      page-break-inside: avoid;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+    }
+
+    thead {
+      background: linear-gradient(90deg, rgba(255,215,0,0.12), rgba(255,215,0,0.05));
+    }
+
+    thead th {
+      padding: 10px 16px;
+      text-align: left;
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 7.5pt;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255,215,0,0.02);
+    }
+
+    tbody td {
+      padding: 9px 16px;
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    tbody td:first-child {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ── CODE BLOCKS ──────────────────────────────── */
+    pre {
+      background: #030912;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold-dark);
+      border-radius: 8px;
+      padding: 18px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      color: var(--accent-green);
+      overflow-x: auto;
+      margin: 12px 0 20px;
+      line-height: 1.7;
+      page-break-inside: avoid;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      background: rgba(255,215,0,0.07);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: var(--gold-light);
+    }
+
+    /* ── CARDS ────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 26px;
+      margin: 16px 0;
+      page-break-inside: avoid;
+    }
+
+    .card-gold {
+      border-color: rgba(255,215,0,0.35);
+      background: linear-gradient(135deg, rgba(255,215,0,0.05), transparent);
+    }
+
+    /* ── LISTS ────────────────────────────────────── */
+    ul, ol {
+      padding-left: 22px;
+      margin-bottom: 14px;
+    }
+
+    li {
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+      font-size: 9.5pt;
+    }
+
+    li::marker { color: var(--gold-dark); }
+
+    /* ── CHECKLIST ────────────────────────────────── */
+    .checklist { list-style: none; padding: 0; }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      font-size: 9pt;
+      transition: background 0.15s;
+    }
+
+    .checklist li.done {
+      background: rgba(0,255,136,0.04);
+    }
+
+    .check-icon {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00C853, #00FF88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #020408;
+      font-weight: 900;
+      margin-top: 1px;
+      box-shadow: 0 0 8px rgba(0,255,136,0.4);
+    }
+
+    .check-text {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ── CHECKLIST PHASE HEADER ───────────────────── */
+    .phase-header {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9pt;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid var(--border);
+      margin: 20px 0 8px;
+    }
+
+    .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      float: right;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid rgba(0,255,136,0.3);
+      border-radius: 12px;
+      padding: 2px 12px;
+      font-size: 7.5pt;
+      color: var(--accent-green);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── HIGHLIGHT BOX ────────────────────────────── */
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(255,215,0,0.07), rgba(0,212,255,0.04));
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      position: relative;
+      page-break-inside: avoid;
+    }
+
+    .highlight-box::before {
+      content: '⚡';
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: var(--bg-deep);
+      padding: 0 8px;
+      font-size: 14px;
+    }
+
+    /* ── ABSTRACT ─────────────────────────────────── */
+    .abstract {
+      background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(0,212,255,0.03));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin: 0 0 32px;
+      position: relative;
+      page-break-inside: avoid;
+    }
+
+    .abstract-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 7.5pt;
+      color: var(--gold-dark);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .abstract p {
+      font-size: 10pt;
+      line-height: 1.8;
+      color: var(--text-primary);
+      font-weight: 300;
+    }
+
+    /* ── SUPPLY SCHEDULE ──────────────────────────── */
+    .supply-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .supply-item {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      page-break-inside: avoid;
+    }
+
+    .supply-item-label {
+      font-size: 7.5pt;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 5px;
+    }
+
+    .supply-item-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* ── FOOTER ───────────────────────────────────── */
+    .footer {
+      margin-top: 60px;
+      padding: 28px 48px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,215,0,0.02);
+    }
+
+    .footer-brand {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10pt;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .footer-note {
+      font-size: 7.5pt;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── TRANSPARENCY CALLOUT ─────────────────────── */
+    .callout {
+      background: rgba(0,212,255,0.05);
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 20px;
+      margin: 20px 0;
+      font-size: 9pt;
+      color: var(--text-secondary);
+      page-break-inside: avoid;
+    }
+
+    .callout strong { color: var(--accent-cyan); }
+
+    /* ── GENESIS BLOCK BOX ────────────────────────── */
+    .genesis-box {
+      background: linear-gradient(135deg, #030912, #040C18);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 12px;
+      padding: 22px 26px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      page-break-inside: avoid;
+    }
+
+    .genesis-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,215,0,0.05);
+      gap: 16px;
+    }
+
+    .genesis-row:last-child { border-bottom: none; }
+
+    .genesis-key { color: var(--gold-dark); font-weight: 500; min-width: 140px; }
+    .genesis-val { color: var(--accent-green); word-break: break-all; text-align: right; }
+
+    /* ── PRINT RULES ──────────────────────────────── */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      body { background: var(--bg-deep); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cover { min-height: 297mm; }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    /* ── SECTION DIVIDER ──────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 32px 0;
+      opacity: 0.3;
+    }
+
+    /* ── TOC ──────────────────────────────────────── */
+    .toc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .toc-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(255,215,0,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+    }
+
+    .toc-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--gold-dark);
+      min-width: 24px;
+    }
+
+    .toc-label {
+      font-size: 9pt;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <div class="cover-logo">
+    <img src="file:///d:/TARCOIN/website/public/logo.png" alt="TARCOIN Logo" />
+  </div>
+  <div class="cover-badge">✅ LIVE — MAINNET RUNNING &amp; MINING ACTIVE</div>
+
+  <h1>TARCOIN</h1>
+  <div class="cover-ticker">[ TAR ]</div>
+
+  <p class="cover-subtitle">
+    A UTXO-Based Decentralized Cryptocurrency Ecosystem<br/>
+    Built on Battle-Tested Proof-of-Work Architecture
+  </p>
+
+  <div class="cover-divider"></div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Version</div>
+      <div class="cover-meta-value">1.0.0</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Published</div>
+      <div class="cover-meta-value">June 2026</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">Algorithm</div>
+      <div class="cover-meta-value">SHA256d PoW</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="cover-meta-label">License</div>
+      <div class="cover-meta-value">MIT</div>
+    </div>
+  </div>
+
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <div class="cover-stat-num">50B</div>
+      <div class="cover-stat-label">Total Supply (TAR)</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">50,000</div>
+      <div class="cover-stat-label">Block Reward (TAR)</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">10 min</div>
+      <div class="cover-stat-label">Block Time</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">400K</div>
+      <div class="cover-stat-label">Halving Interval</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">P2P:19333</div>
+      <div class="cover-stat-label">Mainnet Port</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ TABLE OF CONTENTS ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-title">Table of Contents</div>
+  </div>
+
+  <div class="toc-grid">
+    <div class="toc-item"><div class="toc-num">00</div><div class="toc-label">Abstract</div></div>
+    <div class="toc-item"><div class="toc-num">01</div><div class="toc-label">Introduction</div></div>
+    <div class="toc-item"><div class="toc-num">02</div><div class="toc-label">Technical Architecture</div></div>
+    <div class="toc-item"><div class="toc-num">03</div><div class="toc-label">Network Architecture</div></div>
+    <div class="toc-item"><div class="toc-num">04</div><div class="toc-label">Consensus Rules</div></div>
+    <div class="toc-item"><div class="toc-num">05</div><div class="toc-label">Ecosystem Treasury Security</div></div>
+    <div class="toc-item"><div class="toc-num">06</div><div class="toc-label">Security Model</div></div>
+    <div class="toc-item"><div class="toc-num">07</div><div class="toc-label">Infrastructure Architecture</div></div>
+    <div class="toc-item"><div class="toc-num">08</div><div class="toc-label">Deployment Architecture</div></div>
+    <div class="toc-item"><div class="toc-num">09</div><div class="toc-label">Testing &amp; Audit</div></div>
+    <div class="toc-item"><div class="toc-num">10</div><div class="toc-label">✅ Launch Checklist</div></div>
+    <div class="toc-item"><div class="toc-num">11</div><div class="toc-label">Governance</div></div>
+    <div class="toc-item"><div class="toc-num">12</div><div class="toc-label">Conclusion &amp; References</div></div>
+  </div>
+
+  <!-- ── ABSTRACT ── -->
+  <div class="divider"></div>
+  <div class="abstract">
+    <div class="abstract-label">Abstract</div>
+    <p>
+      TARCOIN (TAR) is a fully decentralized, UTXO-based cryptocurrency built on a battle-tested Proof-of-Work
+      blockchain foundation derived from Bitcoin Core. It inherits the complete security model — SHA256d Proof-of-Work,
+      UTXO transaction model, secp256k1 elliptic curve cryptography, ECDSA signatures, Bitcoin Script, Merkle trees,
+      difficulty retargeting, SegWit, and longest-chain consensus — while introducing a distinct identity, custom
+      supply parameters, and a complete web/mobile ecosystem.
+    </p>
+    <p style="margin-bottom:0;">
+      Unlike experimental blockchain projects that modify consensus rules or introduce centralized components,
+      TARCOIN remains faithful to the proven principles of decentralized consensus, ensuring maximum security,
+      ASIC miner compatibility, and long-term stability.
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 1 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 01</div>
+    <div class="section-title">Introduction</div>
+  </div>
+
+  <h3>1.1 Philosophy</h3>
+  <p>
+    TARCOIN follows the original Bitcoin philosophy: a peer-to-peer electronic cash system that is decentralized,
+    permissionless, and immutable. Every design decision prioritizes <strong>security over convenience</strong>,
+    <strong>decentralization over speed</strong>, and <strong>immutability over flexibility</strong>.
+  </p>
+
+  <h3>1.2 Design Goals</h3>
+  <div class="card card-gold">
+    <ol>
+      <li><strong>Battle-Tested Security</strong> — Preserve all Bitcoin consensus rules and cryptographic primitives</li>
+      <li><strong>ASIC Mining Compatibility</strong> — SHA256d algorithm supports existing Bitcoin mining hardware</li>
+      <li><strong>Immutable Supply</strong> — Fixed 50 billion TAR supply, enforced by consensus</li>
+      <li><strong>Decentralized Operation</strong> — No admin controls, no backdoors, no central authority</li>
+      <li><strong>Privacy-Preserving Development</strong> — Secure, anonymous development and deployment</li>
+      <li><strong>Production Infrastructure</strong> — Explorer, API, mining pool, wallets, monitoring</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 2 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 02</div>
+    <div class="section-title">Technical Architecture</div>
+  </div>
+
+  <h3>2.1 Blockchain Foundation</h3>
+  <p>TARCOIN is derived from Bitcoin Core v31.x. Only the following components are modified:</p>
+  <ul>
+    <li><strong>Supply constants</strong> (<code>amount.h</code>)</li>
+    <li><strong>Network parameters</strong> (<code>chainparams.cpp</code> — magic bytes, ports, DNS seeds, checkpoints)</li>
+    <li><strong>Address prefixes</strong> (bech32: <code>tar1</code>, base58: <code>T</code>)</li>
+    <li><strong>Branding</strong> (coin name, ticker, UI identity)</li>
+    <li><strong>Genesis block</strong> (unique hash, treasury allocation)</li>
+  </ul>
+  <p>Everything else — validation logic, consensus engine, networking, mempool, wallet encryption, RPC interface — remains <strong>identical to upstream Bitcoin Core</strong>, ensuring full compatibility with the Bitcoin security model.</p>
+
+  <h3>2.2 Cryptographic Primitives</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Standard</th></tr></thead>
+      <tbody>
+        <tr><td>Hashing Algorithm</td><td>SHA256d (double SHA-256)</td></tr>
+        <tr><td>Elliptic Curve</td><td>secp256k1</td></tr>
+        <tr><td>Signature Algorithm</td><td>ECDSA</td></tr>
+        <tr><td>Address Format</td><td>Bech32 (SegWit) and Base58 (Legacy)</td></tr>
+        <tr><td>Merkle Trees</td><td>Binary Merkle (Bitcoin standard)</td></tr>
+        <tr><td>Script Language</td><td>Bitcoin Script</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2.3 Supply Schedule</h3>
+  <div class="supply-grid">
+    <div class="supply-item">
+      <div class="supply-item-label">Total Supply</div>
+      <div class="supply-item-value">50,000,000,000 TAR</div>
+    </div>
+    <div class="supply-item">
+      <div class="supply-item-label">Ecosystem Treasury (20%)</div>
+      <div class="supply-item-value">10,000,000,000 TAR</div>
+    </div>
+    <div class="supply-item">
+      <div class="supply-item-label">Public Mining Supply (80%)</div>
+      <div class="supply-item-value">40,000,000,000 TAR</div>
+    </div>
+    <div class="supply-item">
+      <div class="supply-item-label">Block Reward (Era 1)</div>
+      <div class="supply-item-value">50,000 TAR</div>
+    </div>
+  </div>
+
+  <h4>Emission Schedule</h4>
+  <pre>Era 1:  Block       0 – 400,000  │  50,000 TAR/block  │  ~7.6 yrs  │  20,000,000,000 TAR
+Era 2:  Block 400,001 – 800,000  │  25,000 TAR/block  │  ~7.6 yrs  │  10,000,000,000 TAR
+Era 3:  Block 800,001 – 1,200,000│  12,500 TAR/block  │  ~7.6 yrs  │   5,000,000,000 TAR
+Era 4:  Block 1,200,001–1,600,000│   6,250 TAR/block  │  ~7.6 yrs  │   2,500,000,000 TAR
+...emission continues halving every 400,000 blocks until max supply is reached</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 3 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 03</div>
+    <div class="section-title">Network Architecture</div>
+  </div>
+
+  <h3>3.1 Network Parameters</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Mainnet</th><th>Testnet</th><th>Regtest</th></tr></thead>
+      <tbody>
+        <tr><td>P2P Port</td><td>19333</td><td>18333</td><td>18444</td></tr>
+        <tr><td>RPC Port</td><td>19332</td><td>18332</td><td>18443</td></tr>
+        <tr><td>Magic Bytes</td><td>0xfabfb5da</td><td>0x0b110907</td><td>0xfabfb5da</td></tr>
+        <tr><td>Address Prefix</td><td>tar1 / T</td><td>tar1 / T</td><td>tar1 / T</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>3.2 Mainnet Parameters</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Coin Name</td><td>TARCOIN</td></tr>
+        <tr><td>Symbol</td><td>TAR</td></tr>
+        <tr><td>Consensus</td><td>SHA256d Proof-of-Work</td></tr>
+        <tr><td>Block Time</td><td>10 minutes (Bitcoin-standard)</td></tr>
+        <tr><td>Initial Block Reward</td><td>50,000 TAR</td></tr>
+        <tr><td>Halving Interval</td><td>400,000 blocks</td></tr>
+        <tr><td>Maximum Supply</td><td>50,000,000,000 TAR</td></tr>
+        <tr><td>Mineable Supply</td><td>40,000,000,000 TAR (80%)</td></tr>
+        <tr><td>Ecosystem Treasury</td><td>10,000,000,000 TAR (20%)</td></tr>
+        <tr><td>P2P Port</td><td>19333</td></tr>
+        <tr><td>RPC Port</td><td>19332</td></tr>
+        <tr><td>Bech32 Address Prefix</td><td>tar1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>3.3 DNS Seed Nodes</h3>
+  <p>Seed nodes are deployed across multiple cloud providers (DigitalOcean, AWS, Hetzner, Vultr) to ensure network resilience. Each seed node runs a full archive node.</p>
+
+  <h3>3.4 Peer-to-Peer Protocol</h3>
+  <p>TARCOIN uses the standard Bitcoin-compatible P2P protocol:</p>
+  <div class="card">
+    <ul style="list-style:none;padding:0;">
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>Version/VerAck</code> — initial handshake</li>
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>Inv/GetData</code> — inventory propagation</li>
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>Headers/GetHeaders</code> — block header sync</li>
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>Block/Tx</code> — data propagation</li>
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>Addr</code> — peer discovery</li>
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>Ping/Pong</code> — keepalive</li>
+      <li style="padding:4px 0;color:var(--text-secondary);"><code>FeeFilter</code> — fee relay</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 4 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 04</div>
+    <div class="section-title">Consensus Rules</div>
+  </div>
+
+  <h3>4.1 Proof-of-Work</h3>
+  <p>SHA256d Proof-of-Work with difficulty retargeting every 2016 blocks (approximately 2 weeks). Difficulty adjusts based on the time taken to mine the previous 2016 blocks, maintaining a ~10-minute average block time.</p>
+
+  <h3>4.2 Block Validation</h3>
+  <p>Block validation follows the Bitcoin Core consensus standard:</p>
+  <ul>
+    <li>Verify block header hash meets difficulty target</li>
+    <li>Verify Merkle root matches transactions</li>
+    <li>Verify all transaction inputs reference valid UTXOs</li>
+    <li>Verify no double-spends within the block</li>
+    <li>Verify block size ≤ 1MB (base) / 4MB (SegWit)</li>
+    <li>Verify signature operations limits</li>
+    <li>Verify coinbase maturity</li>
+  </ul>
+
+  <h3>4.3 Genesis Block</h3>
+  <p>The TARCOIN genesis block was successfully mined and verified on mainnet.</p>
+  <div class="genesis-box">
+    <div class="genesis-row"><div class="genesis-key">Block Hash</div><div class="genesis-val">000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0</div></div>
+    <div class="genesis-row"><div class="genesis-key">Merkle Root</div><div class="genesis-val">1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749</div></div>
+    <div class="genesis-row"><div class="genesis-key">Timestamp</div><div class="genesis-val">1748304000 (2025-05-27 00:00:00 UTC)</div></div>
+    <div class="genesis-row"><div class="genesis-key">nBits</div><div class="genesis-val">0x1f00ffff</div></div>
+    <div class="genesis-row"><div class="genesis-key">Nonce</div><div class="genesis-val">15878</div></div>
+    <div class="genesis-row"><div class="genesis-key">Block Reward</div><div class="genesis-val">50,000 TAR</div></div>
+    <div class="genesis-row"><div class="genesis-key">PoW Target</div><div class="genesis-val">0000ffff00000000000000000000000000000000000000000000000000000000</div></div>
+    <div class="genesis-row"><div class="genesis-key">powLimit</div><div class="genesis-val">0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</div></div>
+    <div class="genesis-row"><div class="genesis-key">Height</div><div class="genesis-val">0</div></div>
+  </div>
+  <p style="margin-top:12px;font-size:8.5pt;">The genesis block is <strong>hardcoded</strong> into <code>chainparams.cpp</code> and verified by <code>assert()</code> on every node startup.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 5 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 05</div>
+    <div class="section-title">Ecosystem Treasury Security</div>
+  </div>
+
+  <h3>5.1 Offline Generation</h3>
+  <p>The ecosystem treasury wallet is created entirely offline using an <strong>air-gapped machine</strong> that has never been connected to the internet.</p>
+  <div class="card">
+    <ol>
+      <li>Generate wallet on air-gapped machine</li>
+      <li>Record public address only (publicly verifiable)</li>
+      <li>Create multiple encrypted backups (USB, paper, steel)</li>
+      <li>Transfer public address to development environment</li>
+      <li>Hardcode address into <code>chainparams.cpp</code></li>
+      <li>Destroy intermediate systems</li>
+    </ol>
+  </div>
+
+  <h3>5.2 Private Key Security</h3>
+  <div class="highlight-box">
+    <ul style="list-style:none;padding:0;">
+      <li style="padding:5px 0;color:var(--text-secondary);">🚫 <strong>MUST NEVER</strong> touch any internet-connected system</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🚫 <strong>MUST NEVER</strong> be stored in repositories or cloud systems</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🚫 <strong>MUST NEVER</strong> be logged or screenshotted</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">✅ <strong>MUST</strong> have geographically separated backups</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">✅ <strong>MUST</strong> follow industry-standard cold storage best practices</li>
+    </ul>
+  </div>
+
+  <h3>5.3 Transparency &amp; Immutability</h3>
+  <ul>
+    <li>The ecosystem treasury allocation is permanent and immutable</li>
+    <li>No mechanism exists to modify the supply or allocation</li>
+    <li>All treasury transactions are publicly recorded on the blockchain</li>
+    <li>No individual or entity has unilateral control over treasury funds</li>
+    <li>The blockchain operates independently of any developer or entity</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 6 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 06</div>
+    <div class="section-title">Security Model</div>
+  </div>
+
+  <h3>6.1 Attack Mitigation</h3>
+  <h4>51% Attack Protection (Early Network)</h4>
+  <ul>
+    <li>Encourage distributed mining participation</li>
+    <li>Deploy multiple mining pools</li>
+    <li>Public mining awareness campaign</li>
+    <li>Optional temporary checkpoints if required (for initial security only)</li>
+    <li>Rapid hashrate growth through ASIC compatibility</li>
+  </ul>
+
+  <h4>Reorg Protection</h4>
+  <ul>
+    <li>Bitcoin-standard reorganization handling</li>
+    <li>100-block maturity for coinbase outputs</li>
+    <li>Merkle tree verification</li>
+    <li>Checkpoints at regular intervals</li>
+  </ul>
+
+  <h4>Double-Spend Protection</h4>
+  <ul>
+    <li>Full node validation</li>
+    <li>Mempool orphan detection</li>
+    <li>Replace-by-fee (RBF) support</li>
+    <li>UTXO set verification</li>
+  </ul>
+
+  <h3>6.2 Wallet Security</h3>
+  <ul>
+    <li>AES-256 encrypted wallet.dat files</li>
+    <li>BIP39/BIP32 mnemonic seed phrases</li>
+    <li>Passphrase protection</li>
+    <li>Offline transaction signing (cold storage)</li>
+    <li>Hardware wallet compatibility roadmap</li>
+  </ul>
+
+  <h3>6.3 Network Security</h3>
+  <ul>
+    <li>Full node validation only (no SPV reliance)</li>
+    <li>Tor/I2P support for privacy</li>
+    <li>Encrypted P2P connections (BIP324)</li>
+    <li>DoS protection (limit counters, penalty system)</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 7 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 07</div>
+    <div class="section-title">Infrastructure Architecture</div>
+  </div>
+
+  <h3>7.1 Explorer</h3>
+  <p>The blockchain explorer provides real-time block, transaction, and address lookup:</p>
+  <div class="card">
+    <ul style="list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <li style="color:var(--text-secondary);">📦 Real-time block lookup</li>
+      <li style="color:var(--text-secondary);">💸 Transaction explorer</li>
+      <li style="color:var(--text-secondary);">📊 Difficulty &amp; hashrate charts</li>
+      <li style="color:var(--text-secondary);">🏦 Supply tracking &amp; rich list</li>
+      <li style="color:var(--text-secondary);">🔴 WebSocket live updates</li>
+      <li style="color:var(--text-secondary);">⚡ Redis-cached API</li>
+    </ul>
+  </div>
+
+  <h3>7.2 REST API</h3>
+  <p>RESTful API with comprehensive blockchain data endpoints, Swagger documentation, rate limiting, and DDoS protection.</p>
+
+  <h3>7.3 Mining Pool</h3>
+  <p>Full-featured mining pool on Stratum port 3333 with worker management, share tracking via Redis, payout engine, and ASIC miner compatibility.</p>
+
+  <h3>7.4 Website</h3>
+  <p>Built with Next.js featuring a cyberpunk/gold-black aesthetic, Framer Motion animations, Three.js particle effects, responsive design, and SEO optimization.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 8 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 08</div>
+    <div class="section-title">Deployment Architecture</div>
+  </div>
+
+  <h3>8.1 Docker Stack</h3>
+  <p>All services are containerized for deterministic deployment.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Service</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>tarcoind</td><td>Blockchain full node</td></tr>
+        <tr><td>explorer</td><td>Blockchain explorer frontend + backend</td></tr>
+        <tr><td>api</td><td>REST API server</td></tr>
+        <tr><td>mining-pool</td><td>Mining pool + Stratum server</td></tr>
+        <tr><td>website</td><td>Next.js public website</td></tr>
+        <tr><td>nginx</td><td>Reverse proxy (SSL termination, DDoS protection)</td></tr>
+        <tr><td>redis</td><td>Cache layer</td></tr>
+        <tr><td>postgres</td><td>Relational database</td></tr>
+        <tr><td>prometheus / grafana / loki</td><td>Monitoring &amp; observability stack</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8.2 Infrastructure Requirements</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Service</th><th>CPU</th><th>RAM</th><th>Storage</th><th>Network</th></tr></thead>
+      <tbody>
+        <tr><td>tarcoind (archive)</td><td>8 cores</td><td>16 GB</td><td>1+ TB SSD</td><td>1 Gbps</td></tr>
+        <tr><td>tarcoind (pruned)</td><td>4 cores</td><td>8 GB</td><td>50 GB SSD</td><td>100 Mbps</td></tr>
+        <tr><td>Explorer + API</td><td>4 cores</td><td>8 GB</td><td>100 GB SSD</td><td>1 Gbps</td></tr>
+        <tr><td>Mining Pool</td><td>4 cores</td><td>8 GB</td><td>50 GB SSD</td><td>1 Gbps</td></tr>
+        <tr><td>Website</td><td>2 cores</td><td>4 GB</td><td>20 GB SSD</td><td>100 Mbps</td></tr>
+        <tr><td>Monitoring</td><td>2 cores</td><td>4 GB</td><td>100 GB SSD</td><td>100 Mbps</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8.3 Cloud Providers Supported</h3>
+  <div class="card" style="display:flex;gap:24px;flex-wrap:wrap;padding:16px 24px;">
+    <span style="color:var(--gold);font-weight:600;">⚡ DigitalOcean</span>
+    <span style="color:var(--gold);font-weight:600;">⚡ AWS (EC2, EKS)</span>
+    <span style="color:var(--gold);font-weight:600;">⚡ Hetzner</span>
+    <span style="color:var(--gold);font-weight:600;">⚡ Vultr</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 9 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 09</div>
+    <div class="section-title">Testing &amp; Audit</div>
+  </div>
+
+  <h3>9.1 Mandatory Audits</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Audit Type</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Consensus Audit</td><td>Verify all consensus rules match Bitcoin Core</td></tr>
+        <tr><td>2</td><td>Supply Audit</td><td>Verify supply constants, halving schedule, treasury allocation</td></tr>
+        <tr><td>3</td><td>Wallet Penetration Test</td><td>Secure key storage, encryption, signing</td></tr>
+        <tr><td>4</td><td>RPC Security Audit</td><td>No unauthorized access, injection, or exposure</td></tr>
+        <tr><td>5</td><td>API Security Testing</td><td>Rate limiting, SQL injection, XSS, CSRF</td></tr>
+        <tr><td>6</td><td>Memory Analysis</td><td>No leaks in long-running processes</td></tr>
+        <tr><td>7</td><td>Reorg Attack Simulation</td><td>Network partition handling</td></tr>
+        <tr><td>8</td><td>51% Attack Simulation</td><td>Chain reorganization resilience</td></tr>
+        <tr><td>9</td><td>Mining Stress Test</td><td>Pool and Stratum server capacity</td></tr>
+        <tr><td>10</td><td>P2P Network Test</td><td>Peer discovery, propagation, DoS resilience</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>9.2 Deterministic Builds</h3>
+  <p>All releases must be:</p>
+  <ul>
+    <li>Deterministic (same source → same binary)</li>
+    <li>Reproducible (anyone can verify)</li>
+    <li>Publicly auditable</li>
+    <li>Signed with release keys</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 10 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 10</div>
+    <div class="section-title">Launch Checklist</div>
+  </div>
+
+  <!-- PRE-LAUNCH -->
+  <div class="phase-header">
+    Pre-Launch
+    <span class="phase-badge">✅ 18 / 18 Complete</span>
+  </div>
+  <ul class="checklist">
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Genesis block mined and verified (<code>000074c6...f44bd7e0</code>)</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">TARCOIN Core v31.x compiled and running</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Mainnet node boots and passes PoW validation</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text"><code>powLimit</code> aligned with genesis <code>nBits</code> (<code>0x1f00ffff</code>)</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Genesis hash and merkle root <code>assert()</code> verified on startup</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text"><code>CLIENT_VERSION_IS_RELEASE = true</code> set</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Seed nodes deployed (DNS seeds live)</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Explorer backend verified</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Wallet binaries built and signed</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Mining pool configured and tested</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Infrastructure stress-tested</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Monitoring stack operational</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">DNS records configured</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">SSL certificates issued</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Cloudflare configured</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">CI/CD pipeline validated</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Deterministic builds confirmed</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Source code publicly released on GitHub</div></li>
+  </ul>
+
+  <!-- LAUNCH -->
+  <div class="phase-header">
+    Launch
+    <span class="phase-badge">✅ 8 / 8 Complete</span>
+  </div>
+  <ul class="checklist">
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Seed nodes go online</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Explorer goes online</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Mining pool activates</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Wallet downloads available</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Website published</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">API operational</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Social media announcements</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Mining campaigns begin</div></li>
+  </ul>
+
+  <!-- POST-LAUNCH -->
+  <div class="phase-header">
+    Post-Launch
+    <span class="phase-badge">✅ 4 / 4 Complete</span>
+  </div>
+  <ul class="checklist">
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Network monitoring active</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Community support channels live</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Bug bounty program launched</div></li>
+    <li class="done"><div class="check-icon">✓</div><div class="check-text">Ongoing security audits in progress</div></li>
+  </ul>
+
+  <div class="callout" style="margin-top:28px;">
+    <strong>Transparency Statement:</strong> All critical network parameters, supply allocations, genesis data, and consensus rules are publicly documented and independently verifiable from the TARCOIN source code.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SEC 11 + 12 ══ -->
+<div class="page-content section-break">
+  <div class="section-header">
+    <div class="section-number">SECTION 11</div>
+    <div class="section-title">Governance</div>
+  </div>
+
+  <p>TARCOIN operates without any centralized governance authority. The blockchain is governed solely by its immutable consensus rules, enforced by network participants running full nodes.</p>
+  <div class="card card-gold">
+    <ul style="list-style:none;padding:0;">
+      <li style="padding:5px 0;color:var(--text-secondary);">🔒 No foundation, corporation, or legal entity controls the network</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🔒 No administrative keys or backdoors exist</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🔒 No single entity has authority to upgrade or modify the protocol</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🔒 No governance tokens or on-chain voting mechanisms</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🌐 Development is community-driven through open-source contributions</li>
+      <li style="padding:5px 0;color:var(--text-secondary);">🔒 No individual can alter supply schedule, consensus rules, or treasury after genesis</li>
+    </ul>
+  </div>
+  <p>The ecosystem treasury of 10 billion TAR is allocated at genesis to a publicly verifiable cold storage address. The treasury allocation is permanently recorded in the genesis block and remains publicly auditable on-chain.</p>
+
+  <div class="divider"></div>
+
+  <div class="section-header" style="margin-top:28px;">
+    <div class="section-number">SECTION 12</div>
+    <div class="section-title">Conclusion</div>
+  </div>
+
+  <div class="highlight-box">
+    <p style="font-size:10.5pt;color:var(--text-primary);font-style:italic;font-weight:400;margin-bottom:0;">
+      TARCOIN represents a return to the foundational principles of decentralized cryptocurrency — a secure,
+      permissionless, UTXO-based blockchain network that anyone can mine, use, or build upon. By preserving a
+      battle-tested Proof-of-Work codebase while introducing a unique identity, custom supply parameters, and a
+      complete ecosystem, TARCOIN provides a reliable foundation for long-term value storage and peer-to-peer
+      transactions.
+    </p>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:24px;padding:28px;">
+    <div style="font-family:'Orbitron',sans-serif;font-size:13pt;font-weight:700;color:var(--gold);letter-spacing:0.05em;">
+      TARCOIN is not an experiment.
+    </div>
+    <div style="font-family:'Inter',sans-serif;font-size:10pt;color:var(--text-secondary);margin-top:10px;">
+      It is battle-tested Proof-of-Work architecture, reborn for a new era.
+    </div>
+  </div>
+
+  <h3>References</h3>
+  <ol>
+    <li>Nakamoto, S. "Bitcoin: A Peer-to-Peer Electronic Cash System" (2008)</li>
+    <li>Bitcoin Core — https://github.com/bitcoin/bitcoin</li>
+    <li>BIP 32 — Hierarchical Deterministic Wallets</li>
+    <li>BIP 39 — Mnemonic Code for Generating Deterministic Keys</li>
+    <li>BIP 141 — Segregated Witness (SegWit)</li>
+    <li>BIP 173 — Bech32 Address Format</li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ FOOTER ══ -->
+<div class="footer">
+  <div>
+    <div class="footer-brand">TARCOIN [ TAR ]</div>
+    <div style="font-size:7.5pt;color:var(--text-muted);margin-top:4px;">Technical Whitepaper v1.0.0 — June 2026</div>
+  </div>
+  <div class="footer-note">Released under the MIT License.<br/>For informational purposes only. Not financial advice.</div>
+</div>
+
+</body>
+</html>

@@ -2,8 +2,8 @@
 ## A UTXO-Based Decentralized Cryptocurrency Ecosystem Built on Battle-Tested Proof-of-Work Architecture
 
 **Version:** 1.0.0
-**Date:** May 2026
-**Status:** Live — Mainnet Running
+**Date:** June 2026
+**Status:** ✅ Live — Mainnet Running & Mining Active
 
 ---
 
@@ -350,34 +350,34 @@ All releases must be:
 - [x] `powLimit` aligned with genesis `nBits` (`0x1f00ffff`)
 - [x] Genesis hash and merkle root `assert()` verified on startup
 - [x] `CLIENT_VERSION_IS_RELEASE = true` set
-- [ ] Seed nodes deployed (DNS seeds live)
-- [ ] Explorer backend verified
-- [ ] Wallet binaries built and signed
-- [ ] Mining pool configured and tested
-- [ ] Infrastructure stress-tested
-- [ ] Monitoring stack operational
-- [ ] DNS records configured
-- [ ] SSL certificates issued
-- [ ] Cloudflare configured
-- [ ] CI/CD pipeline validated
-- [ ] Deterministic builds confirmed
-- [ ] Source code publicly released
+- [x] Seed nodes deployed (DNS seeds live)
+- [x] Explorer backend verified
+- [x] Wallet binaries built and signed
+- [x] Mining pool configured and tested
+- [x] Infrastructure stress-tested
+- [x] Monitoring stack operational
+- [x] DNS records configured
+- [x] SSL certificates issued
+- [x] Cloudflare configured
+- [x] CI/CD pipeline validated
+- [x] Deterministic builds confirmed
+- [x] Source code publicly released
 
 ### Launch
-- [ ] Seed nodes go online
-- [ ] Explorer goes online
-- [ ] Mining pool activates
-- [ ] Wallet downloads available
-- [ ] Website published
-- [ ] API operational
-- [ ] Social media announcements
-- [ ] Mining campaigns begin
+- [x] Seed nodes go online
+- [x] Explorer goes online
+- [x] Mining pool activates
+- [x] Wallet downloads available
+- [x] Website published
+- [x] API operational
+- [x] Social media announcements
+- [x] Mining campaigns begin
 
 ### Post-Launch
-- [ ] Network monitoring
-- [ ] Community support channels
-- [ ] Bug bounty program
-- [ ] Ongoing security audits
+- [x] Network monitoring
+- [x] Community support channels
+- [x] Bug bounty program
+- [x] Ongoing security audits
 
 > **Transparency Statement:** All critical network parameters, supply allocations, genesis data, and consensus rules are publicly documented and independently verifiable from the TARCOIN source code.
 
