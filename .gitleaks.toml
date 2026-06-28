@@ -1,0 +1,26 @@
+# TARCOIN Gitleaks Configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "TARCOIN Gitleaks Config"
+
+[extend]
+# Extend the default ruleset
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for known safe patterns"
+
+# Allow the RPC test credentials used in CI health checks.
+# tarcoin:tarcoin is a non-sensitive local dev/test RPC credential
+# hardcoded in docker-compose.yml and used only in CI integration tests
+# against localhost — never a real production secret.
+regexes = [
+  '''tarcoin:tarcoin''',
+]
+
+# Allow specific files that contain known test/dev credentials
+paths = [
+  '''.github/workflows/ci-cd.yml''',
+  '''docker/docker-compose.yml''',
+  '''docker/config/tarcoin.conf''',
+]

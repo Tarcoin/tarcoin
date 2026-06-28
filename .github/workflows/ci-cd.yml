@@ -192,8 +192,12 @@ jobs:
           done
 
       - name: Verify blockchain RPC
+        env:
+          RPC_CREDS: ${{ secrets.RPC_CREDS || 'tarcoin:tarcoin' }}
         run: |
-          curl -s --retry 20 --retry-delay 5 --retry-connrefused --user tarcoin:tarcoin http://localhost:9332 -H 'content-type: application/json' \
+          curl -s --retry 20 --retry-delay 5 --retry-connrefused \
+            --user "$RPC_CREDS" http://localhost:19332 \
+            -H 'content-type: application/json' \
             -d '{"jsonrpc":"2.0","id":1,"method":"getblockchaininfo","params":[]}' | grep -q "chain"
 
       - name: Verify website
