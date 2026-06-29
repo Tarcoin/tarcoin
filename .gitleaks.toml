@@ -18,9 +18,11 @@ regexes = [
   '''tarcoin:tarcoin''',
 ]
 
-# Allow specific files that contain known test/dev credentials
+# Allow specific files that contain known test/dev credentials or example documentation
 paths = [
   '''.github/workflows/ci-cd.yml''',
   '''docker/docker-compose.yml''',
   '''docker/config/tarcoin.conf''',
+  '''docs/API\.md''',
+  '''devops/scripts/deploy\.sh''',
 ]
