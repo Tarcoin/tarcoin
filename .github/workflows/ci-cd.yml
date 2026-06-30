@@ -188,7 +188,12 @@ jobs:
       - name: Health check all services
         run: |
           for service in tarcoind website explorer api mining-pool; do
-            docker compose -f docker/docker-compose.yml ps -q $service | xargs docker inspect --format='{{.State.Health.Status}}' | grep -q healthy || echo "$service not healthy"
+            if ! docker compose -f docker/docker-compose.yml ps -q $service | xargs docker inspect --format='{{.State.Health.Status}}' | grep -q healthy; then
+              echo "❌ $service is not healthy!"
+              echo "--- Logs for $service ---"
+              docker compose -f docker/docker-compose.yml logs $service
+              exit 1
+            fi
           done
 
       - name: Verify blockchain RPC
