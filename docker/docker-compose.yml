@@ -167,7 +167,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - CORS_ORIGIN=https://tarcoin.org
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "wget", "-nv", "-t1", "--spider", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -199,7 +199,7 @@ services:
       - POOL_WALLET=${POOL_WALLET}
       - POOL_FEE=1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      test: ["CMD", "wget", "-nv", "-t1", "--spider", "http://localhost:3001"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -221,7 +221,7 @@ services:
       - NEXT_PUBLIC_EXPLORER_URL=https://explorer.tarcoin.org
       - NEXT_PUBLIC_POOL_URL=https://pool.tarcoin.org
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "-nv", "-t1", "--spider", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
