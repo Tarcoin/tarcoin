@@ -182,7 +182,7 @@ jobs:
         run: |
           cd docker
           docker compose pull
-          docker compose up -d
+          docker compose up -d || { echo "❌ docker compose up failed!"; echo "--- Logs for tarcoind ---"; docker compose logs tarcoind; exit 1; }
           sleep 30
 
       - name: Health check all services
