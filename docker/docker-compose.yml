@@ -166,6 +166,11 @@ services:
       - RPC_PASS=tarcoin
       - REDIS_URL=redis://redis:6379
       - CORS_ORIGIN=https://tarcoin.org
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ====== Mining Pool ======
   mining-pool:
@@ -193,6 +198,11 @@ services:
       - REDIS_URL=redis://redis:6379
       - POOL_WALLET=${POOL_WALLET}
       - POOL_FEE=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ====== TARCOIN Website ======
   website:
@@ -210,6 +220,11 @@ services:
       - NEXT_PUBLIC_API_URL=https://api.tarcoin.org
       - NEXT_PUBLIC_EXPLORER_URL=https://explorer.tarcoin.org
       - NEXT_PUBLIC_POOL_URL=https://pool.tarcoin.org
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ====== Nginx Reverse Proxy ======
   nginx:
