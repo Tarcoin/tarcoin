@@ -34,9 +34,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          config-path: .gitleaks.toml
+        run: docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -c="/path/.gitleaks.toml" -v
 
       - name: Run dependency security audit
         run: |
