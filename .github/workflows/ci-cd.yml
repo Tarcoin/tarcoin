@@ -218,7 +218,7 @@ jobs:
   publish:
     name: Publish Docker Images
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'release' || github.ref == 'refs/heads/master'
     needs: [integration-tests]
     steps:
       - name: Login to GitHub Container Registry
