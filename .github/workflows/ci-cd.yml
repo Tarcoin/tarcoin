@@ -240,6 +240,7 @@ jobs:
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/website:latest
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/explorer:latest
+          docker push ${{ env.DOCKER_REGISTRY }}/$REPO/explorer-frontend:latest
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/api:latest
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/mining-pool:latest
 
