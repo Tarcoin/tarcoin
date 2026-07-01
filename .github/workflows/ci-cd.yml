@@ -212,36 +212,45 @@ jobs:
         run: curl -s --retry 20 --retry-delay 5 --retry-connrefused http://localhost:5000/health | grep -q "ok"
 
       - name: Tear down
+        if: always()
         run: docker compose -f docker/docker-compose.yml down
 
-  # ====== Docker Image Publish ======
-  publish:
-    name: Publish Docker Images
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release' || github.ref == 'refs/heads/master'
-    needs: [integration-tests]
-    steps:
       - name: Login to GitHub Container Registry
+        if: github.event_name == 'release' || github.ref == 'refs/heads/master'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push images
+      - name: Tag and Push images
+        if: github.event_name == 'release' || github.ref == 'refs/heads/master'
         run: |
-          docker push ${{ env.DOCKER_IMAGE_TARCOIND }}:latest
-          docker push ${{ env.DOCKER_IMAGE_WEBSITE }}:latest
-          docker push ${{ env.DOCKER_IMAGE_EXPLORER }}:latest
-          docker push ${{ env.DOCKER_IMAGE_API }}:latest
-          docker push ${{ env.DOCKER_IMAGE_POOL }}:latest
+          # Convert repo name to lowercase for GHCR
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          # Tag local docker-compose images with GHCR registry paths
+          docker tag docker-tarcoind:latest ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest
+          docker tag docker-website:latest ${{ env.DOCKER_REGISTRY }}/$REPO/website:latest
+          docker tag docker-explorer:latest ${{ env.DOCKER_REGISTRY }}/$REPO/explorer:latest
+          docker tag docker-api:latest ${{ env.DOCKER_REGISTRY }}/$REPO/api:latest
+          docker tag docker-mining-pool:latest ${{ env.DOCKER_REGISTRY }}/$REPO/mining-pool:latest
+          
+          # Push to GHCR
+          docker push ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest
+          docker push ${{ env.DOCKER_REGISTRY }}/$REPO/website:latest
+          docker push ${{ env.DOCKER_REGISTRY }}/$REPO/explorer:latest
+          docker push ${{ env.DOCKER_REGISTRY }}/$REPO/api:latest
+          docker push ${{ env.DOCKER_REGISTRY }}/$REPO/mining-pool:latest
+
+
 
   # ====== Deployment ======
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
-    needs: [publish]
+    needs: [integration-tests]
     steps:
       - uses: actions/checkout@v4
 
