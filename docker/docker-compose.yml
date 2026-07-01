@@ -59,8 +59,6 @@ services:
     restart: unless-stopped
     networks:
       - tarcoin-net
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
@@ -77,8 +75,6 @@ services:
     restart: unless-stopped
     networks:
       - tarcoin-net
-    ports:
-      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
