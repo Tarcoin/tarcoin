@@ -97,8 +97,6 @@ services:
     restart: unless-stopped
     networks:
       - tarcoin-net
-    ports:
-      - "4000:4000"
     depends_on:
       tarcoind:
         condition: service_healthy
@@ -128,8 +126,6 @@ services:
     restart: unless-stopped
     networks:
       - tarcoin-net
-    ports:
-      - "4001:4001"
     depends_on:
       - explorer
     environment:
@@ -151,8 +147,6 @@ services:
     restart: unless-stopped
     networks:
       - tarcoin-net
-    ports:
-      - "5000:5000"
     depends_on:
       tarcoind:
         condition: service_healthy
@@ -183,7 +177,6 @@ services:
     networks:
       - tarcoin-net
     ports:
-      - "3001:3001"  # HTTP API
       - "3333:3333"  # Stratum
     depends_on:
       tarcoind:
@@ -215,8 +208,6 @@ services:
     restart: unless-stopped
     networks:
       - tarcoin-net
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=https://api.tarcoin.org
