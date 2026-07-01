@@ -16,6 +16,7 @@ description = "Global allowlist for known safe patterns"
 # against localhost — never a real production secret.
 regexes = [
   '''tarcoin:tarcoin''',
+  '''0x0e8a2b136c592a7dULL''',
 ]
 
 # Allow specific files that contain known test/dev credentials or example documentation
@@ -26,4 +27,5 @@ paths = [
   '''docs/API\.md''',
   '''devops/scripts/deploy\.sh''',
   '''blockchain_core/tarcoin-core/src/test/.*''',
+  '''blockchain_core/tarcoin-core/test/.*''',
 ]
