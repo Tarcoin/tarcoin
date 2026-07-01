@@ -19,6 +19,10 @@ env:
   DOCKER_IMAGE_API: ${{ github.repository }}/api
   DOCKER_IMAGE_POOL: ${{ github.repository }}/mining-pool
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # ====== Security Audit ======
   security-audit:
