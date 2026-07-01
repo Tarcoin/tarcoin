@@ -28,6 +28,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.tarcoind
+    image: ghcr.io/tarcoin/tarcoin/tarcoind:latest
     container_name: tarcoind
     restart: unless-stopped
     networks:
@@ -95,6 +96,7 @@ services:
     build:
       context: ../explorer
       dockerfile: ../docker/Dockerfile.explorer
+    image: ghcr.io/tarcoin/tarcoin/explorer:latest
     container_name: tarcoin-explorer
     restart: unless-stopped
     networks:
@@ -125,6 +127,7 @@ services:
     build:
       context: ../explorer/frontend
       dockerfile: ../../docker/Dockerfile.explorer-frontend
+    image: ghcr.io/tarcoin/tarcoin/explorer-frontend:latest
     container_name: tarcoin-explorer-frontend
     restart: unless-stopped
     networks:
@@ -147,6 +150,7 @@ services:
     build:
       context: ../api
       dockerfile: ../docker/Dockerfile.api
+    image: ghcr.io/tarcoin/tarcoin/api:latest
     container_name: tarcoin-api
     restart: unless-stopped
     networks:
@@ -177,6 +181,7 @@ services:
     build:
       context: ../mining_pool
       dockerfile: ../docker/Dockerfile.pool
+    image: ghcr.io/tarcoin/tarcoin/mining-pool:latest
     container_name: tarcoin-mining-pool
     restart: unless-stopped
     networks:
@@ -209,6 +214,7 @@ services:
     build:
       context: ../website
       dockerfile: ../docker/Dockerfile.website
+    image: ghcr.io/tarcoin/tarcoin/website:latest
     container_name: tarcoin-website
     restart: unless-stopped
     networks:
