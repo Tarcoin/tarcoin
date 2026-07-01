@@ -185,7 +185,8 @@ jobs:
       - name: Start Docker Compose
         run: |
           cd docker
-          docker compose pull
+          docker compose pull --ignore-pull-failures
+          docker compose build
           docker compose up -d || { echo "❌ docker compose up failed!"; echo "--- Logs for tarcoind ---"; docker compose logs tarcoind; exit 1; }
           sleep 30
 
@@ -233,12 +234,7 @@ jobs:
           # Convert repo name to lowercase for GHCR
           REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           
-          # Tag local docker-compose images with GHCR registry paths
-          docker tag docker-tarcoind:latest ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest
-          docker tag docker-website:latest ${{ env.DOCKER_REGISTRY }}/$REPO/website:latest
-          docker tag docker-explorer:latest ${{ env.DOCKER_REGISTRY }}/$REPO/explorer:latest
-          docker tag docker-api:latest ${{ env.DOCKER_REGISTRY }}/$REPO/api:latest
-          docker tag docker-mining-pool:latest ${{ env.DOCKER_REGISTRY }}/$REPO/mining-pool:latest
+          # (Images are now already tagged correctly by docker-compose build)
           
           # Push to GHCR
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest
