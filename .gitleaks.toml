@@ -25,4 +25,5 @@ paths = [
   '''docker/config/tarcoin.conf''',
   '''docs/API\.md''',
   '''devops/scripts/deploy\.sh''',
+  '''blockchain_core/tarcoin-core/src/test/.*''',
 ]
