@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import http from 'http';
 import { logger } from '../utils/logger';
 
 interface RpcConfig {
@@ -10,8 +11,13 @@ interface RpcConfig {
 
 export class RpcClient {
   private client: AxiosInstance;
+  private nodeDown: boolean = false;
+  private lastNodeDownLog: number = 0;
 
   constructor(config: RpcConfig) {
+    // Keep-alive agent to reuse TCP connections
+    const keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: 10 });
+
     this.client = axios.create({
       baseURL: `http://${config.host}:${config.port}`,
       auth: {
@@ -22,6 +28,7 @@ export class RpcClient {
         'Content-Type': 'application/json',
       },
       timeout: 30000,
+      httpAgent: keepAliveAgent,
     });
   }
 
@@ -33,8 +40,39 @@ export class RpcClient {
         method,
         params,
       });
+
+      // Node is reachable again — log recovery once
+      if (this.nodeDown) {
+        this.nodeDown = false;
+        logger.info('Node connection restored');
+      }
+
+      if (response.data.error) {
+        throw new Error(response.data.error.message);
+      }
+
       return response.data.result;
     } catch (error: any) {
+      // Differentiate between node-down (connection refused) and RPC errors
+      const isConnectionError =
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'ECONNRESET' ||
+        error.code === 'ETIMEDOUT' ||
+        error.code === 'ENOTFOUND' ||
+        error.message?.includes('ECONNREFUSED');
+
+      if (isConnectionError) {
+        // Rate-limit node-down logs to once every 60 seconds
+        const now = Date.now();
+        if (!this.nodeDown || now - this.lastNodeDownLog > 60000) {
+          this.nodeDown = true;
+          this.lastNodeDownLog = now;
+          logger.warn('Node unreachable — RPC calls will fail until connection is restored');
+        }
+        throw new Error('Node unreachable');
+      }
+
+      // Actual RPC error — log at error level
       logger.error(`RPC call failed: ${method}`, error.message);
       throw new Error(`RPC error: ${error.message}`);
     }

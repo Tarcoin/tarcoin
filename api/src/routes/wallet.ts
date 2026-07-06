@@ -1,23 +1,7 @@
 import { Router, Request, Response } from 'express';
-import axios from 'axios';
+import { rpcCall } from '../lib/rpc';
 
 const router = Router();
-const RPC_CONFIG = {
-  host: process.env.RPC_HOST || '127.0.0.1',
-  port: parseInt(process.env.RPC_PORT || '19332'),
-  user: process.env.RPC_USER || 'tarcoin',
-  pass: process.env.RPC_PASS || 'tarcoin',
-};
-
-async function rpcCall(method: string, params: any[] = []) {
-  const { data } = await axios.post(
-    `http://${RPC_CONFIG.host}:${RPC_CONFIG.port}`,
-    { jsonrpc: '2.0', id: Date.now(), method, params },
-    { auth: { username: RPC_CONFIG.user, password: RPC_CONFIG.pass }, timeout: 15000 }
-  );
-  if (data.error) throw new Error(data.error.message);
-  return data.result;
-}
 
 /**
  * @openapi
@@ -42,7 +26,8 @@ router.get('/validate/:address', async (req: Request, res: Response) => {
         : null,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /wallet/validate:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 
@@ -76,7 +61,8 @@ router.get('/estimate-fee', async (req: Request, res: Response) => {
       slow: Math.max(feeRate * 0.5, 0.000001),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /wallet/estimate-fee:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 
@@ -98,7 +84,8 @@ router.get('/utxo/:address', async (req: Request, res: Response) => {
 
     res.json({ address, utxos, total, count: utxos.length });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /wallet/utxo:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 

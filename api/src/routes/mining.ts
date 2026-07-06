@@ -1,32 +1,16 @@
 import { Router, Request, Response } from 'express';
-import axios from 'axios';
+import { rpcCall } from '../lib/rpc';
 
 const router = Router();
-const RPC_CONFIG = {
-  host: process.env.RPC_HOST || '127.0.0.1',
-  port: parseInt(process.env.RPC_PORT || '19332'),
-  user: process.env.RPC_USER || 'tarcoin',
-  pass: process.env.RPC_PASS || 'tarcoin',
-};
-
-async function rpcCall(method: string, params: any[] = []) {
-  const { data } = await axios.post(
-    `http://${RPC_CONFIG.host}:${RPC_CONFIG.port}`,
-    { jsonrpc: '2.0', id: Date.now(), method, params },
-    { auth: { username: RPC_CONFIG.user, password: RPC_CONFIG.pass }, timeout: 15000 }
-  );
-  if (data.error) throw new Error(data.error.message);
-  return data.result;
-}
 
 // TARCOIN constants
-const BLOCK_REWARD_SATOSHIS = 5000000000000; // 50,000 TAR in satoshis
+const BLOCK_REWARD_TAR_UNITS = 5000000000000; // 50,000 TAR in tar (smallest unit)
 const HALVING_INTERVAL = 400000;
 
 function getCurrentBlockReward(blockHeight: number): number {
   const halvings = Math.floor(blockHeight / HALVING_INTERVAL);
   if (halvings >= 64) return 0;
-  return BLOCK_REWARD_SATOSHIS / Math.pow(2, halvings) / 1e8;
+  return BLOCK_REWARD_TAR_UNITS / Math.pow(2, halvings) / 1e8;
 }
 
 /**
@@ -66,7 +50,8 @@ router.get('/info', async (req: Request, res: Response) => {
       publicMiningSupply: 40000000000,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /mining/info:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 
@@ -92,7 +77,8 @@ router.get('/difficulty', async (req: Request, res: Response) => {
       powTarget: '0000ffff00000000000000000000000000000000000000000000000000000000',
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /mining/difficulty:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 
@@ -113,7 +99,8 @@ router.get('/hashrate', async (req: Request, res: Response) => {
       averageBlocks: nblocks,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /mining/hashrate:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 
@@ -129,7 +116,8 @@ router.get('/blocktemplate', async (req: Request, res: Response) => {
     const template = await rpcCall('getblocktemplate', [{ rules: ['segwit'] }]);
     res.json(template);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('RPC error in /mining/blocktemplate:', err.message);
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 });
 

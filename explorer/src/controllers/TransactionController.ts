@@ -35,7 +35,7 @@ export class TransactionController {
       await this.cache.set(this.cache.txKey(txid), enriched, ttl);
       res.json(enriched);
     } catch (error: any) {
-      res.status(404).json({ error: 'Transaction not found', message: error.message });
+      res.status(404).json({ error: 'Transaction not found' });
     }
   }
 }

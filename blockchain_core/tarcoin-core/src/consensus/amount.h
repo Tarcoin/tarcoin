@@ -8,13 +8,13 @@
 
 #include <cstdint>
 
-/** Amount in taroshi (Can be negative) */
+/** Amount in tar (Can be negative) */
 typedef int64_t CAmount;
 
-/** The amount of taroshi in one TAR. */
+/** The amount of tar in one TAR. */
 static constexpr CAmount COIN = 100000000;
 
-/** No amount larger than this (in taroshi) is valid.
+/** No amount larger than this (in tar) is valid.
  *
  * Note that this constant is *not* the total money supply, which in Bitcoin
  * currently happens to be less than 21,000,000 BTC for various reasons, but

@@ -270,7 +270,7 @@ Bootstraps all `.env` files with secure random secrets.
 bash devops/scripts/init-env.sh
 ```
 
-- Generates 32-character random passwords for `POSTGRES_PASSWORD`, `GRAFANA_PASSWORD`, `RPC_PASSWORD`
+- Generates 32-character random passwords for `POSTGRES_PASSWORD`, `GRAFANA_PASSWORD`, `RPC_PASS`
 - Prompts for `POOL_WALLET`, domain name, Discord webhook
 - Validates the TARCOIN wallet address format (`tar1…` or `T…`)
 - Creates `docker/.env`, `explorer/.env`, `api/.env`, `mining_pool/.env`
@@ -287,7 +287,7 @@ These live in `docker/.env` (copied from `docker/.env.example`).
 | `POSTGRES_PASSWORD` | ✅ | PostgreSQL password (auto-generated) |
 | `POSTGRES_DB` | ✅ | Database name (default: `tarcoin`) |
 | `RPC_USER` | ✅ | tarcoind RPC username |
-| `RPC_PASSWORD` | ✅ | tarcoind RPC password (auto-generated) |
+| `RPC_PASS` | ✅ | tarcoind RPC password (auto-generated) |
 | `POOL_WALLET` | ✅ | Mining pool payout wallet address |
 | `GRAFANA_PASSWORD` | ✅ | Grafana admin password (auto-generated) |
 | `DOMAIN` | ✅ | Primary domain (e.g. `tarcoin.org`) |

@@ -1,23 +1,7 @@
 import { Router, Request, Response } from 'express';
-import axios from 'axios';
+import { rpcCall } from '../lib/rpc';
 
 const router = Router();
-const RPC_CONFIG = {
-  host: process.env.RPC_HOST || '127.0.0.1',
-  port: parseInt(process.env.RPC_PORT || '19332'),
-  user: process.env.RPC_USER || 'tarcoin',
-  pass: process.env.RPC_PASS || 'tarcoin',
-};
-
-async function rpcCall(method: string, params: any[] = []) {
-  const { data } = await axios.post(
-    `http://${RPC_CONFIG.host}:${RPC_CONFIG.port}`,
-    { jsonrpc: '2.0', id: Date.now(), method, params },
-    { auth: { username: RPC_CONFIG.user, password: RPC_CONFIG.pass }, timeout: 15000 }
-  );
-  if (data.error) throw new Error(data.error.message);
-  return data.result;
-}
 
 /**
  * @openapi
@@ -70,6 +54,10 @@ router.post('/send', async (req: Request, res: Response) => {
     if (!hex || typeof hex !== 'string') {
       return res.status(400).json({ error: 'hex string is required' });
     }
+    // Validate size before forwarding to node (MAX_STANDARD_TX_WEIGHT = 400000 bytes = 800000 hex chars)
+    if (hex.length > 800000) {
+      return res.status(400).json({ error: 'Transaction too large', message: 'Maximum raw transaction size is 400KB' });
+    }
     const txid = await rpcCall('sendrawtransaction', [hex]);
     res.json({
       txid,
@@ -108,7 +96,7 @@ router.get('/:txid', async (req: Request, res: Response) => {
     const tx = await rpcCall('getrawtransaction', [txid, true]);
     res.json(tx);
   } catch (err: any) {
-    res.status(404).json({ error: 'Transaction not found', message: err.message });
+    res.status(404).json({ error: 'Transaction not found' });
   }
 });
 

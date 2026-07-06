@@ -187,7 +187,7 @@ wait_for_health() {
             # RPC check
             local resp
             resp=$(curl -s --connect-timeout 5 \
-                -u "${RPC_USER:-tarcoin}:${RPC_PASSWORD:-}" \
+                -u "${RPC_USER:-tarcoin}:${RPC_PASS:-${RPC_PASSWORD:-}}" \
                 --data '{"jsonrpc":"1.0","id":"deploy","method":"getblockchaininfo","params":[]}' \
                 "${endpoint}" 2>/dev/null || true)
             if echo "${resp}" | grep -q '"result"'; then
@@ -264,7 +264,7 @@ post_deploy_health_check() {
         if [[ "${svc}" == "tarcoind" ]]; then
             local resp
             resp=$(curl -s --connect-timeout 5 \
-                -u "${RPC_USER:-tarcoin}:${RPC_PASSWORD:-}" \
+                -u "${RPC_USER:-tarcoin}:${RPC_PASS:-${RPC_PASSWORD:-}}" \
                 --data '{"jsonrpc":"1.0","id":"healthcheck","method":"getblockchaininfo","params":[]}' \
                 "${endpoint}" 2>/dev/null || true)
             if echo "${resp}" | grep -q '"result"'; then

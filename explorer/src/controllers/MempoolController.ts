@@ -33,7 +33,7 @@ export class MempoolController {
       await this.cache.set(this.cache.mempoolKey(), result, 10);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch mempool', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch mempool' });
     }
   }
 
@@ -56,7 +56,7 @@ export class MempoolController {
       await this.cache.set(this.cache.mempoolStatsKey(), stats, 10);
       res.json(stats);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch mempool stats', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch mempool stats' });
     }
   }
 }

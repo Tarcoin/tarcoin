@@ -79,7 +79,7 @@ export const SUPPLY = {
   MINING: 40_000_000_000,
   BLOCK_REWARD_ERA1: 50_000,
   HALVING_INTERVAL: 400_000,
-  SATOSHIS_PER_TAR: 100_000_000,   // 1 TAR = 100,000,000 Tar
+  TAR_PER_COIN: 100_000_000,       // 1 TAR = 100,000,000 tar (smallest unit)
 } as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -547,11 +547,11 @@ export class TarcoinWallet {
     const addrInfo = TarcoinWallet.validateAddress(toAddress);
     if (!addrInfo.isValid) throw new Error(`Invalid TARCOIN address: ${toAddress}`);
 
-    const amountSats = TarcoinWallet.toSatoshis(amountTar);
-    const feeSats = TarcoinWallet.toSatoshis(feeTar);
+    const amountSats = TarcoinWallet.toSmallestUnit(amountTar);
+    const feeSats = TarcoinWallet.toSmallestUnit(feeTar);
     const totalNeeded = amountSats + feeSats;
 
-    if (TarcoinWallet.toSatoshis(this._balance.confirmed) < totalNeeded) {
+    if (TarcoinWallet.toSmallestUnit(this._balance.confirmed) < totalNeeded) {
       throw new Error(
         `Insufficient balance: have ${this._balance.confirmed} TAR, need ${amountTar + feeTar} TAR`
       );
@@ -567,7 +567,7 @@ export class TarcoinWallet {
     for (const utxo of this._utxos) {
       if (!utxo.spendable) continue;
       selectedUtxos.push(utxo);
-      inputTotal += TarcoinWallet.toSatoshis(utxo.amount);
+      inputTotal += TarcoinWallet.toSmallestUnit(utxo.amount);
       if (inputTotal >= totalNeeded) break;
     }
 
@@ -591,7 +591,7 @@ export class TarcoinWallet {
         index: utxo.vout,
         witnessUtxo: {
           script: p2wpkh.output!,
-          value: BigInt(TarcoinWallet.toSatoshis(utxo.amount)),
+          value: BigInt(TarcoinWallet.toSmallestUnit(utxo.amount)),
         },
       });
     }
@@ -680,7 +680,7 @@ export class TarcoinWallet {
         method: 'listunspent',
         params: [0, 9999999, syncAddresses],
       }, {
-        auth: { username: 'tarcoin', password: 'tarcoin' },
+        auth: { username: process.env.RPC_USER || 'tarcoin', password: process.env.RPC_PASS || 'tarcoin' },
         timeout: 10000,
       });
 
@@ -748,14 +748,24 @@ export class TarcoinWallet {
     };
   }
 
-  /** Convert TAR to Tar (satoshis) */
-  static toSatoshis(tar: number): number {
-    return Math.round(tar * SUPPLY.SATOSHIS_PER_TAR);
+  /** Convert TAR to smallest unit (tar) */
+  static toSmallestUnit(tar: number): number {
+    return Math.round(tar * SUPPLY.TAR_PER_COIN);
   }
 
-  /** Convert Tar (satoshis) to TAR */
+  /** @deprecated Use toSmallestUnit instead */
+  static toSatoshis(tar: number): number {
+    return TarcoinWallet.toSmallestUnit(tar);
+  }
+
+  /** Convert smallest unit (tar) to TAR */
+  static fromSmallestUnit(smallestUnit: number): number {
+    return smallestUnit / SUPPLY.TAR_PER_COIN;
+  }
+
+  /** @deprecated Use fromSmallestUnit instead */
   static fromSatoshis(satoshis: number): number {
-    return satoshis / SUPPLY.SATOSHIS_PER_TAR;
+    return TarcoinWallet.fromSmallestUnit(satoshis);
   }
 
   /** Format TAR amount for display */

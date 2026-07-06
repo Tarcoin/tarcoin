@@ -14,13 +14,21 @@ export class SupplyController {
       if (cached) return res.json(cached);
 
       const info = await this.rpc.getBlockchainInfo();
-      const txoutset = await this.rpc.getTxOutSetInfo();
-      
+      let circulating: number | null = null;
+      try {
+        const txoutset = await this.rpc.getTxOutSetInfo();
+        if (txoutset && txoutset.total_amount != null) {
+          circulating = Math.floor(txoutset.total_amount);
+        }
+      } catch {
+        // gettxoutsetinfo can be slow or fail — circulating will be null
+      }
+
       const supply = {
         totalSupply: 50000000000,
         ecosystemTreasuryAllocation: 10000000000,
         publicMiningSupply: 40000000000,
-        circulating: Math.max(0, Math.floor(txoutset.total_amount || 10000000000) - 10000000000),
+        circulating,
         blockHeight: info.blocks,
         lastUpdated: Date.now(),
       };
@@ -28,19 +36,22 @@ export class SupplyController {
       await this.cache.set(this.cache.supplyKey(), supply, 60);
       res.json(supply);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch supply', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch supply' });
     }
   }
 
   async getCirculating(req: Request, res: Response) {
     try {
       const txoutset = await this.rpc.getTxOutSetInfo();
+      const circulating = txoutset && txoutset.total_amount != null
+        ? Math.floor(txoutset.total_amount)
+        : null;
       res.json({
-        circulating: Math.max(0, Math.floor(txoutset.total_amount || 10000000000) - 10000000000),
+        circulating,
         units: 'TAR',
       });
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch circulating supply', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch circulating supply' });
     }
   }
 
@@ -49,21 +60,31 @@ export class SupplyController {
       const cached = await this.cache.get(this.cache.networkStatsKey());
       if (cached) return res.json(cached);
 
-      const [info, difficulty, hashrate, mempool, network, txoutset] = await Promise.all([
+      // Fetch all stats in parallel, with individual error handling
+      const [info, difficulty, hashrate, mempool, network] = await Promise.all([
         this.rpc.getBlockchainInfo(),
         this.rpc.getDifficulty(),
-        this.rpc.getNetworkHashrate(),
+        this.rpc.getNetworkHashrate().catch(() => 0),
         this.rpc.getMempoolInfo(),
         this.rpc.getNetworkInfo(),
-        this.rpc.getTxOutSetInfo(),
       ]);
+
+      let circulating: number | null = null;
+      try {
+        const txoutset = await this.rpc.getTxOutSetInfo();
+        if (txoutset && txoutset.total_amount != null) {
+          circulating = Math.floor(txoutset.total_amount);
+        }
+      } catch {
+        // gettxoutsetinfo is expensive and may timeout — supply will be null
+      }
 
       const stats = {
         blockHeight: info.blocks,
         difficulty,
         hashrate,
         totalSupply: 50000000000,
-        circulating: Math.max(0, Math.floor(txoutset.total_amount || 10000000000) - 10000000000),
+        circulating,
         mempool: {
           size: mempool.size,
           bytes: mempool.bytes,
@@ -77,7 +98,7 @@ export class SupplyController {
       await this.cache.set(this.cache.networkStatsKey(), stats, 30);
       res.json(stats);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch network stats', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch network stats' });
     }
   }
 
@@ -93,7 +114,7 @@ export class SupplyController {
       await this.cache.set(this.cache.richListKey(), richList, 300);
       res.json(richList);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch rich list', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch rich list' });
     }
   }
 }

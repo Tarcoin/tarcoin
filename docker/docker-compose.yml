@@ -109,7 +109,7 @@ services:
       - RPC_HOST=tarcoind
       - RPC_PORT=19332
       - RPC_USER=tarcoin
-      - RPC_PASSWORD=tarcoin
+      - RPC_PASS=tarcoin
       - REDIS_URL=redis://redis:6379
       - CORS_ORIGIN=https://tarcoin.org
     healthcheck:

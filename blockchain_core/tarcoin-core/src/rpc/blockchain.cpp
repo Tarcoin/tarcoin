@@ -1971,7 +1971,7 @@ static RPCMethod getblockstats()
 {
     return RPCMethod{
         "getblockstats",
-        "Compute per block statistics for a given window. All amounts are in taroshi.\n"
+        "Compute per block statistics for a given window. All amounts are in tar.\n"
                 "It won't work for some heights with pruning.\n",
                 {
                     {"hash_or_height", RPCArg::Type::NUM, RPCArg::Optional::NO, "The block hash or height of the target block",
@@ -1990,10 +1990,10 @@ static RPCMethod getblockstats()
             RPCResult::Type::OBJ, "", "",
             {
                 {RPCResult::Type::NUM, "avgfee", /*optional=*/true, "Average fee in the block"},
-                {RPCResult::Type::NUM, "avgfeerate", /*optional=*/true, "Average feerate (in taroshi per virtual byte)"},
+                {RPCResult::Type::NUM, "avgfeerate", /*optional=*/true, "Average feerate (in tar per virtual byte)"},
                 {RPCResult::Type::NUM, "avgtxsize", /*optional=*/true, "Average transaction size"},
                 {RPCResult::Type::STR_HEX, "blockhash", /*optional=*/true, "The block hash (to check for potential reorgs)"},
-                {RPCResult::Type::ARR_FIXED, "feerate_percentiles", /*optional=*/true, "Feerates at the 10th, 25th, 50th, 75th, and 90th percentile weight unit (in taroshi per virtual byte)",
+                {RPCResult::Type::ARR_FIXED, "feerate_percentiles", /*optional=*/true, "Feerates at the 10th, 25th, 50th, 75th, and 90th percentile weight unit (in tar per virtual byte)",
                 {
                     {RPCResult::Type::NUM, "10th_percentile_feerate", "The 10th percentile feerate"},
                     {RPCResult::Type::NUM, "25th_percentile_feerate", "The 25th percentile feerate"},
@@ -2004,13 +2004,13 @@ static RPCMethod getblockstats()
                 {RPCResult::Type::NUM, "height", /*optional=*/true, "The height of the block"},
                 {RPCResult::Type::NUM, "ins", /*optional=*/true, "The number of inputs (excluding coinbase)"},
                 {RPCResult::Type::NUM, "maxfee", /*optional=*/true, "Maximum fee in the block"},
-                {RPCResult::Type::NUM, "maxfeerate", /*optional=*/true, "Maximum feerate (in taroshi per virtual byte)"},
+                {RPCResult::Type::NUM, "maxfeerate", /*optional=*/true, "Maximum feerate (in tar per virtual byte)"},
                 {RPCResult::Type::NUM, "maxtxsize", /*optional=*/true, "Maximum transaction size"},
                 {RPCResult::Type::NUM, "medianfee", /*optional=*/true, "Truncated median fee in the block"},
                 {RPCResult::Type::NUM, "mediantime", /*optional=*/true, "The block median time past"},
                 {RPCResult::Type::NUM, "mediantxsize", /*optional=*/true, "Truncated median transaction size"},
                 {RPCResult::Type::NUM, "minfee", /*optional=*/true, "Minimum fee in the block"},
-                {RPCResult::Type::NUM, "minfeerate", /*optional=*/true, "Minimum feerate (in taroshi per virtual byte)"},
+                {RPCResult::Type::NUM, "minfeerate", /*optional=*/true, "Minimum feerate (in tar per virtual byte)"},
                 {RPCResult::Type::NUM, "mintxsize", /*optional=*/true, "Minimum transaction size"},
                 {RPCResult::Type::NUM, "outs", /*optional=*/true, "The number of outputs"},
                 {RPCResult::Type::NUM, "subsidy", /*optional=*/true, "The block subsidy"},

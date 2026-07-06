@@ -20,6 +20,7 @@ import { CacheManager } from './services/CacheManager';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 4000;
 
 // Create HTTP server first (needed for WebSocket)
@@ -30,8 +31,15 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
+const allowedOrigins = (process.env.CORS_ORIGIN || 'https://tarcoin.org').split(',').map(s => s.trim());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST'],
   credentials: true,
 }));
@@ -49,8 +57,21 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'tarcoin-explorer', timestamp: Date.now() });
+app.get('/health', async (_req, res) => {
+  let nodeStatus = 'unknown';
+  try {
+    const rpc = new RpcClient({
+      host: process.env.RPC_HOST || '127.0.0.1',
+      port: parseInt(process.env.RPC_PORT || '19332'),
+      username: process.env.RPC_USER || 'tarcoin',
+      password: process.env.RPC_PASS || 'tarcoin',
+    });
+    await rpc.getBlockCount();
+    nodeStatus = 'connected';
+  } catch {
+    nodeStatus = 'disconnected';
+  }
+  res.json({ status: 'ok', service: 'tarcoin-explorer', node: nodeStatus, timestamp: Date.now() });
 });
 
 // Genesis block info (always available even without RPC)
@@ -104,7 +125,7 @@ async function initialize() {
       host: process.env.RPC_HOST || '127.0.0.1',
       port: parseInt(process.env.RPC_PORT || '19332'),
       username: process.env.RPC_USER || 'tarcoin',
-      password: process.env.RPC_PASSWORD || 'tarcoin',
+      password: process.env.RPC_PASS || 'tarcoin',
     });
 
     // WebSocket manager (uses server created above)

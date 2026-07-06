@@ -90,8 +90,8 @@ Additional halving eras continue beyond Era 4 until the remaining mineable suppl
 
 | Parameter | Mainnet | Testnet | Regtest |
 |-----------|---------|---------|---------|
-| P2P Port | 19333 | 18333 | 18444 |
-| RPC Port | 19332 | 18332 | 18443 |
+| P2P Port | 19333 | 29333 | 18444 |
+| RPC Port | 19332 | 29332 | 18443 |
 | Magic Bytes | 0xfabfb5da | 0x0b110907 | 0xfabfb5da |
 | Address Prefix | tar1 / T | tar1 / T | tar1 / T |
 

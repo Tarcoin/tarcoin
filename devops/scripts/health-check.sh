@@ -25,7 +25,7 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 RPC_USER="${RPC_USER:-tarcoin}"
-RPC_PASSWORD="${RPC_PASSWORD:-}"
+RPC_PASS="${RPC_PASS:-${RPC_PASSWORD:-}}"
 RPC_HOST="localhost"
 RPC_PORT="19332"
 
@@ -83,7 +83,7 @@ check_tarcoind() {
 
     start=$(date +%s%3N)
     response=$(curl -s --connect-timeout 5 --max-time 10 \
-        -u "${RPC_USER}:${RPC_PASSWORD}" \
+        -u "${RPC_USER}:${RPC_PASS}" \
         --data '{"jsonrpc":"1.0","id":"health","method":"getblockchaininfo","params":[]}' \
         "http://${RPC_HOST}:${RPC_PORT}" 2>/dev/null || echo "")
     end=$(date +%s%3N)
@@ -92,7 +92,7 @@ check_tarcoind() {
     if echo "${response}" | grep -q '"result"'; then
         blocks=$(echo "${response}" | grep -o '"blocks":[0-9]*' | cut -d: -f2 || echo "?")
         connections_resp=$(curl -s --connect-timeout 5 --max-time 10 \
-            -u "${RPC_USER}:${RPC_PASSWORD}" \
+            -u "${RPC_USER}:${RPC_PASS}" \
             --data '{"jsonrpc":"1.0","id":"health","method":"getnetworkinfo","params":[]}' \
             "http://${RPC_HOST}:${RPC_PORT}" 2>/dev/null || echo "")
         connections=$(echo "${connections_resp}" | grep -o '"connections":[0-9]*' | cut -d: -f2 || echo "?")

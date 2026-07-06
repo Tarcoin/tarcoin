@@ -11,6 +11,7 @@ import { createLogger, format, transports } from 'winston';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 // Logger
@@ -28,8 +29,18 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
+
+// CORS: support comma-separated origins via CORS_ORIGIN env var
+const allowedOrigins = (process.env.CORS_ORIGIN || 'https://tarcoin.org').split(',').map(s => s.trim());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://tarcoin.org',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -65,9 +76,17 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'TARCOIN API'
 }));
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now(), version: '1.0.0' });
+// Health check with node connectivity status
+app.get('/health', async (req, res) => {
+  let nodeStatus = 'unknown';
+  try {
+    const { rpcCall } = await import('./lib/rpc');
+    await rpcCall('getblockchaininfo');
+    nodeStatus = 'connected';
+  } catch {
+    nodeStatus = 'disconnected';
+  }
+  res.json({ status: 'ok', node: nodeStatus, timestamp: Date.now(), version: '1.0.0' });
 });
 
 // Root redirect to docs

@@ -34,7 +34,7 @@ export class AddressController {
       await this.cache.set(this.cache.addressKey(address), result, 30);
       res.json(result);
     } catch (error: any) {
-      res.status(404).json({ error: 'Address not found', message: error.message });
+      res.status(404).json({ error: 'Address not found' });
     }
   }
 
@@ -54,7 +54,7 @@ export class AddressController {
       await this.cache.set(this.cache.addressTxsKey(address), result, 30);
       res.json(result);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch transactions', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch transactions' });
     }
   }
 
@@ -68,7 +68,7 @@ export class AddressController {
       await this.cache.set(this.cache.addressUtxoKey(address), utxos, 30);
       res.json(utxos);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch UTXOs', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch UTXOs' });
     }
   }
 }

@@ -18,7 +18,7 @@ export class BlockController {
       await this.cache.set(this.cache.blockKey(hash), block, 30);
       res.json(block);
     } catch (error: any) {
-      res.status(404).json({ error: 'Block not found', message: error.message });
+      res.status(404).json({ error: 'Block not found' });
     }
   }
 
@@ -33,7 +33,7 @@ export class BlockController {
       await this.cache.set(this.cache.blockHeightKey(height), block, 30);
       res.json(block);
     } catch (error: any) {
-      res.status(404).json({ error: 'Block not found', message: error.message });
+      res.status(404).json({ error: 'Block not found' });
     }
   }
 
@@ -55,7 +55,7 @@ export class BlockController {
       await this.cache.set(this.cache.recentBlocksKey(), blocks, 15);
       res.json(blocks);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to fetch blocks', message: error.message });
+      res.status(500).json({ error: 'Failed to fetch blocks' });
     }
   }
 }

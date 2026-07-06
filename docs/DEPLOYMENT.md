@@ -66,7 +66,7 @@ docker run -d \
   -e RPC_HOST=tarcoind \
   -e RPC_PORT=19332 \
   -e RPC_USER=tarcoin \
-  -e RPC_PASSWORD=tarcoin \
+  -e RPC_PASS=tarcoin \
   tarcoin/explorer:latest
 ```
 

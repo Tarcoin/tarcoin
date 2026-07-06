@@ -64,7 +64,7 @@ export class SearchController {
         error: 'Unrecognized query format. Enter a block height, block hash, txid, or address.',
       });
     } catch (error: any) {
-      res.status(500).json({ error: 'Search failed', message: error.message });
+      res.status(500).json({ error: 'Search failed' });
     }
   }
 }
