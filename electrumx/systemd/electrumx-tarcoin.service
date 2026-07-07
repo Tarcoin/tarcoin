@@ -1,0 +1,61 @@
+[Unit]
+Description=ElectrumX TARCOIN (TAR) Server
+Documentation=https://github.com/spesmilo/electrumx
+After=network-online.target tarcoind.service
+Wants=network-online.target
+Requires=tarcoind.service
+
+[Service]
+# ---------------------------------------------------------------------------
+# Security hardening
+# ---------------------------------------------------------------------------
+Type=simple
+User=electrumx
+Group=electrumx
+
+# Restrict filesystem access
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+ReadWritePaths=/data/electrumx
+
+# Restrict network (ElectrumX only needs IPv4/IPv6 sockets)
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+Environment=ELECTRUMX_CONFIG=/etc/electrumx/electrumx.conf
+Environment=HOME=/home/electrumx
+
+# Load secrets from a protected file (not in this unit file)
+# Create /etc/electrumx/electrumx.env with DAEMON_URL=http://user:pass@...
+EnvironmentFile=-/etc/electrumx/electrumx.env
+
+# ---------------------------------------------------------------------------
+# Process management
+# ---------------------------------------------------------------------------
+ExecStart=/usr/local/bin/electrumx_server
+
+# Graceful shutdown — allow up to 60s for ElectrumX to flush its DB
+TimeoutStopSec=60
+KillMode=mixed
+KillSignal=SIGTERM
+
+# Restart policy — restart on crash, but not on clean exit
+Restart=on-failure
+RestartSec=10s
+
+# Limit log noise to systemd journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=electrumx-tarcoin
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=512
+
+[Install]
+WantedBy=multi-user.target

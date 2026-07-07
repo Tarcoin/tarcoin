@@ -1,0 +1,153 @@
+# =============================================================================
+# ElectrumX TARCOIN — Docker Compose
+# =============================================================================
+# Deploys:
+#   - tarcoind   : TARCOIN full node (RPC backend for ElectrumX)
+#   - electrumx  : ElectrumX Electrum server (patched for TARCOIN)
+#   - nginx      : SSL/TLS reverse proxy
+#
+# Usage:
+#   cp .env.example .env
+#   nano .env           # set your passwords and domain
+#   docker-compose up -d
+#
+# Ports exposed to internet (via nginx):
+#   50002 — ElectrumX SSL (Electrum clients)
+#   50004 — ElectrumX WebSocket TLS (web wallets)
+# =============================================================================
+
+version: '3.8'
+
+networks:
+  electrumx-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  tarcoin-data:
+    driver: local
+  electrumx-data:
+    driver: local
+  ssl-certs:
+    driver: local
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # TARCOIN full node — ElectrumX RPC backend
+  # ---------------------------------------------------------------------------
+  tarcoind:
+    image: ghcr.io/tarcoin/tarcoin/tarcoind:latest
+    container_name: electrumx-tarcoind
+    restart: unless-stopped
+    networks:
+      - electrumx-net
+    ports:
+      - "19333:19333"   # P2P — must be open for peers
+      # 19332 (RPC) is NOT exposed externally — internal only
+    volumes:
+      - tarcoin-data:/home/tarcoin/.tarcoin
+      - ./config/tarcoin.conf:/home/tarcoin/.tarcoin/tarcoin.conf:ro
+    environment:
+      - TARCOIN_RPC_USER=${TARCOIN_RPC_USER:-tarcoin}
+      - TARCOIN_RPC_PASSWORD=${TARCOIN_RPC_PASSWORD}
+    command:
+      - tarcoind
+      - -printtoconsole
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=172.21.0.0/16
+      - -rpcuser=${TARCOIN_RPC_USER:-tarcoin}
+      - -rpcpassword=${TARCOIN_RPC_PASSWORD}
+      - -txindex=1        # Required by ElectrumX for transaction history
+      - -server=1
+    healthcheck:
+      test: ["CMD", "tarcoin-cli",
+             "-rpcuser=${TARCOIN_RPC_USER:-tarcoin}",
+             "-rpcpassword=${TARCOIN_RPC_PASSWORD}",
+             "getblockcount"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # ElectrumX — Electrum protocol server
+  # ---------------------------------------------------------------------------
+  electrumx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: electrumx-tarcoin:latest
+    container_name: electrumx-server
+    restart: unless-stopped
+    networks:
+      - electrumx-net
+    ports:
+      - "50001:50001"   # TCP — internal / behind nginx
+      - "50002:50002"   # SSL — can be exposed directly or via nginx
+      - "50004:50004"   # WebSocket TLS
+    volumes:
+      - electrumx-data:/data/electrumx
+      - ssl-certs:/etc/ssl/electrumx:ro
+      - ./config/electrumx_mainnet.conf:/etc/electrumx/electrumx.conf:ro
+    environment:
+      - ELECTRUMX_CONFIG=/etc/electrumx/electrumx.conf
+      - COIN=TarCoin
+      - DB_DIRECTORY=/data/electrumx
+      # Override DAEMON_URL with actual credentials
+      - DAEMON_URL=http://${TARCOIN_RPC_USER:-tarcoin}:${TARCOIN_RPC_PASSWORD}@tarcoind:19332/
+      - SERVICES=tcp://:50001,ssl://:50002,wss://:50004
+      - REPORT_SERVICES=ssl://${ELECTRUMX_HOST}:50002
+      - SSL_CERTFILE=/etc/ssl/electrumx/server.crt
+      - SSL_KEYFILE=/etc/ssl/electrumx/server.key
+      - HOST=${ELECTRUMX_HOST}
+      - CACHE_MB=${ELECTRUMX_CACHE_MB:-1000}
+      - MAX_SESSIONS=${ELECTRUMX_MAX_SESSIONS:-1000}
+      - LOG_LEVEL=info
+      - PEER_DISCOVERY=self
+      - PEER_ANNOUNCE=off
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.create_connection(('127.0.0.1',50001),5); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # Nginx — SSL termination and reverse proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: electrumx-nginx
+    restart: unless-stopped
+    networks:
+      - electrumx-net
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/electrumx-ssl.conf:/etc/nginx/conf.d/electrumx.conf:ro
+      - ssl-certs:/etc/ssl/electrumx:ro
+    depends_on:
+      - electrumx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"

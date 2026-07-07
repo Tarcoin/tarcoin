@@ -1,158 +1,186 @@
-# TARCOIN Architecture Guide
+# TARCOIN Ecosystem — Architecture Overview
 
-## System Architecture Overview
-
-TARCOIN follows a microservices architecture built around the Bitcoin Core blockchain daemon.
+## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         INTERNET                             │
-│                                                              │
-│    Cloudflare (DDoS, CDN, SSL)                               │
-│         │                                                    │
-│    ┌────┴──────────────────────────────────────────────┐    │
-│    │            Nginx Reverse Proxy                     │    │
-│    │    rate-limiting, SSL, security headers            │    │
-│    └──┬──────┬──────┬──────┬──────┬────────────────────┘    │
-│       │      │      │      │      │                         │
-│       ▼      ▼      ▼      ▼      ▼                         │
-│   ┌─────┐┌──────┐┌─────┐┌──────┐┌──────┐                  │
-│   │Website│Explorer││ API ││ Pool ││Stratum│                │
-│   │:3000 │:4000 ││:5000││:3001││:3333 │                 │
-│   └──┬───┘└──┬───┘└──┬──┘└──┬───┘└──────┘                  │
-│      │       │       │      │                               │
-│      └───────┴───────┴──────┘                               │
-│                      │                                      │
-│                      ▼                                      │
-│              ┌───────────┐                                  │
-│              │  tarcoind  │  P2P: 19333  RPC: 19332          │
-│              │  (RPC)    │  ◄─── TARCOIN Network            │
-│              └───────────┘                                  │
-│                      │                                      │
-│              ┌───────┴───────┐                              │
-│              ▼               ▼                              │
-│         ┌────────┐    ┌────────┐                           │
-│         │ Redis  │    │Postgres│                           │
-│         │(Cache) │    │  (DB)  │                           │
-│         └────────┘    └────────┘                           │
-│                      │                                      │
-│              ┌───────┴───────┐                              │
-│              ▼               ▼                              │
-│         ┌────────┐    ┌────────┐                           │
-│         │Prometheus│  │ Grafana│ Monitoring                 │
-│         │ Loki    │   │        │                           │
-│         └────────┘    └────────┘                           │
-└─────────────────────────────────────────────────────────────┘
+                        ┌─────────────────────────────────┐
+                        │          INTERNET                │
+                        └─────────────┬───────────────────┘
+                                      │
+                        ┌─────────────▼───────────────────┐
+                        │     HAProxy (Load Balancer)      │
+                        │   Ports: 50001 / 50002 / 50004   │
+                        └──────┬──────────┬────────┬───────┘
+                               │          │        │
+              ┌────────────────▼┐  ┌──────▼─┐  ┌──▼──────────────┐
+              │  ElectrumX-1    │  │ElectrumX│  │  ElectrumX-3    │
+              │  (primary)      │  │   -2    │  │  (replica)      │
+              └────────┬────────┘  └────┬───┘  └───────┬─────────┘
+                       │               │               │
+                       └───────────────┴───────────────┘
+                                       │ JSON-RPC :19332 (internal)
+                        ┌──────────────▼──────────────────┐
+                        │       tarcoind (full node)        │
+                        │   txindex=1  |  -server=1         │
+                        └──────────────┬──────────────────┘
+                                       │ P2P :19333
+                        ┌──────────────▼──────────────────┐
+                        │         TARCOIN Network           │
+                        │     (miners, peers, nodes)        │
+                        └─────────────────────────────────┘
+
+Mobile / Desktop Wallet
+        │
+        │ Electrum Protocol (SSL :50002)
+        ▼
+   HAProxy → ElectrumX → tarcoind → TARCOIN Network
 ```
 
-## Component Descriptions
+---
 
-### 1. Blockchain Node (`tarcoind`)
-- Bitcoin Core v31.x fork — **Live on Mainnet**
-- Genesis block: `000074c6...f44bd7e0` (verified)
-- Maintains full copy of the blockchain
-- Validates transactions and blocks via SHA256d PoW
-- Serves RPC API to internal services
-- Connects to P2P network via port 19333
-- RPC port 19332 (internal only)
+## Components
 
-### 2. Explorer Service
-- Backend API for blockchain data
-- Connects to `tarcoind` RPC
-- Uses Redis for caching (30-60s TTL)
-- WebSocket streaming for live updates
-- Rate-limited (50 req/s)
+### tarcoind (Full Node)
 
-### 3. REST API
-- Public-facing API for developers
-- Swagger documentation
-- Rate-limited (30 req/s)
-- Redis for session management
+| Property | Value |
+|---|---|
+| Base | TARCOIN Core (Bitcoin Core v31.x fork) |
+| P2P Port | `19333` |
+| RPC Port | `19332` (internal only — never expose) |
+| Required flags | `-txindex=1 -server=1` |
+| Consensus | SHA256d PoW + DarkGravityWave v3 |
+| Genesis | `0000e37ee7aa8a88...fbd9939e` |
 
-### 4. Mining Pool
-- Stratum protocol server for ASIC miners
-- Worker management and share tracking
-- Payout engine
-- Redis for real-time statistics
+### ElectrumX Server
 
-### 5. Website
-- Next.js SSR/SSG
-- Cyberpunk gold/black theme
-- Framer Motion animations
-- Three.js particle backgrounds
+| Property | Value |
+|---|---|
+| Source | [spesmilo/electrumx](https://github.com/spesmilo/electrumx) |
+| Patch | `coins_tarcoin.py` injected via `apply_patch.py` |
+| TCP Port | `50001` (internal only) |
+| SSL Port | `50002` (public-facing) |
+| WSS Port | `50004` (WebSocket TLS) |
+| Database | LevelDB (`/data/electrumx`) |
 
-### 6. Monitoring Stack
-- Prometheus: Metrics collection
-- Grafana: Dashboards and alerts
-- Loki: Log aggregation
-- Node Exporter: System metrics
+### HAProxy (Load Balancer)
+
+| Property | Value |
+|---|---|
+| Algorithm | Least connections |
+| Health check | TCP connect every 30s |
+| Ports forwarded | 50001, 50002, 50004 |
+| Stats page | `http://127.0.0.1:8404/stats` |
+
+### TARWallet (Mobile)
+
+| Property | Value |
+|---|---|
+| Base | BlueWallet (React Native, MIT) |
+| Platforms | iOS 14+ / Android 8+ |
+| BIP44 coin type | `5050` — SLIP-0044 PR [#2030](https://github.com/satoshilabs/slips/pull/2030) |
+| Default server | `ssl://electrum.tarcoin.org:50002` |
+| Wallet types | BIP44 / BIP49 / BIP84 / BIP86 |
+
+---
 
 ## Data Flow
 
-### Block Discovery
+### Balance Check
 ```
-1. Miner finds block → submits to pool
-2. Pool validates → submits to tarcoind RPC
-3. tarcoind propagates to P2P network
-4. Explorer detects new block via polling/WebSocket
-5. Cache invalidated → updates broadcast to subscribers
+Wallet  →  ElectrumX: blockchain.scripthash.get_balance(scripthash)
+ElectrumX  →  LevelDB: lookup indexed UTXO
+ElectrumX  →  Wallet: { confirmed: N, unconfirmed: M }
 ```
 
-### Transaction Flow
+### Send Transaction
 ```
-1. User creates tx in wallet
-2. Wallet broadcasts to tarcoind via RPC
-3. tarcoind validates and adds to mempool
-4. Mempool update → Explorer API detects change
-5. Miners pick up tx for next block
-6. Block mined → tx confirmed
+Wallet: sign raw tx locally (private key NEVER leaves device)
+Wallet  →  ElectrumX: blockchain.transaction.broadcast(raw_hex)
+ElectrumX  →  tarcoind RPC: sendrawtransaction(raw_hex)
+tarcoind  →  TARCOIN Network: P2P mempool propagation
 ```
 
-## Security Architecture
-
-### Network Segmentation
+### New Block (real-time)
 ```
-Service          Network     Firewall Rules
-─────────        ───────     ──────────────
-tarcoind         internal    Port 19333 (P2P), 19332 (RPC-internal)
-Explorer         dmz         4000
-API              dmz         5000
-Website          dmz         3000
-Mining Pool      dmz         3001, 3333 (Stratum)
-Redis            internal    6379 (internal-only)
-PostgreSQL       internal    5432 (internal-only)
-Nginx            public      80, 443
+tarcoind  →  ElectrumX: new block notification
+ElectrumX  →  Subscribed wallets: blockchain.headers.subscribe push
 ```
 
-### Rate Limiting
-| Endpoint | Rate | Burst |
-|----------|------|-------|
-| /api/* | 30/s | 50 |
-| /api/v1/blockchain/* | 50/s | 100 |
-| Explorer /api/* | 50/s | 100 |
-| Website | 100/s | 200 |
+---
 
-### Security Headers (Nginx)
-- X-Frame-Options: SAMEORIGIN
-- X-Content-Type-Options: nosniff
-- X-XSS-Protection: 1; mode=block
-- Strict-Transport-Security: max-age=63072000
-- Permissions-Policy: restricted
+## Network Parameters Reference
 
-## Deployment Requirements
+| Parameter | Mainnet | Testnet | Regtest |
+|---|---|---|---|
+| P2P Port | 19333 | 29333 | 18444 |
+| RPC Port | 19332 | 29332 | 19443 |
+| ElectrumX SSL | 50002 | 60002 | — |
+| Bech32 HRP | `tar` | `ttar` | `tarrt` |
+| P2PKH prefix | 65 → `T` | 111 → `m/n` | 111 |
+| P2SH prefix | 127 → `t` | 196 | 196 |
+| WIF prefix | 128 | 239 | 239 |
+| BIP32 xpub | `0488B21E` | `043587CF` | `043587CF` |
+| BIP32 xprv | `0488ADE4` | `04358394` | `04358394` |
+| Magic bytes | `74 61 72 63` | `fc c1 b7 dc` | `fa bf b5 da` |
+| BIP44 coin type | 5050 | 1 (testnet) | — |
 
-### Minimum Production Specs
-| Component | vCPU | RAM | Storage |
-|-----------|------|-----|---------|
-| tarcoind | 4 | 8GB | 100GB+ |
-| Explorer | 2 | 4GB | 20GB |
-| API | 2 | 4GB | 10GB |
-| Pool | 2 | 4GB | 10GB |
-| Website | 1 | 2GB | 5GB |
-| Monitoring | 2 | 4GB | 50GB |
+---
 
-### Network
-- 100 Mbps minimum
-- 1 Gbps recommended for seed nodes
-- Static public IP addresses for seed nodes
-- DNS A records for: tarcoin.org, *.tarcoin.org
+## Key Design Decisions
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| ElectrumX fork | spesmilo/electrumx | Canonical, actively maintained |
+| Coin class injection | Patch script | Upstream-compatible, survives `git pull` |
+| Mobile wallet base | BlueWallet | React Native, MIT, iOS+Android, feature-rich |
+| TLS | Let's Encrypt | Free, auto-renewing |
+| Load balancer | HAProxy | Battle-tested TCP proxy |
+| Database | LevelDB | Native ElectrumX choice |
+| BIP44 coin type | 5050 | Registered via SLIP-0044 PR #2030 |
+
+---
+
+## Ports Summary
+
+| Port | Service | Exposure |
+|---|---|---|
+| `19332` | tarcoind RPC | Internal only |
+| `19333` | TARCOIN P2P | Public |
+| `50001` | ElectrumX TCP | Internal (behind HAProxy) |
+| `50002` | ElectrumX SSL | Public |
+| `50004` | ElectrumX WSS | Public |
+| `8404` | HAProxy stats | localhost only |
+| `9090` | Prometheus | localhost only |
+| `3000` | Grafana | localhost (SSH tunnel) |
+
+---
+
+## Repository Structure
+
+```
+TARCOIN/
+├── blockchain_core/            ← TARCOIN Core (source of truth)
+│   └── tarcoin-core/src/kernel/chainparams.cpp
+├── electrumx/                  ← ElectrumX TARCOIN integration
+│   ├── coins_tarcoin.py        ← Coin class patch
+│   ├── Dockerfile / docker-compose.yml
+│   ├── config/                 ← mainnet + testnet + tarcoin.conf
+│   ├── nginx/ / scripts/ / systemd/
+├── wallet/                     ← TARWallet (BlueWallet fork)
+│   ├── src/config/             ← network.js, electrum.js, app.js
+│   ├── src/models/             ← walletConstants.js
+│   ├── patches/ / scripts/
+├── infrastructure/             ← Production deployment
+│   ├── haproxy/haproxy.cfg
+│   ├── docker-compose.prod.yml
+│   └── monitoring/             ← Prometheus + Grafana
+├── tests/                      ← Test suite
+│   ├── test_coin_class.py
+│   ├── test_addresses.py
+│   └── integration_regtest.sh
+└── docs/                       ← Documentation
+    ├── ARCHITECTURE.md
+    ├── SECURITY_AUDIT.md
+    ├── ELECTRUMX_DEPLOYMENT.md
+    └── MOBILE_WALLET.md
+```

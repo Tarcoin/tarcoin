@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: haproxy
+    static_configs:
+      - targets: ['haproxy:8404']
+
+  - job_name: electrumx_1
+    static_configs:
+      - targets: ['electrumx-1:50001']
+        labels:
+          instance: electrumx-1
+
+  - job_name: electrumx_2
+    static_configs:
+      - targets: ['electrumx-2:50001']
+        labels:
+          instance: electrumx-2
+
+  - job_name: electrumx_3
+    static_configs:
+      - targets: ['electrumx-3:50001']
+        labels:
+          instance: electrumx-3
+
+  - job_name: node_exporter
+    static_configs:
+      - targets: ['localhost:9100']

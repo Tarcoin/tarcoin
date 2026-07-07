@@ -150,13 +150,18 @@ Block validation follows the Bitcoin Core consensus standard:
 
 The TARCOIN genesis block was successfully mined and verified on mainnet.
 
+> **Note:** The genesis hash documented here matches the value asserted in `chainparams.cpp`
+> and confirmed by the live network (Block #1 `Previous Block` field). An earlier pre-launch
+> candidate hash (`000074c6...f44bd7e0`, nonce 15878) was superseded before mainnet launch.
+> The testnet and regtest networks use a different placeholder timestamp (`1748304000` / 2025-05-27).
+
 | Field | Value |
 |-------|-------|
-| Block Hash | `000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0` |
-| Merkle Root | `1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749` |
-| Timestamp | `1748304000` (2025-05-27 00:00:00 UTC) |
+| Block Hash | `0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e` |
+| Merkle Root | `eaf980618b3cde94360d83c4937c3bcebcba7cc1db9f3276eb8b180da3a2e921` |
+| Timestamp | `1782181262` (2026-06-23 02:21:02 UTC) |
 | nBits | `0x1f00ffff` |
-| Nonce | `15878` |
+| Nonce | `65067` |
 | Block Reward | `50,000 TAR` |
 | PoW Target | `0000ffff00000000000000000000000000000000000000000000000000000000` |
 | powLimit | `0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff` |
@@ -344,7 +349,7 @@ All releases must be:
 ## 10. Launch Checklist
 
 ### Pre-Launch
-- [x] Genesis block mined and verified (`000074c6...f44bd7e0`)
+- [x] Genesis block mined and verified (`0000e37e...fbd9939e`)
 - [x] TARCOIN Core v31.x compiled and running
 - [x] Mainnet node boots and passes PoW validation
 - [x] `powLimit` aligned with genesis `nBits` (`0x1f00ffff`)

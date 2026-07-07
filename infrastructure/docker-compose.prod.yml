@@ -1,0 +1,212 @@
+# =============================================================================
+# TARCOIN Infrastructure — Production Multi-Server Stack
+# =============================================================================
+# Production topology:
+#
+#   Internet
+#     │
+#   HAProxy (load balancer — ports 50001/50002/50004)
+#     ├── ElectrumX-1 (primary)
+#     ├── ElectrumX-2 (replica)
+#     └── ElectrumX-3 (replica)
+#           │ (all three share one tarcoind archive node)
+#         tarcoind (archive — txindex=1)
+#
+# Usage:
+#   cp .env.example .env && nano .env
+#   docker-compose -f docker-compose.prod.yml up -d
+# =============================================================================
+
+version: '3.8'
+
+networks:
+  tarcoin-prod:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+volumes:
+  tarcoin-data:
+  electrumx-data-1:
+  electrumx-data-2:
+  electrumx-data-3:
+  ssl-certs:
+
+# ---------------------------------------------------------------------------
+# Common ElectrumX environment (shared by all three instances)
+# ---------------------------------------------------------------------------
+x-electrumx-env: &electrumx-env
+  COIN: TarCoin
+  DB_ENGINE: leveldb
+  DAEMON_URL: http://${TARCOIN_RPC_USER}:${TARCOIN_RPC_PASSWORD}@tarcoind:19332/
+  SSL_CERTFILE: /etc/ssl/electrumx/server.crt
+  SSL_KEYFILE:  /etc/ssl/electrumx/server.key
+  CACHE_MB: "1000"
+  MAX_SESSIONS: "500"
+  LOG_LEVEL: info
+  PEER_DISCOVERY: self
+  PEER_ANNOUNCE: "off"
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # tarcoind — Shared archive node (single instance, serves all ElectrumX)
+  # ---------------------------------------------------------------------------
+  tarcoind:
+    image: ghcr.io/tarcoin/tarcoin/tarcoind:latest
+    container_name: tarcoin-archive
+    restart: unless-stopped
+    networks:
+      tarcoin-prod:
+        ipv4_address: 172.22.0.10
+    ports:
+      - "19333:19333"   # P2P — public
+    volumes:
+      - tarcoin-data:/home/tarcoin/.tarcoin
+      - ./electrumx/config/tarcoin.conf:/home/tarcoin/.tarcoin/tarcoin.conf:ro
+    command:
+      - tarcoind
+      - -printtoconsole
+      - -txindex=1
+      - -server=1
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=172.22.0.0/16
+      - -rpcuser=${TARCOIN_RPC_USER}
+      - -rpcpassword=${TARCOIN_RPC_PASSWORD}
+    healthcheck:
+      test: ["CMD", "tarcoin-cli", "-rpcuser=${TARCOIN_RPC_USER}",
+             "-rpcpassword=${TARCOIN_RPC_PASSWORD}", "getblockcount"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # ElectrumX-1 — Primary server
+  # ---------------------------------------------------------------------------
+  electrumx-1:
+    build:
+      context: ./electrumx
+      dockerfile: Dockerfile
+    image: electrumx-tarcoin:latest
+    container_name: electrumx-1
+    restart: unless-stopped
+    networks:
+      tarcoin-prod:
+        ipv4_address: 172.22.0.21
+    volumes:
+      - electrumx-data-1:/data/electrumx
+      - ssl-certs:/etc/ssl/electrumx:ro
+    environment:
+      <<: *electrumx-env
+      DB_DIRECTORY: /data/electrumx
+      SERVICES: tcp://:50001,ssl://:50002,wss://:50004
+      REPORT_SERVICES: ssl://${ELECTRUMX_HOST}:50002
+      HOST: ${ELECTRUMX_HOST}
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # ElectrumX-2 — Replica
+  # ---------------------------------------------------------------------------
+  electrumx-2:
+    image: electrumx-tarcoin:latest
+    container_name: electrumx-2
+    restart: unless-stopped
+    networks:
+      tarcoin-prod:
+        ipv4_address: 172.22.0.22
+    volumes:
+      - electrumx-data-2:/data/electrumx
+      - ssl-certs:/etc/ssl/electrumx:ro
+    environment:
+      <<: *electrumx-env
+      DB_DIRECTORY: /data/electrumx
+      SERVICES: tcp://:50001,ssl://:50002,wss://:50004
+      REPORT_SERVICES: ssl://${ELECTRUMX_HOST}:50002
+      HOST: ${ELECTRUMX_HOST}
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # ElectrumX-3 — Replica
+  # ---------------------------------------------------------------------------
+  electrumx-3:
+    image: electrumx-tarcoin:latest
+    container_name: electrumx-3
+    restart: unless-stopped
+    networks:
+      tarcoin-prod:
+        ipv4_address: 172.22.0.23
+    volumes:
+      - electrumx-data-3:/data/electrumx
+      - ssl-certs:/etc/ssl/electrumx:ro
+    environment:
+      <<: *electrumx-env
+      DB_DIRECTORY: /data/electrumx
+      SERVICES: tcp://:50001,ssl://:50002,wss://:50004
+      REPORT_SERVICES: ssl://${ELECTRUMX_HOST}:50002
+      HOST: ${ELECTRUMX_HOST}
+    depends_on:
+      tarcoind:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # HAProxy — TCP load balancer across all three ElectrumX instances
+  # ---------------------------------------------------------------------------
+  haproxy:
+    image: haproxy:2.9-alpine
+    container_name: tarcoin-haproxy
+    restart: unless-stopped
+    networks:
+      tarcoin-prod:
+        ipv4_address: 172.22.0.5
+    ports:
+      - "50001:50001"   # Electrum TCP
+      - "50002:50002"   # Electrum SSL
+      - "50004:50004"   # Electrum WSS
+      - "127.0.0.1:8404:8404"  # HAProxy stats (local only)
+    volumes:
+      - ./infrastructure/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - electrumx-1
+      - electrumx-2
+      - electrumx-3
+
+  # ---------------------------------------------------------------------------
+  # Prometheus — Metrics collection
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tarcoin-prometheus
+    restart: unless-stopped
+    networks:
+      - tarcoin-prod
+    ports:
+      - "127.0.0.1:9090:9090"  # Local only
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+
+  # ---------------------------------------------------------------------------
+  # Grafana — Metrics dashboard
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tarcoin-grafana
+    restart: unless-stopped
+    networks:
+      - tarcoin-prod
+    ports:
+      - "127.0.0.1:3000:3000"  # Local only — access via SSH tunnel
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-changeme}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./infrastructure/monitoring/grafana:/var/lib/grafana

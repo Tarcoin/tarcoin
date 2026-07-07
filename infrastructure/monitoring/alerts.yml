@@ -1,0 +1,47 @@
+groups:
+  - name: tarcoin_electrumx
+    rules:
+      - alert: ElectrumXDown
+        expr: up{job=~"electrumx.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ElectrumX instance {{ $labels.instance }} is DOWN"
+          description: "ElectrumX server has been unreachable for 2 minutes."
+
+      - alert: AllElectrumXDown
+        expr: count(up{job=~"electrumx.*"} == 1) == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ALL ElectrumX servers are DOWN — wallet users cannot connect"
+          description: "Zero ElectrumX instances are reachable."
+
+      - alert: TarcoindDown
+        expr: up{job="tarcoind"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "tarcoind full node is DOWN"
+          description: "tarcoind RPC is unreachable. ElectrumX cannot sync."
+
+      - alert: HAProxyDown
+        expr: up{job="haproxy"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HAProxy load balancer is DOWN"
+          description: "The load balancer is unreachable. All connections may be failing."
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage > 85% on /data"
+          description: "ElectrumX database disk is filling up. Free space: {{ $value | humanizePercentage }}"
