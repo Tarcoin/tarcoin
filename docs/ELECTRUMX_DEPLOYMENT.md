@@ -101,7 +101,7 @@ nano ~/.tarcoin/tarcoin.conf
 txindex=1
 server=1
 rpcuser=tarcoin
-rpcpassword=<same password>
+rpcpassword=YOUR_SECURE_RPC_PASSWORD
 rpcbind=127.0.0.1
 rpcallowip=127.0.0.1
 ```

@@ -24,8 +24,9 @@ paths = [
   '''.github/workflows/ci-cd.yml''',
   '''docker/docker-compose.yml''',
   '''docker/config/tarcoin.conf''',
-  '''docs/API\.md''',
+  '''docs/.*''',
   '''devops/scripts/deploy\.sh''',
   '''blockchain_core/tarcoin-core/src/test/.*''',
   '''blockchain_core/tarcoin-core/test/.*''',
 ]
+
