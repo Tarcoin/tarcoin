@@ -31,14 +31,12 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Set up Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'wallet/package.json'
+
 
       - name: Setup Android Wallet Environment
         run: |
