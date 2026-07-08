@@ -33,51 +33,62 @@ function replaceInFile(filePath, target, replacement) {
   log(`Successfully patched: ${path.basename(filePath)}`);
 }
 
-// 1. Patch currency.js
+// ---------------------------------------------------------------------------
+// 1. Overwrite index.js to inject global bitcoinjs-lib network configuration
+// ---------------------------------------------------------------------------
 replaceInFile(
-  'blue_modules/currency.js',
-  `const COIN_TICKER = 'BTC';
-const COIN_DECIMALS = 8;
+  'index.js',
+  `import './shim.js';`,
+  `import './shim.js';
 
-export const satoshiToBTC = (satoshi) => satoshi / 100000000;`,
-  `const COIN_TICKER = 'TAR';
-const COIN_DECIMALS = 8;
+// Inject global TARCOIN parameters into bitcoinjs-lib
+import * as bitcoin from 'bitcoinjs-lib';
 
-export const satoshiToBTC = (satoshi) => satoshi / 100000000;
-export const satoshiToTAR = (satoshi) => satoshi / 100000000;
-export const TARToSatoshi = (tar) => Math.round(tar * 100000000);`
+bitcoin.networks.bitcoin.messagePrefix = '\\x19Tarcoin Signed Message:\\n';
+bitcoin.networks.bitcoin.bech32 = 'tar';
+bitcoin.networks.bitcoin.bip32 = {
+  public: 0x0488b21e,
+  private: 0x0488ade4
+};
+bitcoin.networks.bitcoin.pubKeyHash = 65;  // T...
+bitcoin.networks.bitcoin.scriptHash = 127; // t...
+bitcoin.networks.bitcoin.wif = 128;
+
+// Testnet params
+bitcoin.networks.testnet.messagePrefix = '\\x19Tarcoin Signed Message:\\n';
+bitcoin.networks.testnet.bech32 = 'ttar';
+bitcoin.networks.testnet.bip32 = {
+  public: 0x043587cf,
+  private: 0x04358394
+};
+bitcoin.networks.testnet.pubKeyHash = 111;
+bitcoin.networks.testnet.scriptHash = 196;
+bitcoin.networks.testnet.wif = 239;
+`
 );
 
-// 2. Patch network.js (complete overwrite is safer)
-const networkJsContent = `import * as bitcoin from 'bitcoinjs-lib';
+// ---------------------------------------------------------------------------
+// 2. Patch currency.ts
+// ---------------------------------------------------------------------------
+replaceInFile(
+  'blue_modules/currency.ts',
+  `function satoshiToBTC(satoshi: number): string {
+  return new BigNumber(satoshi).dividedBy(100000000).toString(10);
+}`,
+  `function satoshiToBTC(satoshi: number): string {
+  return new BigNumber(satoshi).dividedBy(100000000).toString(10);
+}
+export function satoshiToTAR(satoshi: number): string {
+  return satoshiToBTC(satoshi);
+}
+export function TARToSatoshi(tar: number | string): number {
+  return new BigNumber(tar).multipliedBy(100000000).toNumber();
+}`
+);
 
-// TARCOIN mainnet network parameters
-export const TARCOIN_MAINNET = {
-  messagePrefix: '\\x19Tarcoin Signed Message:\\n',
-  bech32: 'tar',
-  bip32: { public: 0x0488b21e, private: 0x0488ade4 },
-  pubKeyHash: 65,
-  scriptHash: 127,
-  wif: 128,
-};
-
-// TARCOIN testnet network parameters
-export const TARCOIN_TESTNET = {
-  messagePrefix: '\\x19Tarcoin Signed Message:\\n',
-  bech32: 'ttar',
-  bip32: { public: 0x043587cf, private: 0x04358394 },
-  pubKeyHash: 111,
-  scriptHash: 196,
-  wif: 239,
-};
-
-export const NETWORK = TARCOIN_MAINNET;
-export const network = TARCOIN_MAINNET;
-`;
-fs.writeFileSync('blue_modules/network.js', networkJsContent, 'utf8');
-log('Successfully patched: network.js');
-
+// ---------------------------------------------------------------------------
 // 3. Patch ElectrumClient.js
+// ---------------------------------------------------------------------------
 replaceInFile(
   'ElectrumClient.js',
   `const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443', tcp: '50001' };`,
@@ -87,4 +98,44 @@ const defaultPeer = { host: 'electrum.tarcoin.org', ssl: '50002', tcp: '50001' }
 const hardcodedPeers = [
   { host: 'electrum.tarcoin.org', ssl: '50002', tcp: '50001' },
 ];`
+);
+
+// ---------------------------------------------------------------------------
+// 4. Patch bitcoinUnits.ts
+// ---------------------------------------------------------------------------
+replaceInFile(
+  'models/bitcoinUnits.ts',
+  `export const BitcoinUnit = {
+  BTC: 'BTC',
+  SATS: 'sats',
+  LOCAL_CURRENCY: 'local_currency',
+  MAX: 'MAX',
+} as const;`,
+  `export const BitcoinUnit = {
+  BTC: 'TAR',
+  SATS: 'tar',
+  LOCAL_CURRENCY: 'local_currency',
+  MAX: 'MAX',
+} as const;`
+);
+
+// ---------------------------------------------------------------------------
+// 5. Patch loc/en.json
+// ---------------------------------------------------------------------------
+replaceInFile(
+  'loc/en.json',
+  `    "BTC": "BTC",`,
+  `    "BTC": "TAR",`
+);
+
+replaceInFile(
+  'loc/en.json',
+  `    "add_bitcoin": "Bitcoin",`,
+  `    "add_bitcoin": "TARCOIN",`
+);
+
+replaceInFile(
+  'loc/en.json',
+  `    "add_bitcoin_explain": "Simple and powerful Bitcoin wallet",`,
+  `    "add_bitcoin_explain": "Simple and powerful TARCOIN wallet",`
 );
