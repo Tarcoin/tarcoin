@@ -139,6 +139,10 @@ fi
 # ---------------------------------------------------------------------------
 # Step 7: Install Node dependencies
 # ---------------------------------------------------------------------------
+info "Configuring Git to rewrite SSH repository URLs to HTTPS..."
+git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+git config --global url."https://github.com/".insteadOf "git@github.com:"
+
 info "Installing Node.js dependencies (this may take a few minutes)..."
 npm install --legacy-peer-deps
 success "Dependencies installed"
