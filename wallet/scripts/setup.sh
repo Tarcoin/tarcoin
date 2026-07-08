@@ -73,7 +73,13 @@ cp "$WALLET_ROOT/src/config/electrum.js"          blue_modules/tarcoin/electrum.
 cp "$WALLET_ROOT/src/config/app.js"               blue_modules/tarcoin/app.js
 cp "$WALLET_ROOT/src/models/walletConstants.js"   blue_modules/tarcoin/walletConstants.js
 
-success "TARCOIN source files copied"
+# Overwrite default application launcher icons with custom TARCOIN logo
+info "Replacing default launcher icons with custom TARCOIN logo..."
+cp -R "$WALLET_ROOT/assets/android/"* android/app/src/main/res/
+cp -R "$WALLET_ROOT/assets/ios/"* ios/BlueWallet/Images.xcassets/AppIcon.appiconset/
+
+success "TARCOIN source files and brand assets copied successfully"
+
 
 # ---------------------------------------------------------------------------
 # Step 3: Apply patches
