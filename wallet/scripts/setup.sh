@@ -84,14 +84,8 @@ success "TARCOIN source files and brand assets copied successfully"
 # ---------------------------------------------------------------------------
 # Step 3: Apply patches
 # ---------------------------------------------------------------------------
-info "Applying TARCOIN patches..."
-PATCH_DIR="$WALLET_ROOT/patches"
-
-for patch in "$PATCH_DIR"/*.patch; do
-    info "  Applying: $(basename "$patch")"
-    git apply "$patch" --ignore-whitespace || warn "  Patch $(basename "$patch") had conflicts — check manually"
-done
-
+info "Applying TARCOIN patches via JavaScript utility..."
+node "$WALLET_ROOT/scripts/apply_patches.js"
 success "Patches applied"
 
 # ---------------------------------------------------------------------------
