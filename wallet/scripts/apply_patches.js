@@ -87,16 +87,22 @@ export function TARToSatoshi(tar: number | string): number {
 );
 
 // ---------------------------------------------------------------------------
-// 3. Patch ElectrumClient.js
+// 3. Patch BlueElectrum.ts (ElectrumClient module in v7.0.0)
 // ---------------------------------------------------------------------------
 replaceInFile(
-  'ElectrumClient.js',
-  `const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443', tcp: '50001' };`,
-  `// TARCOIN ElectrumX servers
-const defaultPeer = { host: 'electrum.tarcoin.org', ssl: '50002', tcp: '50001' };
-
-const hardcodedPeers = [
-  { host: 'electrum.tarcoin.org', ssl: '50002', tcp: '50001' },
+  'blue_modules/BlueElectrum.ts',
+  `const defaultPeer = { host: 'electrum1.bluewallet.io', ssl: '443' };
+export const hardcodedPeers: Peer[] = [
+  { host: 'mainnet.foundationdevices.com', ssl: '50002' },
+  // { host: 'bitcoin.lukechilds.co', ssl: '50002' },
+  // { host: 'electrum.jochen-hoenicke.de', ssl: '50006' },
+  { host: 'electrum1.bluewallet.io', ssl: '443' },
+  { host: 'electrum.acinq.co', ssl: '50002' },
+  { host: 'electrum.bitaroo.net', ssl: '50002' },
+];`,
+  `const defaultPeer = { host: 'electrum.tarcoin.org', ssl: '50002' };
+export const hardcodedPeers: Peer[] = [
+  { host: 'electrum.tarcoin.org', ssl: '50002' },
 ];`
 );
 
