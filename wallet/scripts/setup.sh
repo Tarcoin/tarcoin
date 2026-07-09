@@ -131,6 +131,13 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Step 6b: Clean lock files to prevent SSH URLs from lock file being used
+# ---------------------------------------------------------------------------
+info "Removing lock files to force fresh resolution with rewritten package.json..."
+rm -f package-lock.json yarn.lock pnpm-lock.yaml
+success "Lock files removed"
+
+# ---------------------------------------------------------------------------
 # Step 7: Rewrite all SSH/github: git dependencies to HTTPS in package.json
 # ---------------------------------------------------------------------------
 info "Rewriting SSH git dependencies to HTTPS in package.json..."
@@ -189,6 +196,10 @@ git config --global url."${AUTHED_BASE}".insteadOf "git@github.com:"
 git config --global url."${AUTHED_BASE}".insteadOf "git+ssh://git@github.com/"
 
 info "Installing Node.js dependencies (this may take a few minutes)..."
+# Remove lock file to force fresh dependency resolution with rewritten HTTPS URLs.
+# If lock file exists (from cloned repo), npm will use it instead of package.json,
+# and any SSH URLs in the lock file will cause authentication failures in CI.
+rm -f package-lock.json yarn.lock
 npm install --legacy-peer-deps
 success "Dependencies installed"
 
