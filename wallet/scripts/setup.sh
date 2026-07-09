@@ -131,11 +131,52 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 7: Install Node dependencies
+# Step 7: Rewrite all SSH/github: git dependencies to HTTPS in package.json
 # ---------------------------------------------------------------------------
-info "Configuring Git to rewrite SSH repository URLs to HTTPS..."
+info "Rewriting SSH git dependencies to HTTPS in package.json..."
+# This is required because GitHub Actions runners have no SSH key.
+# npm resolves 'github:Owner/Repo' and 'git+ssh://...' to SSH before git-config rewrites apply.
+node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+let count = 0;
+
+function rewriteUrl(val) {
+  if (typeof val !== 'string') return val;
+  // github:Owner/Repo#commit  =>  https://github.com/Owner/Repo#commit
+  val = val.replace(/^github:(.+)$/, 'https://github.com/\$1');
+  // git+ssh://git@github.com/Owner/Repo  =>  https://github.com/Owner/Repo
+  val = val.replace(/^git\+ssh:\/\/git@github\.com\//, 'https://github.com/');
+  // ssh://git@github.com/Owner/Repo  =>  https://github.com/Owner/Repo
+  val = val.replace(/^ssh:\/\/git@github\.com\//, 'https://github.com/');
+  // https://github.com/Owner/Repo  (already fine, leave as-is)
+  return val;
+}
+
+for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
+  if (!pkg[section]) continue;
+  for (const [name, val] of Object.entries(pkg[section])) {
+    const rewritten = rewriteUrl(val);
+    if (rewritten !== val) {
+      pkg[section][name] = rewritten;
+      count++;
+      console.log('  Rewrote: ' + name + '  =>  ' + rewritten);
+    }
+  }
+}
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+console.log('[PATCH] ' + count + ' dependency URL(s) rewritten to HTTPS');
+"
+success "package.json SSH dependencies rewritten to HTTPS"
+
+# ---------------------------------------------------------------------------
+# Step 8: Install Node dependencies
+# ---------------------------------------------------------------------------
+info "Configuring Git to rewrite SSH repository URLs to HTTPS (belt-and-suspenders)..."
+git config --global url."https://github.com/".insteadOf "git+ssh://git@github.com/"
 git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 git config --global url."https://github.com/".insteadOf "git@github.com:"
+git config --global url."https://".insteadOf "ssh://"
 
 info "Installing Node.js dependencies (this may take a few minutes)..."
 npm install --legacy-peer-deps
