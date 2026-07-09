@@ -39,16 +39,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Configure Git credentials for GitHub Actions
-        # Inject GITHUB_TOKEN so npm can fetch public GitHub git dependencies
-        # over HTTPS without hitting unauthenticated rate limits.
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git@github.com:"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git+ssh://git@github.com/"
-
       - name: Setup Android Wallet Environment
+        # Pass GITHUB_TOKEN so setup.sh can configure authenticated HTTPS for
+        # npm's git dependency fetching (avoids SSH permission errors in CI).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x wallet/scripts/*.sh
           ./wallet/scripts/setup.sh
@@ -95,14 +90,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
 
-      - name: Configure Git credentials for GitHub Actions
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git@github.com:"
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git+ssh://git@github.com/"
-
       - name: Setup iOS Wallet Environment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x wallet/scripts/*.sh
           ./wallet/scripts/setup.sh

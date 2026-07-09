@@ -172,11 +172,21 @@ success "package.json SSH dependencies rewritten to HTTPS"
 # ---------------------------------------------------------------------------
 # Step 8: Install Node dependencies
 # ---------------------------------------------------------------------------
-info "Configuring Git to rewrite SSH repository URLs to HTTPS (belt-and-suspenders)..."
-git config --global url."https://github.com/".insteadOf "git+ssh://git@github.com/"
-git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-git config --global url."https://github.com/".insteadOf "git@github.com:"
-git config --global url."https://".insteadOf "ssh://"
+info "Configuring Git to rewrite SSH repository URLs to HTTPS..."
+# If GITHUB_TOKEN is set (e.g. in GitHub Actions), use authenticated HTTPS
+# so npm can fetch git dependencies from GitHub without hitting auth errors.
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  info "GITHUB_TOKEN detected — using authenticated HTTPS for git deps"
+  AUTHED_BASE="https://x-access-token:${GITHUB_TOKEN}@github.com/"
+else
+  info "No GITHUB_TOKEN — using plain HTTPS (public repos only)"
+  AUTHED_BASE="https://github.com/"
+fi
+
+git config --global url."${AUTHED_BASE}".insteadOf "https://github.com/"
+git config --global url."${AUTHED_BASE}".insteadOf "ssh://git@github.com/"
+git config --global url."${AUTHED_BASE}".insteadOf "git@github.com:"
+git config --global url."${AUTHED_BASE}".insteadOf "git+ssh://git@github.com/"
 
 info "Installing Node.js dependencies (this may take a few minutes)..."
 npm install --legacy-peer-deps
