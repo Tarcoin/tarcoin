@@ -190,10 +190,10 @@ else
   AUTHED_BASE="https://github.com/"
 fi
 
-git config --global url."${AUTHED_BASE}".insteadOf "https://github.com/"
-git config --global url."${AUTHED_BASE}".insteadOf "ssh://git@github.com/"
-git config --global url."${AUTHED_BASE}".insteadOf "git@github.com:"
-git config --global url."${AUTHED_BASE}".insteadOf "git+ssh://git@github.com/"
+git config --global --add url."${AUTHED_BASE}".insteadOf "https://github.com/"
+git config --global --add url."${AUTHED_BASE}".insteadOf "ssh://git@github.com/"
+git config --global --add url."${AUTHED_BASE}".insteadOf "git@github.com:"
+git config --global --add url."${AUTHED_BASE}".insteadOf "git+ssh://git@github.com/"
 
 info "Installing Node.js dependencies (this may take a few minutes)..."
 # Remove lock file to force fresh dependency resolution with rewritten HTTPS URLs.
