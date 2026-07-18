@@ -72,7 +72,7 @@ export default function VerifyPage() {
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.35 }}
               className="text-base text-gray-400 max-w-xl mb-10 font-space leading-relaxed">
               Verify that a message was cryptographically signed by the owner of a TARCOIN address.
-              Enter the receiver's address, the original message (copy line breaks exactly), and the signature.
+              Enter the receiver&apos;s address, the original message (copy line breaks exactly), and the signature.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }}
@@ -82,14 +82,14 @@ export default function VerifyPage() {
                 {/* Address */}
                 <div>
                   <label className="block text-xs font-orbitron text-tarcoin-gold tracking-widest mb-2 uppercase">
-                    TARCOIN Address (tar1… or T…)
+                    TARCOIN Address (tar1q&hellip; or T&hellip;)
                   </label>
                   <input
                     id="verify-address"
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. tar1qxxx... or TxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxY"
+                    placeholder="e.g. tar1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx or TxxxxxxxxxxxxxxxxxxxY"
                     className="w-full bg-black/40 border border-tarcoin-gold/20 rounded-lg px-4 py-3 text-sm font-mono text-white placeholder-gray-600 focus:outline-none focus:border-tarcoin-gold/50 transition-colors"
                     autoComplete="off"
                     spellCheck={false}
@@ -177,9 +177,10 @@ export default function VerifyPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
               className="glass rounded-xl p-5 border border-tarcoin-gold/10 mb-8 text-sm text-gray-400 font-space">
               <p className="mb-2">
-                <span className="text-tarcoin-gold font-orbitron text-xs tracking-wider">ℹ NOTE:</span> This only proves the signing party controls the address — it does not prove sendership of any transaction.
+                <span className="text-tarcoin-gold font-orbitron text-xs tracking-wider">&#9432; NOTE:</span> This only proves the signing party controls the address &mdash; it does not prove sendership of any transaction.
               </p>
               <p>Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack.</p>
+              <p className="mt-2">TARCOIN address formats: <span className="font-mono text-tarcoin-gold/80">tar1q...</span> (SegWit / Bech32) or <span className="font-mono text-tarcoin-gold/80">T...</span> (Legacy / Base58). Coin type: 5050 (SLIP-0044).</p>
             </motion.div>
 
             <div className="flex flex-wrap gap-4">
