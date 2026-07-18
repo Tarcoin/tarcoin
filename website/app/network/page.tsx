@@ -2,8 +2,72 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+const EXPLORER_API = process.env.NEXT_PUBLIC_EXPLORER_API || "https://explorer.tarcoin.org";
+
+function formatHashrate(hr: number): string {
+  if (!hr) return "0 H/s";
+  if (hr < 1e3) return `${hr.toFixed(2)} H/s`;
+  if (hr < 1e6) return `${(hr / 1e3).toFixed(2)} KH/s`;
+  if (hr < 1e9) return `${(hr / 1e6).toFixed(2)} MH/s`;
+  if (hr < 1e12) return `${(hr / 1e9).toFixed(2)} GH/s`;
+  return `${(hr / 1e12).toFixed(2)} TH/s`;
+}
+
+function formatNumber(n: number): string {
+  if (n === undefined || n === null) return "—";
+  return n.toLocaleString();
+}
+
+interface NetStats {
+  blocks?: number;
+  blockHeight?: number;
+  hashrate?: number;
+  difficulty?: number;
+  connections?: number;
+}
 
 export default function NetworkPage() {
+  const [stats, setStats] = useState<NetStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  async function fetchStats() {
+    try {
+      const res = await fetch(`${EXPLORER_API}/api/network/stats`);
+      if (res.ok) {
+        const data: NetStats = await res.json();
+        setStats(data);
+        setLastUpdated(new Date().toLocaleTimeString());
+      }
+    } catch {
+      // keep previous data if available
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const blockHeight = stats?.blocks ?? stats?.blockHeight ?? 0;
+  const hashrate = stats?.hashrate ?? 0;
+  const difficulty = stats?.difficulty ?? 0;
+  const connections = stats?.connections ?? 0;
+
+  const statsGrid = [
+    { label: "Consensus", value: "SHA256d PoW" },
+    { label: "Block Time", value: "~10 minutes" },
+    { label: "Difficulty", value: loading ? "Loading..." : difficulty ? difficulty.toFixed(4) : "—" },
+    { label: "Block Height", value: loading ? "Loading..." : formatNumber(blockHeight) },
+    { label: "Network Hashrate", value: loading ? "Loading..." : formatHashrate(hashrate) },
+    { label: "Active Nodes", value: loading ? "Loading..." : connections ? formatNumber(connections) : "—" },
+  ];
+
   return (
     <main className="min-h-screen bg-tarcoin-black">
       <div className="scanlines" />
@@ -25,29 +89,43 @@ export default function NetworkPage() {
               <span className="text-tarcoin-gold text-glow">Status</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg text-gray-400 max-w-3xl mx-auto mb-10 font-space">
+              className="text-lg text-gray-400 max-w-3xl mx-auto mb-2 font-space">
               Real-time TARCOIN mainnet status. View block height, difficulty, hashrate, and node health.
             </motion.p>
+            {lastUpdated && (
+              <p className="text-xs text-gray-600 font-mono mb-10">
+                Last updated: {lastUpdated} · Auto-refreshes every 15s
+              </p>
+            )}
+            {!lastUpdated && !loading && (
+              <p className="text-xs text-red-400/70 font-mono mb-10">
+                Could not reach API — showing static parameters only.
+              </p>
+            )}
+            {!lastUpdated && loading && (
+              <p className="text-xs text-gray-600 font-mono mb-10 animate-pulse">
+                Fetching live data…
+              </p>
+            )}
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left mb-12">
-              {[
-                { label: "Consensus", value: "SHA256d PoW" },
-                { label: "Block Time", value: "~10 minutes" },
-                { label: "Difficulty", value: "Loading..." },
-                { label: "Block Height", value: "Loading..." },
-                { label: "Network Hashrate", value: "Loading..." },
-                { label: "Active Nodes", value: "Loading..." },
-              ].map((s) => (
+              {statsGrid.map((s) => (
                 <div key={s.label} className="glass rounded-xl p-6 border border-tarcoin-gold/10">
                   <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-1">{s.label}</div>
-                  <div className="text-xl font-mono text-white">{s.value}</div>
+                  <div className={`text-xl font-mono ${s.value === "Loading..." ? "text-gray-500 animate-pulse" : "text-white"}`}>{s.value}</div>
                 </div>
               ))}
             </motion.div>
-            <Link href="/" className="btn-ghost text-base px-8 py-3.5">Back to Home</Link>
+            <div className="mb-8">
+              <a href="https://explorer.tarcoin.org" target="_blank" rel="noopener noreferrer"
+                className="btn-primary text-base px-8 py-3.5 inline-block mr-4">
+                Open Explorer ↗
+              </a>
+              <Link href="/" className="btn-ghost text-base px-8 py-3.5">Back to Home</Link>
+            </div>
           </div>
         </section>
       </div>
     </main>
   );
-}
+}

@@ -8,7 +8,7 @@ const statusItems = [
     icon: BsCheckCircle,
     label: "Genesis Block",
     status: "Verified & Running",
-    description: "Hash: 000074c6...f44bd7e0 · Nonce: 15878 · nBits: 0x1f00ffff · Height: 0.",
+    description: "Hash: 0000e37e...bd9939e · Nonce: 65067 · nBits: 0x1f00ffff · Height: 0.",
     state: "completed",
   },
   {
@@ -59,7 +59,7 @@ export default function MainnetStatus() {
           <div className="mt-6 inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-tarcoin-neon/30 bg-tarcoin-neon/5">
             <span className="w-2 h-2 rounded-full bg-tarcoin-neon animate-pulse" />
             <span className="text-xs font-mono text-tarcoin-neon tracking-wider">
-              Genesis: 000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0
+              Genesis: 0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e
             </span>
           </div>
         </motion.div>

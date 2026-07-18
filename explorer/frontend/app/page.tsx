@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_BASE = process.env.NEXT_PUBLIC_EXPLORER_API || 'http://localhost:4000';
-const GENESIS_HASH = '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0';
+const GENESIS_HASH = '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e';
 const POLL_INTERVAL = 15000;
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -334,8 +334,15 @@ export default function HomePage() {
   const hashrate = stats.hashrate ?? 0;
   const difficulty = stats.difficulty ?? (blocks[0]?.difficulty ?? 0);
   const mempoolSize = stats.mempoolSize ?? stats.mempoolCount ?? 0;
-  const totalSupply = stats.totalSupply ?? 50_000_000_000;
-  const circulatingSupply = stats.circulating ?? 10_000_000_000;
+  // Circulating supply = mined coins only (block rewards so far).
+  // Do NOT fall back to 10B — that's the cold storage reserve, not circulating.
+  const rawCirculating = stats.circulating ?? stats.circulatingSupply ?? 0;
+  // If the API returns a value that already includes the 10B reserve, subtract it:
+  // circulatingSupply (mined) = totalSupply - remaining_mineable - reserved
+  // But if the API returns mined supply directly, just use it.
+  // Safe approach: if value > 10.5B, assume it includes the 10B reserve and subtract.
+  const RESERVE = 10_000_000_000;
+  const circulatingSupply = rawCirculating > (RESERVE + 1_000_000) ? rawCirculating - RESERVE : rawCirculating;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--black)', color: 'var(--text)' }}>
@@ -486,7 +493,17 @@ export default function HomePage() {
           <StatCard label="Mempool TXs" value={formatNumber(mempoolSize)} loading={loadingStats} />
           <StatCard label="Max Supply" value="50 Billion" loading={false} />
           <StatCard label="Reserved (Cold Storage)" value="10.00 Billion" loading={false} />
-          <StatCard label="Circulating Supply" value={circulatingSupply >= 1000000 ? `${(circulatingSupply / 1000000000).toFixed(6)} Billion` : formatNumber(circulatingSupply)} loading={loadingStats} />
+          <StatCard
+            label="Mined Supply"
+            value={
+              circulatingSupply === 0
+                ? '0 TAR'
+                : circulatingSupply >= 1_000_000_000
+                  ? `${(circulatingSupply / 1_000_000_000).toFixed(6)} Billion TAR`
+                  : `${formatNumber(circulatingSupply)} TAR`
+            }
+            loading={loadingStats}
+          />
         </div>
 
         {/* ── live indicator ────────────────────────────────────────────── */}

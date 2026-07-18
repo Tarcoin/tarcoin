@@ -96,7 +96,7 @@ function WhitepaperHero() {
             { label: "Status", value: "Mining ✓" },
             { label: "Date", value: "June 2026" },
             { label: "License", value: "MIT" },
-            { label: "Genesis", value: "000074c6..." },
+            { label: "Genesis", value: "0000e37e..." },
           ].map((s) => (
             <div key={s.label} className="glass rounded-lg px-5 py-3 text-center min-w-[110px]">
               <div className="text-sm font-mono text-tarcoin-gold">{s.value}</div>
@@ -262,7 +262,7 @@ const networkParams = [
   { label: "RPC Port (Mainnet)", value: "19332" },
   { label: "Magic Bytes (Mainnet)", value: "0xfabfb5da" },
   { label: "Genesis nBits", value: "0x1f00ffff" },
-  { label: "Genesis Nonce", value: "15878" },
+  { label: "Genesis Nonce", value: "65067" },
 ];
 
 const supplyParams = [
@@ -272,8 +272,8 @@ const supplyParams = [
   { label: "Block Reward (Era 1)", value: "50,000 TAR" },
   { label: "Halving Interval", value: "400,000 blocks (~7.6 years)" },
   { label: "Halving Schedule", value: "Progressive halvings every 400,000 blocks" },
-  { label: "Genesis Hash", value: "000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0" },
-  { label: "Genesis Merkle Root", value: "1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749" },
+  { label: "Genesis Hash", value: "0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e" },
+  { label: "Genesis Merkle Root", value: "eaf980618b3cde94360d83c4937c3bcebcba7cc1db9f3276eb8b180da3a2e921" },
 ];
 
 const emissionSchedule = [
@@ -650,7 +650,7 @@ function InfrastructureSection() {
 // ─── Section 6: Launch Checklist ─────────────────────────────────────────────
 
 const preLaunchItems = [
-  "Genesis block mined and verified (000074c6...f44bd7e0)",
+  "Genesis block mined and verified (0000e37e...bd9939e)",
   "TARCOIN Core v31.x compiled and running",
   "Mainnet node boots and passes PoW validation",
   "powLimit aligned with genesis nBits (0x1f00ffff)",

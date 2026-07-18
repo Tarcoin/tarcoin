@@ -349,7 +349,7 @@ All releases must be:
 ## 10. Launch Checklist
 
 ### Pre-Launch
-- [x] Genesis block mined and verified (`0000e37e...fbd9939e`)
+- [x] Genesis block mined and verified (`0000e37e...bd9939e`)
 - [x] TARCOIN Core v31.x compiled and running
 - [x] Mainnet node boots and passes PoW validation
 - [x] `powLimit` aligned with genesis `nBits` (`0x1f00ffff`)

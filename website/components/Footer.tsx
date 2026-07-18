@@ -9,6 +9,7 @@ const footerLinks = {
     { name: "Whitepaper", href: "/whitepaper" },
     { name: "Network Status", href: "/network" },
     { name: "Rich List", href: "/richlist" },
+    { name: "Verify Signature", href: "/verify" },
   ],
   wallets: [
     { name: "Windows Wallet", href: "/download#windows" },
@@ -98,7 +99,7 @@ export default function Footer() {
             <span className="w-1 h-1 rounded-full bg-gray-600" />
             <span>RPC Port: 19332</span>
             <span className="w-1 h-1 rounded-full bg-gray-600" />
-            <span>bech32: tar</span>
+            <span>bech32: tar1</span>
           </div>
         </div>
       </div>

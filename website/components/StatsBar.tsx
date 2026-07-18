@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 const stats = [
-  { label: "Block Height", value: "0", suffix: "" },
-  { label: "Network Hashrate", value: "0", suffix: " TH/s" },
-  { label: "Circulating Supply", value: "10,000,000,000", suffix: " TAR" },
+  { label: "Block Height", value: "375+", suffix: "" },
+  { label: "Network Hashrate", value: "71.72", suffix: " TH/s" },
+  { label: "Mined Supply", value: "18,750,000", suffix: " TAR" },
   { label: "Total Supply", value: "50,000,000,000", suffix: " TAR" },
-  { label: "Blocks Until Halving", value: "400,000", suffix: "" },
-  { label: "Difficulty", value: "1.52588e-5", suffix: "" },
+  { label: "Cold Storage Reserve", value: "10,000,000,000", suffix: " TAR" },
+  { label: "Block Reward", value: "50,000", suffix: " TAR" },
 ];
 
 export default function StatsBar() {

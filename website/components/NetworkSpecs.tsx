@@ -11,7 +11,7 @@ const specs = [
   { label: "Block Reward", value: "50,000 TAR" },
   { label: "P2P Port", value: "19333" },
   { label: "RPC Port", value: "19332" },
-  { label: "Bech32 Prefix", value: "tar" },
+  { label: "Bech32 Prefix", value: "tar1" },
   { label: "nBits", value: "0x1f00ffff" },
 ];
 
