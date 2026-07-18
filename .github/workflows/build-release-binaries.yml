@@ -194,7 +194,6 @@ jobs:
             miniupnpc:u
             zeromq:u
             qrencode:u
-            zip:u
 
       - name: Configure CMake (MSYS2 native MinGW)
         working-directory: ${{ env.CORE_DIR }}

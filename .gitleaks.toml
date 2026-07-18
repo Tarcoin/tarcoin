@@ -17,11 +17,15 @@ description = "Global allowlist for known safe patterns"
 regexes = [
   '''tarcoin:tarcoin''',
   '''0x0e8a2b136c592a7dULL''',
+  # CI cache keys — not secrets, just build system identifiers
+  '''mingw32-qt-depends-''',
+  '''mingw32-depends-''',
 ]
 
 # Allow specific files that contain known test/dev credentials or example documentation
 paths = [
   '''.github/workflows/ci-cd.yml''',
+  '''.github/workflows/build-release-binaries.yml''',
   '''docker/docker-compose.yml''',
   '''docker/config/tarcoin.conf''',
   '''docs/.*''',
