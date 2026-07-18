@@ -54,6 +54,7 @@ jobs:
             libboost-thread-dev libboost-program-options-dev \
             libsqlite3-dev libminiupnpc-dev libzmq3-dev \
             qt6-base-dev qt6-tools-dev qt6-tools-dev-tools \
+            qt6-l10n-tools \
             libqt6svg6-dev libqrencode-dev libxkbcommon-dev \
             libgl1-mesa-dev zip
 
@@ -161,76 +162,100 @@ jobs:
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────
-  # JOB 3 — Windows Wallet (cross-compiled with MinGW + Qt GUI)
-  # Runner: ubuntu-22.04 with mingw-w64
+  # JOB 3 — Windows Wallet (MSYS2/UCRT64 native build with pre-built Qt6)
+  # Runner: windows-2022 — avoids MinGW cross-compile GCC ICE with Qt6
   # Produces: tarcoind.exe + tarcoin-cli.exe + tarcoin-qt.exe
   # ────────────────────────────────────────────────────────────────────────────
   windows-wallet:
     name: Windows Wallet (Qt GUI + CLI)
-    runs-on: ubuntu-22.04
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install MinGW cross-compiler and Qt deps
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            build-essential pkg-config cmake ninja-build python3 \
-            g++-mingw-w64-x86-64 mingw-w64-x86-64-dev \
-            nsis zip
-
-      - name: Cache Windows depends (with Qt)
-        uses: actions/cache@v4
+      - name: Setup MSYS2 with UCRT64 + Qt6
+        uses: msys2/setup-msys2@v2
         with:
-          path: ${{ env.CORE_DIR }}/depends/built
-          key: mingw32-qt-depends-${{ hashFiles(format('{0}/depends/packages/*.mk', env.CORE_DIR)) }}
-          restore-keys: mingw32-qt-depends-
+          msystem: UCRT64
+          update: true
+          pacboy: >
+            gcc:u
+            cmake:u
+            ninja:u
+            qt6-base:u
+            qt6-tools:u
+            qt6-svg:u
+            boost:u
+            libevent:u
+            sqlite3:u
+            miniupnpc:u
+            zeromq:u
+            qrencode:u
+            zip:u
 
-      - name: Build Windows depends (includes Qt)
-        working-directory: ${{ env.CORE_DIR }}/depends
-        run: |
-          chmod +x config.guess config.sub || true
-          # Build WITH Qt (no NO_QT=1) so tarcoin-qt.exe is available
-          make HOST=x86_64-w64-mingw32 -j$(nproc)
-
-      - name: Configure (Windows cross-compile, with Qt GUI)
+      - name: Configure CMake (MSYS2 native MinGW)
         working-directory: ${{ env.CORE_DIR }}
         run: |
           touch contrib/filter-lcov.py || true
           cmake -B build -G Ninja \
-            --toolchain depends/x86_64-w64-mingw32/toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_GUI=ON \
             -DENABLE_IPC=OFF \
-            -DBUILD_TESTS=OFF
+            -DBUILD_TESTS=OFF \
+            -DWITH_ZMQ=ON \
+            -DWITH_UPNP=ON
 
       - name: Compile
         working-directory: ${{ env.CORE_DIR }}
         run: cmake --build build -j$(nproc)
 
-      - name: Package — Windows Wallet
+      - name: Deploy Qt DLLs (windeployqt)
+        working-directory: ${{ env.CORE_DIR }}
         run: |
-          VERSION="${GITHUB_REF_NAME:-dev}"
-          PKG="tarcoin-windows-wallet-${VERSION}"
-          mkdir -p "${PKG}"
-          # tarcoind.exe
-          cp "${{ env.CORE_DIR }}/build/bin/tarcoind.exe"    "${PKG}/" 2>/dev/null || \
-          cp "${{ env.CORE_DIR }}/build/src/tarcoind.exe"    "${PKG}/" 2>/dev/null || true
-          # tarcoin-cli.exe
-          cp "${{ env.CORE_DIR }}/build/bin/tarcoin-cli.exe" "${PKG}/" 2>/dev/null || \
-          cp "${{ env.CORE_DIR }}/build/src/tarcoin-cli.exe" "${PKG}/" 2>/dev/null || true
-          # tarcoin-qt.exe (GUI wallet)
-          cp "${{ env.CORE_DIR }}/build/bin/tarcoin-qt.exe"  "${PKG}/" 2>/dev/null || \
-          cp "${{ env.CORE_DIR }}/build/src/qt/tarcoin-qt.exe" "${PKG}/" 2>/dev/null || true
-          cat > "${PKG}/README.txt" << 'EOF'
+          # Bundle required Qt DLLs alongside tarcoin-qt.exe
+          if [ -f build/bin/tarcoin-qt.exe ]; then
+            windeployqt6 build/bin/tarcoin-qt.exe || \
+            windeployqt build/bin/tarcoin-qt.exe || true
+          fi
+
+      - name: Package — Windows Wallet
+        shell: pwsh
+        run: |
+          $VERSION = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "dev" }
+          $PKG = "tarcoin-windows-wallet-$VERSION"
+          New-Item -ItemType Directory -Force -Path $PKG | Out-Null
+
+          $CORE = "${{ env.CORE_DIR }}"
+          $searchDirs = @("$CORE\build\bin", "$CORE\build\src", "$CORE\build\src\qt")
+
+          foreach ($dir in $searchDirs) {
+            foreach ($exe in @("tarcoind.exe", "tarcoin-cli.exe", "tarcoin-qt.exe")) {
+              $src = Join-Path $dir $exe
+              if (Test-Path $src) {
+                Copy-Item $src "$PKG\" -Force
+              }
+            }
+          }
+
+          # Copy any Qt DLLs deployed alongside tarcoin-qt.exe
+          $binDir = "$CORE\build\bin"
+          if (Test-Path $binDir) {
+            Get-ChildItem "$binDir" -Filter "*.dll" -Recurse | Copy-Item -Destination "$PKG\" -Force
+            Get-ChildItem "$binDir" -Directory | Where-Object { $_.Name -in @("platforms","styles","imageformats","iconengines") } |
+              Copy-Item -Destination "$PKG\" -Recurse -Force
+          }
+
+          @"
           TARCOIN Windows Wallet
           ======================
           Binaries: tarcoin-qt.exe (GUI) | tarcoind.exe | tarcoin-cli.exe
           Requires: Windows 10 / 11  (64-bit)
           P2P Port: 19333  |  RPC Port: 19332
-          SegWit Address : tar1q...  (Bech32)
-          Legacy Address : T...      (Base58)
+          SegWit Address : tar1q...  (Bech32, HRP: tar)
+          Legacy Address : T...      (Base58, prefix 65)
           Coin Type      : 5050      (SLIP-0044)
 
           Quick start GUI:
@@ -239,9 +264,9 @@ jobs:
           Quick start daemon:
             tarcoind.exe -daemon -rpcuser=<user> -rpcpassword=<pass>
             tarcoin-cli.exe getblockchaininfo
-          EOF
-          zip -r "${PKG}.zip" "${PKG}/"
-          echo "PKG_WIN=${PKG}.zip" >> $GITHUB_ENV
+          "@ | Set-Content "$PKG\README.txt"
+
+          Compress-Archive -Path "$PKG" -DestinationPath "${PKG}.zip" -Force
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
