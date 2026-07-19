@@ -211,14 +211,45 @@ jobs:
         working-directory: ${{ env.CORE_DIR }}
         run: cmake --build build -j$(nproc)
 
-      - name: Deploy Qt DLLs (windeployqt)
+      - name: Bundle Qt DLLs + all MSYS2 dependencies
         working-directory: ${{ env.CORE_DIR }}
         run: |
-          # Bundle required Qt DLLs alongside tarcoin-qt.exe
-          if [ -f build/bin/tarcoin-qt.exe ]; then
-            windeployqt6 build/bin/tarcoin-qt.exe || \
-            windeployqt build/bin/tarcoin-qt.exe || true
+          BIN="build/bin"
+          UCRT64_BIN="D:/a/_temp/msys64/ucrt64/bin"
+
+          # Step 1: windeployqt bundles Qt-specific DLLs
+          if [ -f "$BIN/tarcoin-qt.exe" ]; then
+            windeployqt6 "$BIN/tarcoin-qt.exe" 2>/dev/null || \
+            windeployqt   "$BIN/tarcoin-qt.exe" 2>/dev/null || true
+            echo "windeployqt complete"
           fi
+
+          # Step 2: use ldd to find ALL MSYS2 DLLs each exe needs
+          echo "Collecting MSYS2 dependency DLLs via ldd..."
+          for exe in "$BIN/tarcoin-qt.exe" "$BIN/tarcoind.exe" "$BIN/tarcoin-cli.exe"; do
+            if [ -f "$exe" ]; then
+              echo "  Scanning: $exe"
+              ldd "$exe" 2>/dev/null \
+                | grep -Ei '(ucrt64|msys64)' \
+                | awk '{print $3}' \
+                | while read dll; do
+                    [ -f "$dll" ] && cp -n "$dll" "$BIN/" && echo "    + $(basename $dll)"
+                  done
+            fi
+          done
+
+          # Step 3: explicitly ensure critical MSYS2 libs are present
+          for lib in libqrencode*.dll libzmq*.dll libevent*.dll \
+                     libboost*.dll libsqlite3*.dll \
+                     libgcc_s*.dll libstdc++*.dll libwinpthread*.dll \
+                     libssl*.dll libcrypto*.dll \
+                     libbrotli*.dll libzstd*.dll libpng*.dll libfreetype*.dll; do
+            find "$UCRT64_BIN" -maxdepth 1 -name "$lib" 2>/dev/null \
+              | while read f; do
+                  cp -n "$f" "$BIN/" && echo "  Ensured: $(basename $f)"
+                done
+          done
+          echo "DLL bundling complete"
 
       - name: Package — Windows Wallet
         shell: pwsh
