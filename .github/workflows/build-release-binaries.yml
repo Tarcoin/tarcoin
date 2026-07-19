@@ -211,45 +211,106 @@ jobs:
         working-directory: ${{ env.CORE_DIR }}
         run: cmake --build build -j$(nproc)
 
-      - name: Bundle Qt DLLs + all MSYS2 dependencies
+      - name: Bundle DLLs + Qt6 plugins (Python3 ldd collector)
         working-directory: ${{ env.CORE_DIR }}
         run: |
-          BIN="build/bin"
-          UCRT64_BIN="D:/a/_temp/msys64/ucrt64/bin"
+          python3 - << 'PYEOF'
+          import subprocess, shutil, os, sys, glob
+          from pathlib import Path
 
-          # Step 1: windeployqt bundles Qt-specific DLLs
-          if [ -f "$BIN/tarcoin-qt.exe" ]; then
-            windeployqt6 "$BIN/tarcoin-qt.exe" 2>/dev/null || \
-            windeployqt   "$BIN/tarcoin-qt.exe" 2>/dev/null || true
-            echo "windeployqt complete"
-          fi
+          BIN = Path("build/bin")
+          UCRT64_BIN = Path("/ucrt64/bin")
 
-          # Step 2: use ldd to find ALL MSYS2 DLLs each exe needs
-          echo "Collecting MSYS2 dependency DLLs via ldd..."
-          for exe in "$BIN/tarcoin-qt.exe" "$BIN/tarcoind.exe" "$BIN/tarcoin-cli.exe"; do
-            if [ -f "$exe" ]; then
-              echo "  Scanning: $exe"
-              ldd "$exe" 2>/dev/null \
-                | grep -Ei '(ucrt64|msys64)' \
-                | awk '{print $3}' \
-                | while read dll; do
-                    [ -f "$dll" ] && cp -n "$dll" "$BIN/" && echo "    + $(basename $dll)"
-                  done
-            fi
-          done
+          # Qt6 plugins can live in either location on MSYS2
+          QT_PLUGIN_DIRS = [
+              Path("/ucrt64/share/qt6/plugins"),
+              Path("/ucrt64/lib/qt6/plugins"),
+          ]
 
-          # Step 3: explicitly ensure critical MSYS2 libs are present
-          for lib in libqrencode*.dll libzmq*.dll libevent*.dll \
-                     libboost*.dll libsqlite3*.dll \
-                     libgcc_s*.dll libstdc++*.dll libwinpthread*.dll \
-                     libssl*.dll libcrypto*.dll \
-                     libbrotli*.dll libzstd*.dll libpng*.dll libfreetype*.dll; do
-            find "$UCRT64_BIN" -maxdepth 1 -name "$lib" 2>/dev/null \
-              | while read f; do
-                  cp -n "$f" "$BIN/" && echo "  Ensured: $(basename $f)"
-                done
-          done
-          echo "DLL bundling complete"
+          def run_ldd(exe):
+              try:
+                  out = subprocess.check_output(
+                      ["ldd", str(exe)], stderr=subprocess.DEVNULL, text=True, timeout=30)
+                  return out
+              except Exception:
+                  return ""
+
+          def collect(exe, dest, seen):
+              for line in run_ldd(exe).splitlines():
+                  parts = line.strip().split()
+                  # ldd output: "libfoo.dll => /ucrt64/bin/libfoo.dll (0x...)"
+                  dll_path = None
+                  if "=>" in parts:
+                      idx = parts.index("=>")
+                      if idx + 1 < len(parts):
+                          dll_path = Path(parts[idx + 1])
+                  if dll_path is None or not dll_path.is_absolute():
+                      continue
+                  low = str(dll_path).lower()
+                  if "/ucrt64" not in low and "/msys64" not in low:
+                      continue  # skip Windows system DLLs
+                  if not dll_path.exists():
+                      continue
+                  name_lower = dll_path.name.lower()
+                  if name_lower in seen:
+                      continue
+                  seen.add(name_lower)
+                  dst = dest / dll_path.name
+                  if not dst.exists():
+                      shutil.copy2(dll_path, dst)
+                      print(f"  + {dll_path.name}")
+                      collect(dll_path, dest, seen)  # recurse
+
+          print("=== Collecting DLLs via ldd ===")
+          seen = set()
+          for exe_name in ["tarcoin-qt.exe", "tarcoind.exe", "tarcoin-cli.exe"]:
+              exe = BIN / exe_name
+              if exe.exists():
+                  print(f"Scanning {exe_name} ...")
+                  collect(exe, BIN, seen)
+
+          print("\n=== Ensuring critical MSYS2 DLLs ===")
+          critical_patterns = [
+              "libqrencode*.dll",
+              "libzmq*.dll",
+              "libevent*.dll", "libevent_core*.dll", "libevent_extra*.dll",
+              "libgcc_s*.dll", "libstdc++*.dll", "libwinpthread*.dll",
+              "libsqlite3*.dll",
+              "libssl*.dll", "libcrypto*.dll",
+              "libbz2*.dll", "libzstd*.dll", "libpng*.dll",
+              "libfreetype*.dll", "libharfbuzz*.dll", "libpcre2*.dll",
+              "libb2*.dll", "libdouble-conversion*.dll",
+              "libicudt*.dll", "libicuin*.dll", "libicuuc*.dll",
+          ]
+          for pattern in critical_patterns:
+              for dll in glob.glob(str(UCRT64_BIN / pattern)):
+                  dst = BIN / Path(dll).name
+                  if not dst.exists():
+                      shutil.copy2(dll, dst)
+                      print(f"  critical: {Path(dll).name}")
+
+          print("\n=== Copying Qt6 plugin directories ===")
+          plugin_dirs = ["platforms", "styles", "imageformats", "iconengines"]
+          for plugin_dir_name in plugin_dirs:
+              src_dir = None
+              for qt_root in QT_PLUGIN_DIRS:
+                  candidate = qt_root / plugin_dir_name
+                  if candidate.exists():
+                      src_dir = candidate
+                      break
+              if src_dir:
+                  dst_dir = BIN / plugin_dir_name
+                  dst_dir.mkdir(exist_ok=True)
+                  for dll in src_dir.glob("*.dll"):
+                      shutil.copy2(dll, dst_dir / dll.name)
+                      print(f"  {plugin_dir_name}/{dll.name}")
+              else:
+                  print(f"  WARNING: {plugin_dir_name} not found in Qt6 plugin dirs")
+
+          total = len(list(BIN.glob("*.dll")))
+          print(f"\n=== Done: {total} root DLLs, plugin dirs: {plugin_dirs} ===")
+          sys.exit(0)
+          PYEOF
 
       - name: Package — Windows Wallet
         shell: pwsh
@@ -261,6 +322,7 @@ jobs:
           $CORE = "${{ env.CORE_DIR }}"
           $searchDirs = @("$CORE\build\bin", "$CORE\build\src", "$CORE\build\src\qt")
 
+          # Copy executables
           foreach ($dir in $searchDirs) {
             foreach ($exe in @("tarcoind.exe", "tarcoin-cli.exe", "tarcoin-qt.exe")) {
               $src = Join-Path $dir $exe
@@ -270,12 +332,14 @@ jobs:
             }
           }
 
-          # Copy any Qt DLLs deployed alongside tarcoin-qt.exe
+          # Copy ALL DLLs from build\bin (flat)
           $binDir = "$CORE\build\bin"
           if (Test-Path $binDir) {
-            Get-ChildItem "$binDir" -Filter "*.dll" -Recurse | Copy-Item -Destination "$PKG\" -Force
-            Get-ChildItem "$binDir" -Directory | Where-Object { $_.Name -in @("platforms","styles","imageformats","iconengines") } |
-              Copy-Item -Destination "$PKG\" -Recurse -Force
+            Get-ChildItem "$binDir" -Filter "*.dll" | Copy-Item -Destination "$PKG\" -Force
+            # Copy ALL plugin subdirectories (platforms, styles, imageformats, iconengines, etc.)
+            Get-ChildItem "$binDir" -Directory | ForEach-Object {
+              Copy-Item $_.FullName -Destination "$PKG\" -Recurse -Force
+            }
           }
 
           @"
