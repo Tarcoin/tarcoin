@@ -275,33 +275,27 @@ jobs:
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────
-  # JOB 4 — macOS Wallet (native, Intel + Apple Silicon via universal build)
-  # Runner: macos-13 (Intel) — produces universal zip used on both arches
+  # JOB 4a — macOS Intel build (macos-13)
   # ────────────────────────────────────────────────────────────────────────────
-  macos-wallet:
-    name: macOS Wallet (Intel + Apple Silicon)
+  macos-intel:
+    name: macOS Wallet — Intel (x86_64)
     runs-on: macos-13
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Homebrew dependencies
+      - name: Install dependencies
         run: |
           brew update
           brew install cmake ninja pkg-config autoconf automake libtool \
-            boost libevent sqlite qt@6 \
-            miniupnpc zeromq qrencode
+            boost libevent sqlite qt@6 miniupnpc zeromq qrencode
           brew link qt@6 --force || brew link qt --force || true
 
-      - name: Install Python helpers
-        run: pip3 install ds_store mac_alias --break-system-packages || true
-
-      - name: Configure CMake (macOS, with Qt GUI)
+      - name: Configure (Intel x86_64)
         working-directory: ${{ env.CORE_DIR }}
-        env:
-          Qt6_DIR: /usr/local/opt/qt@6/lib/cmake/Qt6
         run: |
           touch contrib/filter-lcov.py || true
+          Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_GUI=ON \
@@ -309,49 +303,132 @@ jobs:
             -DBUILD_TESTS=OFF \
             -DWITH_ZMQ=ON \
             -DWITH_UPNP=ON \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DQt6_DIR=$Qt6_DIR
 
       - name: Compile
         working-directory: ${{ env.CORE_DIR }}
         run: cmake --build build -j$(sysctl -n hw.ncpu)
 
-      - name: Package macOS app bundle
+      - name: Upload Intel binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-intel-bins
+          path: |
+            ${{ env.CORE_DIR }}/build/bin/tarcoin-qt
+            ${{ env.CORE_DIR }}/build/bin/tarcoind
+            ${{ env.CORE_DIR }}/build/bin/tarcoin-cli
+          retention-days: 1
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 4b — macOS Apple Silicon build (macos-14)
+  # ────────────────────────────────────────────────────────────────────────────
+  macos-arm:
+    name: macOS Wallet — Apple Silicon (arm64)
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install cmake ninja pkg-config autoconf automake libtool \
+            boost libevent sqlite qt@6 miniupnpc zeromq qrencode
+          brew link qt@6 --force || brew link qt --force || true
+
+      - name: Configure (Apple Silicon arm64)
         working-directory: ${{ env.CORE_DIR }}
         run: |
-          # Try 'deploy' target first (creates .dmg / .zip), fall back to manual zip
-          cmake --build build --target deploy 2>/dev/null || true
+          touch contrib/filter-lcov.py || true
+          Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_GUI=ON \
+            -DENABLE_IPC=OFF \
+            -DBUILD_TESTS=OFF \
+            -DWITH_ZMQ=ON \
+            -DWITH_UPNP=ON \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DQt6_DIR=$Qt6_DIR
+
+      - name: Compile
+        working-directory: ${{ env.CORE_DIR }}
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Upload ARM binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm-bins
+          path: |
+            ${{ env.CORE_DIR }}/build/bin/tarcoin-qt
+            ${{ env.CORE_DIR }}/build/bin/tarcoind
+            ${{ env.CORE_DIR }}/build/bin/tarcoin-cli
+          retention-days: 1
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 4c — Combine Intel + ARM into Universal binary zip
+  # ────────────────────────────────────────────────────────────────────────────
+  macos-wallet:
+    name: macOS Wallet — Universal (Intel + Apple Silicon)
+    runs-on: macos-14
+    needs: [macos-intel, macos-arm]
+    steps:
+      - name: Download Intel binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-intel-bins
+          path: bins/intel
+
+      - name: Download ARM binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-arm-bins
+          path: bins/arm
+
+      - name: Create Universal binaries with lipo
+        run: |
+          mkdir -p universal
+          for bin in tarcoin-qt tarcoind tarcoin-cli; do
+            chmod +x bins/intel/$bin bins/arm/$bin 2>/dev/null || true
+            lipo -create bins/intel/$bin bins/arm/$bin -output universal/$bin
+            echo "✓ $bin: $(lipo -archs universal/$bin)"
+          done
+
+      - name: Package — macOS Universal zip
+        run: |
           VERSION="${GITHUB_REF_NAME:-dev}"
-          if [ -f "build/tarcoin-macos-app.zip" ]; then
-            echo "Deploy target produced zip ✓"
-          else
-            echo "Creating zip manually..."
-            PKG="tarcoin-macos-${VERSION}"
-            mkdir -p "${PKG}"
-            # Copy app bundle if present
-            if [ -d "build/bin/tarcoin-qt.app" ]; then
-              cp -R build/bin/tarcoin-qt.app "${PKG}/"
-            elif [ -f "build/bin/tarcoin-qt" ]; then
-              cp build/bin/tarcoin-qt "${PKG}/"
-            fi
-            cp build/bin/tarcoind    "${PKG}/" 2>/dev/null || true
-            cp build/bin/tarcoin-cli "${PKG}/" 2>/dev/null || true
-            cat > "${PKG}/README.txt" << 'EOF'
+          PKG="tarcoin-macos-${VERSION}"
+          mkdir -p "${PKG}"
+          cp universal/tarcoin-qt  "${PKG}/"
+          cp universal/tarcoind    "${PKG}/"
+          cp universal/tarcoin-cli "${PKG}/"
+          chmod +x "${PKG}/"*
+          cat > "${PKG}/README.txt" << 'EOF'
           TARCOIN macOS Wallet
           ====================
-          Requires: macOS 12+ (Intel & Apple Silicon)
-          Binaries: tarcoin-qt.app | tarcoind | tarcoin-cli
+          Universal Binary: Intel (x86_64) + Apple Silicon (arm64)
+          Requires: macOS 12+ (Monterey or later)
+          Binaries: tarcoin-qt | tarcoind | tarcoin-cli
           P2P Port: 19333  |  RPC Port: 19332
-          Address:  tar1q... (SegWit) | T... (Legacy)
+          SegWit Address : tar1q...  (Bech32, HRP: tar)
+          Legacy Address : T...      (Base58, prefix 65)
+          Coin Type      : 5050      (SLIP-0044)
+
+          Usage:
+            Open tarcoin-qt for the GUI wallet
+            ./tarcoind -daemon -rpcuser=<user> -rpcpassword=<pass>
+            ./tarcoin-cli getblockchaininfo
           EOF
-            zip -r "build/tarcoin-macos-app.zip" "${PKG}/"
-          fi
+          zip -r "tarcoin-macos-app.zip" "${PKG}/"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-wallet
-          path: ${{ env.CORE_DIR }}/build/tarcoin-macos-app.zip
-          if-no-files-found: warn
+          path: tarcoin-macos-app.zip
           retention-days: 7
 
   # ────────────────────────────────────────────────────────────────────────────
