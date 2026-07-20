@@ -235,10 +235,10 @@ jobs:
               except Exception:
                   return ""
 
-          def collect(exe, dest, seen):
-              for line in run_ldd(exe).splitlines():
+          def collect(exe, dest):
+              out = run_ldd(exe)
+              for line in out.splitlines():
                   parts = line.strip().split()
-                  # ldd output: "libfoo.dll => /ucrt64/bin/libfoo.dll (0x...)"
                   dll_path = None
                   if "=>" in parts:
                       idx = parts.index("=>")
@@ -248,26 +248,20 @@ jobs:
                       continue
                   low = str(dll_path).lower()
                   if "/ucrt64" not in low and "/msys64" not in low:
-                      continue  # skip Windows system DLLs
+                      continue
                   if not dll_path.exists():
                       continue
-                  name_lower = dll_path.name.lower()
-                  if name_lower in seen:
-                      continue
-                  seen.add(name_lower)
                   dst = dest / dll_path.name
                   if not dst.exists():
                       shutil.copy2(dll_path, dst)
                       print(f"  + {dll_path.name}")
-                      collect(dll_path, dest, seen)  # recurse
 
           print("=== Collecting DLLs via ldd ===")
-          seen = set()
           for exe_name in ["tarcoin-qt.exe", "tarcoind.exe", "tarcoin-cli.exe"]:
               exe = BIN / exe_name
               if exe.exists():
                   print(f"Scanning {exe_name} ...")
-                  collect(exe, BIN, seen)
+                  collect(exe, BIN)
 
           print("\n=== Ensuring critical MSYS2 DLLs ===")
           critical_patterns = [
@@ -377,7 +371,7 @@ jobs:
   # ────────────────────────────────────────────────────────────────────────────
   macos-wallet:
     name: macOS Wallet (Universal — Intel + Apple Silicon)
-    runs-on: macos-14
+    runs-on: macos-13
     steps:
       - name: Checkout
         uses: actions/checkout@v4
