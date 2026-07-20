@@ -77,13 +77,16 @@ app.get('/health', async (_req, res) => {
 // Genesis block info (always available even without RPC)
 app.get('/api/genesis', (_req, res) => {
   res.json({
-    hash: '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0',
-    merkleRoot: '1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749',
-    timestamp: 1748304000,
+    hash: '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e',
+    merkleRoot: 'eaf980618b3cde94360d83c4937c3bcebcba7cc1db9f3276eb8b180da3a2e921',
+    timestamp: 1782181262,
     nBits: '1f00ffff',
-    nonce: 15878,
+    nonce: 65067,
     height: 0,
     reward: 50000,
+    version: 1,
+    size: 233,
+    weight: 932,
   });
 });
 

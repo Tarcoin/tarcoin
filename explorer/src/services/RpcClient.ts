@@ -88,8 +88,8 @@ export class RpcClient {
   }
 
   async getBlock(hash: string, verbosity: number = 1): Promise<any> {
-    if (hash === '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0') {
-      return { hash, height: 0, time: 1748304000, confirmations: 999, tx: [], size: 285, weight: 1140, difficulty: 0.00024, bits: '1f00ffff', nonce: 15878, previousblockhash: null, merkleroot: '1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749' };
+    if (hash === '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e') {
+      return { hash, height: 0, time: 1782181262, confirmations: 999, tx: [], size: 233, weight: 932, difficulty: 0.00001526, bits: '1f00ffff', nonce: 65067, previousblockhash: null, merkleroot: 'eaf980618b3cde94360d83c4937c3bcebcba7cc1db9f3276eb8b180da3a2e921' };
     }
     return this.call('getblock', [hash, verbosity]);
   }

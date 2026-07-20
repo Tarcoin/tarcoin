@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { RpcClient } from '../services/RpcClient';
 import { CacheManager } from '../services/CacheManager';
 
-const GENESIS_HASH = '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0';
+const GENESIS_HASH = '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e';
 
 export class SearchController {
   constructor(
