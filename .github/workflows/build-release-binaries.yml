@@ -211,33 +211,54 @@ jobs:
         working-directory: ${{ env.CORE_DIR }}
         run: cmake --build build -j$(nproc)
 
-      - name: Bundle DLLs + Qt6 plugins (Python3 ldd collector)
+      - name: Bundle Qt6 DLLs via windeployqt
+        working-directory: ${{ env.CORE_DIR }}
+        run: |
+          # windeployqt is the official Qt tool that copies ALL required Qt6 DLLs
+          # and plugins (Qt6Core, Qt6Gui, Qt6Network, Qt6Widgets, platforms/, etc.)
+          WINDEPLOYQT=$(find /ucrt64 -name "windeployqt*" -type f 2>/dev/null | head -1)
+          if [ -n "$WINDEPLOYQT" ]; then
+            echo "Running windeployqt: $WINDEPLOYQT"
+            "$WINDEPLOYQT" \
+              --release \
+              --no-translations \
+              --no-system-d3d-compiler \
+              --no-opengl-sw \
+              build/bin/tarcoin-qt.exe || true
+            echo "windeployqt done."
+          else
+            echo "WARNING: windeployqt not found, falling back to manual copy"
+          fi
+
+          # Also copy all Qt6*.dll from ucrt64/bin directly as a safety net
+          for qt_dll in /ucrt64/bin/Qt6*.dll; do
+            [ -f "$qt_dll" ] || continue
+            name=$(basename "$qt_dll")
+            if [ ! -f "build/bin/$name" ]; then
+              cp "$qt_dll" "build/bin/$name"
+              echo "  + $name"
+            fi
+          done
+
+      - name: Bundle MSYS2 native DLLs (Python3 ldd collector)
         working-directory: ${{ env.CORE_DIR }}
         run: |
           python3 - << 'PYEOF'
-          import subprocess, shutil, os, sys, glob
+          import subprocess, shutil, glob, sys
           from pathlib import Path
 
           BIN = Path("build/bin")
           UCRT64_BIN = Path("/ucrt64/bin")
 
-          # Qt6 plugins can live in either location on MSYS2
-          QT_PLUGIN_DIRS = [
-              Path("/ucrt64/share/qt6/plugins"),
-              Path("/ucrt64/lib/qt6/plugins"),
-          ]
-
           def run_ldd(exe):
               try:
-                  out = subprocess.check_output(
+                  return subprocess.check_output(
                       ["ldd", str(exe)], stderr=subprocess.DEVNULL, text=True, timeout=30)
-                  return out
               except Exception:
                   return ""
 
           def collect(exe, dest):
-              out = run_ldd(exe)
-              for line in out.splitlines():
+              for line in run_ldd(exe).splitlines():
                   parts = line.strip().split()
                   dll_path = None
                   if "=>" in parts:
@@ -256,53 +277,32 @@ jobs:
                       shutil.copy2(dll_path, dst)
                       print(f"  + {dll_path.name}")
 
-          print("=== Collecting DLLs via ldd ===")
+          print("=== Collecting MSYS2 DLLs via ldd ===")
           for exe_name in ["tarcoin-qt.exe", "tarcoind.exe", "tarcoin-cli.exe"]:
               exe = BIN / exe_name
               if exe.exists():
-                  print(f"Scanning {exe_name} ...")
+                  print(f"Scanning {exe_name}...")
                   collect(exe, BIN)
 
-          print("\n=== Ensuring critical MSYS2 DLLs ===")
-          critical_patterns = [
-              "libqrencode*.dll",
-              "libzmq*.dll",
+          print("\n=== Ensuring critical DLLs ===")
+          critical = [
+              "libqrencode*.dll", "libzmq*.dll",
               "libevent*.dll", "libevent_core*.dll", "libevent_extra*.dll",
               "libgcc_s*.dll", "libstdc++*.dll", "libwinpthread*.dll",
-              "libsqlite3*.dll",
-              "libssl*.dll", "libcrypto*.dll",
+              "libsqlite3*.dll", "libssl*.dll", "libcrypto*.dll",
               "libbz2*.dll", "libzstd*.dll", "libpng*.dll",
               "libfreetype*.dll", "libharfbuzz*.dll", "libpcre2*.dll",
               "libb2*.dll", "libdouble-conversion*.dll",
               "libicudt*.dll", "libicuin*.dll", "libicuuc*.dll",
           ]
-          for pattern in critical_patterns:
-              for dll in glob.glob(str(UCRT64_BIN / pattern)):
+          for pat in critical:
+              for dll in glob.glob(str(UCRT64_BIN / pat)):
                   dst = BIN / Path(dll).name
                   if not dst.exists():
                       shutil.copy2(dll, dst)
                       print(f"  critical: {Path(dll).name}")
 
-          print("\n=== Copying Qt6 plugin directories ===")
-          plugin_dirs = ["platforms", "styles", "imageformats", "iconengines"]
-          for plugin_dir_name in plugin_dirs:
-              src_dir = None
-              for qt_root in QT_PLUGIN_DIRS:
-                  candidate = qt_root / plugin_dir_name
-                  if candidate.exists():
-                      src_dir = candidate
-                      break
-              if src_dir:
-                  dst_dir = BIN / plugin_dir_name
-                  dst_dir.mkdir(exist_ok=True)
-                  for dll in src_dir.glob("*.dll"):
-                      shutil.copy2(dll, dst_dir / dll.name)
-                      print(f"  {plugin_dir_name}/{dll.name}")
-              else:
-                  print(f"  WARNING: {plugin_dir_name} not found in Qt6 plugin dirs")
-
-          total = len(list(BIN.glob("*.dll")))
-          print(f"\n=== Done: {total} root DLLs, plugin dirs: {plugin_dirs} ===")
+          print(f"\n=== Done: {len(list(BIN.glob('*.dll')))} root DLLs ===")
           sys.exit(0)
           PYEOF
 
