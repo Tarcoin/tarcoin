@@ -380,7 +380,7 @@ jobs:
         run: |
           brew update
           brew install cmake ninja pkg-config autoconf automake libtool \
-            boost libevent sqlite qt@6 zeromq qrencode create-dmg
+            boost libevent sqlite qt@6 zeromq qrencode create-dmg llvm
           brew link qt@6 --force || brew link qt --force || true
 
       - name: Install Python helpers for DMG deploy script
@@ -392,6 +392,8 @@ jobs:
           touch contrib/filter-lcov.py || true
           Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6
           cmake -B build -G Ninja \
+            -DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_STANDARD=20 \
             -DCMAKE_CXX_STANDARD_REQUIRED=ON \
