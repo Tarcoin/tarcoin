@@ -337,10 +337,11 @@ jobs:
           DMG=$(find build -maxdepth 2 -name "*.dmg" | head -1)
           if [ -n "$DMG" ]; then
             echo "Found DMG: $DMG"
+            cp "$DMG" build/tarcoin-qt.dmg
             cp "$DMG" build/tarcoin-macos-app.dmg
             # Also create a zip containing the dmg for the artifact uploader
-            zip -j build/tarcoin-macos-app.zip build/tarcoin-macos-app.dmg
-            echo "MACOS_ASSET=build/tarcoin-macos-app.dmg" >> $GITHUB_ENV
+            zip -j build/tarcoin-macos-app.zip build/tarcoin-qt.dmg
+            echo "MACOS_ASSET=build/tarcoin-qt.dmg" >> $GITHUB_ENV
           else
             echo "No DMG found — creating zip fallback"
             VERSION="${GITHUB_REF_NAME:-dev}"
@@ -370,6 +371,7 @@ jobs:
         with:
           name: macos-wallet
           path: |
+            ${{ env.CORE_DIR }}/build/tarcoin-qt.dmg
             ${{ env.CORE_DIR }}/build/tarcoin-macos-app.dmg
             ${{ env.CORE_DIR }}/build/tarcoin-macos-app.zip
           if-no-files-found: warn
@@ -399,13 +401,13 @@ jobs:
       - name: Flatten artifacts into release dir
         run: |
           mkdir -p dist
-          find release-assets/ -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} dist/ \;
+          find release-assets/ -type f \( -name "*.zip" -o -name "*.tar.gz" -o -name "*.dmg" \) -exec cp {} dist/ \;
           ls -lh dist/
 
       - name: Generate SHA256 checksums
         working-directory: dist
         run: |
-          sha256sum *.zip > SHA256SUMS.txt 2>/dev/null || true
+          sha256sum *.* > SHA256SUMS.txt 2>/dev/null || true
           cat SHA256SUMS.txt
 
       - name: Generate changelog
@@ -430,6 +432,7 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
           files: |
             dist/*.zip
+            dist/*.dmg
             dist/SHA256SUMS.txt
           body: |
             ## TARCOIN ${{ github.ref_name }}

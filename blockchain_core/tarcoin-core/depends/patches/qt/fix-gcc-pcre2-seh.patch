@@ -1,6 +1,6 @@
 --- a/qtbase/src/3rdparty/pcre2/src/pcre2_compile.c
 +++ b/qtbase/src/3rdparty/pcre2/src/pcre2_compile.c
-@@ -1,3 +1,8 @@
+@@ -1,3 +1,9 @@
 +/* Workaround for GCC 10/11 internal compiler error (i386_pe_seh_unwind_emit)
 + * when cross-compiling for Windows with SEH on very large functions.
 + * See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82188
@@ -12,7 +12,7 @@
  *************************************************/
 --- a/qtbase/src/3rdparty/pcre2/src/pcre2_dfa_match.c
 +++ b/qtbase/src/3rdparty/pcre2/src/pcre2_dfa_match.c
-@@ -1,3 +1,8 @@
+@@ -1,3 +1,9 @@
 +/* Workaround for GCC 10/11 internal compiler error (i386_pe_seh_unwind_emit)
 + * when cross-compiling for Windows with SEH on very large functions.
 + * See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82188
