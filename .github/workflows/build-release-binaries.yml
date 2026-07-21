@@ -181,20 +181,34 @@ jobs:
             g++-mingw-w64-x86-64 mingw-w64-x86-64-dev \
             nsis zip
 
+          # CREATE COMPILER WRAPPERS TO STRIP -fcf-protection=full
+          # This flag is injected by Qt/CMake and causes an Internal Compiler Error (ICE) in Ubuntu's MinGW.
+          for BIN in x86_64-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc-posix x86_64-w64-mingw32-g++-posix; do
+            if [ -f "/usr/bin/$BIN" ]; then
+              sudo mv "/usr/bin/$BIN" "/usr/bin/$BIN.real"
+              echo '#!/bin/bash' | sudo tee "/usr/bin/$BIN"
+              echo "args=()" | sudo tee -a "/usr/bin/$BIN"
+              echo 'for arg in "$@"; do' | sudo tee -a "/usr/bin/$BIN"
+              echo '  if [ "$arg" != "-fcf-protection=full" ] && [ "$arg" != "-fcf-protection=branch" ]; then' | sudo tee -a "/usr/bin/$BIN"
+              echo '    args+=("$arg")' | sudo tee -a "/usr/bin/$BIN"
+              echo '  fi' | sudo tee -a "/usr/bin/$BIN"
+              echo 'done' | sudo tee -a "/usr/bin/$BIN"
+              echo 'exec "/usr/bin/'$BIN'.real" "${args[@]}"' | sudo tee -a "/usr/bin/$BIN"
+              sudo chmod +x "/usr/bin/$BIN"
+            fi
+          done
+
       - name: Cache Windows depends (with Qt)
         uses: actions/cache@v4
         with:
           path: ${{ env.CORE_DIR }}/depends/built
-          key: mingw32-qt-depends-${{ hashFiles(format('{0}/depends/packages/*.mk', env.CORE_DIR)) }}
+          key: mingw32-qt-depends-${{ hashFiles(format('{0}/depends/packages/*.mk', env.CORE_DIR), format('{0}/depends/patches/**', env.CORE_DIR)) }}
           restore-keys: mingw32-qt-depends-
 
       - name: Build Windows depends (includes Qt)
         working-directory: ${{ env.CORE_DIR }}/depends
         run: |
           chmod +x config.guess config.sub || true
-          # Override Ubuntu GCC default -fcf-protection which causes ICE in MinGW for Qt6
-          export CFLAGS="-fcf-protection=none"
-          export CXXFLAGS="-fcf-protection=none"
           # Build WITH Qt (no NO_QT=1) so tarcoin-qt.exe is available
           make HOST=x86_64-w64-mingw32 -j$(nproc)
 

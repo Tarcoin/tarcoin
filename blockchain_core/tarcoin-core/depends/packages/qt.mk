@@ -285,7 +285,8 @@ define $(package)_preprocess_cmds
   patch -p1 -i $($(package)_patch_dir)/fix-gcc16-sfinae-qbitarray.patch && \
   patch -p1 -i $($(package)_patch_dir)/fix-gcc16-sfinae-qanystringview.patch && \
   patch -p1 -i $($(package)_patch_dir)/fix-macos26-qyield.patch && \
-  patch -p1 -i $($(package)_patch_dir)/fix-qbytearray-include.patch
+  patch -p1 -i $($(package)_patch_dir)/fix-qbytearray-include.patch && \
+  patch -p1 -i $($(package)_patch_dir)/fix-gcc-pcre2-seh.patch
 endef
 ifeq ($(host),$(build))
   $(package)_preprocess_cmds += && patch -p1 -i $($(package)_patch_dir)/qttools_skip_dependencies.patch
