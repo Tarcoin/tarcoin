@@ -168,7 +168,7 @@ jobs:
   # ────────────────────────────────────────────────────────────────────────────
   windows-wallet:
     name: Windows Wallet (Qt GUI + CLI)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -180,23 +180,6 @@ jobs:
             build-essential pkg-config cmake ninja-build python3 \
             g++-mingw-w64-x86-64 mingw-w64-x86-64-dev \
             nsis zip
-
-          # CREATE COMPILER WRAPPERS TO STRIP -fcf-protection=full
-          # This flag is injected by Qt/CMake and causes an Internal Compiler Error (ICE) in Ubuntu's MinGW.
-          for BIN in x86_64-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc-posix x86_64-w64-mingw32-g++-posix; do
-            if [ -f "/usr/bin/$BIN" ]; then
-              sudo mv "/usr/bin/$BIN" "/usr/bin/$BIN.real"
-              echo '#!/bin/bash' | sudo tee "/usr/bin/$BIN"
-              echo "args=()" | sudo tee -a "/usr/bin/$BIN"
-              echo 'for arg in "$@"; do' | sudo tee -a "/usr/bin/$BIN"
-              echo '  if [ "$arg" != "-fcf-protection=full" ] && [ "$arg" != "-fcf-protection=branch" ]; then' | sudo tee -a "/usr/bin/$BIN"
-              echo '    args+=("$arg")' | sudo tee -a "/usr/bin/$BIN"
-              echo '  fi' | sudo tee -a "/usr/bin/$BIN"
-              echo 'done' | sudo tee -a "/usr/bin/$BIN"
-              echo 'exec "/usr/bin/'$BIN'.real" "${args[@]}"' | sudo tee -a "/usr/bin/$BIN"
-              sudo chmod +x "/usr/bin/$BIN"
-            fi
-          done
 
       - name: Cache Windows depends (with Qt)
         uses: actions/cache@v4
