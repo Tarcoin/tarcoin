@@ -5,13 +5,14 @@
  * address generators and display metadata.
  *
  * Coin type 5050 — SLIP-0044 PR: github.com/satoshilabs/slips/pull/2030
+ * Coin type 0    — Used by TARCOIN Core Qt wallet (Bitcoin-compatible)
  */
 
 import * as bitcoin from 'bitcoinjs-lib';
 import { BIP32Factory } from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { TARCOIN_MAINNET, TARCOIN_TESTNET } from './network';
-import { BIP44_COIN_TYPE, SEGWIT_ACTIVATION_HEIGHT } from './app';
+import { BIP44_COIN_TYPE, BIP44_COIN_TYPE_LEGACY, SEGWIT_ACTIVATION_HEIGHT } from './app';
 
 const bip32 = BIP32Factory(ecc);
 
@@ -89,6 +90,46 @@ export const WALLET_TYPES = {
     supported:   true,
     segwitRequired: true,
     activationHeight: SEGWIT_ACTIVATION_HEIGHT,
+  },
+
+  // -------------------------------------------------------------------------
+  // Qt wallet compatible types — coin type 0 (Bitcoin-style derivation)
+  // Use these when importing a seed phrase from TARCOIN Core Qt wallet
+  // -------------------------------------------------------------------------
+
+  /**
+   * BIP44_QT — Legacy P2PKH (Qt wallet compatible)
+   * Derivation: m/44'/0'/account'/change/index  ← coin type 0
+   * Address:    T... (same address format, different derivation)
+   */
+  BIP44_QT: {
+    id:          'BIP44_QT',
+    label:       'Legacy (Qt Import)',
+    description: 'Import from TARCOIN Core Qt wallet — m/44\'/0\'/0\'',
+    path:        (account = 0) => `m/44'/${BIP44_COIN_TYPE_LEGACY}'/${account}'`,
+    addressType: 'p2pkh',
+    addressPrefix: 'T',
+    supported:   true,
+    segwitRequired: false,
+    isLegacyImport: true,
+  },
+
+  /**
+   * BIP84_QT — Native SegWit (Qt wallet compatible)
+   * Derivation: m/84'/0'/account'/change/index  ← coin type 0
+   * Address:    tar1q... (same address format, different derivation)
+   */
+  BIP84_QT: {
+    id:          'BIP84_QT',
+    label:       'Native SegWit (Qt Import)',
+    description: 'Import from TARCOIN Core Qt wallet — m/84\'/0\'/0\'',
+    path:        (account = 0) => `m/84'/${BIP44_COIN_TYPE_LEGACY}'/${account}'`,
+    addressType: 'p2wpkh',
+    addressPrefix: 'tar1q',
+    supported:   true,
+    segwitRequired: true,
+    activationHeight: SEGWIT_ACTIVATION_HEIGHT,
+    isLegacyImport: true,
   },
 };
 

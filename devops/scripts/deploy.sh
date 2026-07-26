@@ -142,8 +142,31 @@ send_notification() {
 git_pull() {
     section "Git Pull"
     info "Current HEAD: ${GIT_SHA}"
-    run git -C "${PROJECT_ROOT}" fetch --all
-    run git -C "${PROJECT_ROOT}" pull --ff-only origin main
+
+    if git -C "${PROJECT_ROOT}" remote get-url origin >/dev/null 2>&1; then
+        if git -C "${PROJECT_ROOT}" fetch --all --prune >/dev/null 2>&1; then
+            local remote_name="origin"
+            local remote_branch="master"
+            if git -C "${PROJECT_ROOT}" show-ref --verify --quiet refs/remotes/origin/main; then
+                remote_branch="main"
+            elif git -C "${PROJECT_ROOT}" show-ref --verify --quiet refs/remotes/origin/master; then
+                remote_branch="master"
+            fi
+
+            if git -C "${PROJECT_ROOT}" rev-parse --verify "refs/remotes/${remote_name}/${remote_branch}" >/dev/null 2>&1; then
+                info "Using remote branch: ${remote_name}/${remote_branch}"
+                git -C "${PROJECT_ROOT}" pull --ff-only "${remote_name}" "${remote_branch}" >/dev/null 2>&1 || \
+                    warn "Git pull failed; continuing with local checkout"
+            else
+                warn "Remote branch ${remote_name}/${remote_branch} not found; continuing with local checkout"
+            fi
+        else
+            warn "Git fetch failed; continuing with local checkout"
+        fi
+    else
+        warn "No git remote configured; continuing with local checkout"
+    fi
+
     GIT_SHA="$(git -C "${PROJECT_ROOT}" rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
     success "Updated to: ${GIT_SHA}"
 }

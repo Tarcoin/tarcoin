@@ -48,6 +48,10 @@ export const SEGWIT_ACTIVATION_HEIGHT = 481_824;
 // Coin type 5050 registered at: github.com/satoshilabs/slips/pull/2030
 export const BIP44_COIN_TYPE = 5050;
 
+// Coin type 0 — used by TARCOIN Core Qt wallet (Bitcoin-compatible paths)
+// Import wallets created in the Qt wallet using these paths
+export const BIP44_COIN_TYPE_LEGACY = 0;
+
 export const DERIVATION_PATHS = {
   // BIP44 — Legacy P2PKH  →  T... addresses
   BIP44:  `m/44'/${BIP44_COIN_TYPE}'/0'`,
@@ -57,6 +61,14 @@ export const DERIVATION_PATHS = {
   BIP84:  `m/84'/${BIP44_COIN_TYPE}'/0'`,
   // BIP86 — Taproot       →  tar1p... addresses (active after block 481,824)
   BIP86:  `m/86'/${BIP44_COIN_TYPE}'/0'`,
+};
+
+// Qt wallet compatible derivation paths (coin type 0)
+export const DERIVATION_PATHS_LEGACY = {
+  BIP44:  `m/44'/${BIP44_COIN_TYPE_LEGACY}'/0'`,
+  BIP49:  `m/49'/${BIP44_COIN_TYPE_LEGACY}'/0'`,
+  BIP84:  `m/84'/${BIP44_COIN_TYPE_LEGACY}'/0'`,
+  BIP86:  `m/86'/${BIP44_COIN_TYPE_LEGACY}'/0'`,
 };
 
 // Default wallet type shown on "Create Wallet" screen

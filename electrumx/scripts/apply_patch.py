@@ -19,7 +19,7 @@ import re
 import sys
 from pathlib import Path
 
-COINS_FILE   = Path("electrumx/lib/coins.py")
+COINS_FILE   = Path("src/electrumx/lib/coins.py")
 PATCH_FILE   = Path("coins_tarcoin.py")
 MARKER_CLASS = "class TarCoin("
 INSERT_BEFORE = "class BitcoinTestnet("

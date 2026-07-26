@@ -67,11 +67,12 @@ WalletDescriptor GenerateWalletDescriptor(const CExtPubKey& master_key, const Ou
     } // no default case, so the compiler can warn about missing cases
     assert(!desc_prefix.empty());
 
-    // Mainnet derives at 0', testnet and regtest derive at 1'
+    // Coin type 5050 — TARCOIN registered coin type (SLIP-0044 PR #2030)
+    // Mainnet: m/purpose'/5050'/account'  Testnet: m/purpose'/1'/account'
     if (Params().IsTestChain()) {
         desc_prefix += "/1h";
     } else {
-        desc_prefix += "/0h";
+        desc_prefix += "/5050h";  // TARCOIN mainnet coin type (was 0h = Bitcoin)
     }
 
     std::string internal_path = internal ? "/1" : "/0";
