@@ -1,0 +1,8 @@
+{
+  "name": "Remix: TARCOIN Wallet",
+  "description": "Fast-loading TARCOIN crypto wallet with Cake Wallet style PIN lock, deferred Electrum connections, and instant secure storage initialization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
