@@ -1,19 +1,10 @@
 name: Build TARCOIN Mobile Wallet
 
+# Mobile wallet is built manually in Android Studio.
+# This workflow is disabled for automatic triggers.
+# To build manually: GitHub → Actions → Build TARCOIN Mobile Wallet → Run workflow
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'wallet/**'
-      - '.github/workflows/build-wallet.yml'
-  pull_request:
-    branches:
-      - master
-    paths:
-      - 'wallet/**'
-      - '.github/workflows/build-wallet.yml'
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch: # Manual trigger only from GitHub UI
 
 jobs:
   # ---------------------------------------------------------------------------
