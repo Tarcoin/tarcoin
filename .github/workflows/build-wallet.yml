@@ -4,7 +4,16 @@ name: Build TARCOIN Mobile Wallet
 # This workflow is disabled for automatic triggers.
 # To build manually: GitHub → Actions → Build TARCOIN Mobile Wallet → Run workflow
 on:
-  workflow_dispatch: # Manual trigger only from GitHub UI
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+    paths:
+      - 'wallet/TARWallet/**'
+      - 'wallet/scripts/**'
+      - '.github/workflows/build-wallet.yml'
+  workflow_dispatch:
 
 jobs:
   # ---------------------------------------------------------------------------
