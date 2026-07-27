@@ -86,9 +86,9 @@ exports.TARCOIN_MAINNET = {
     p2pPort: 19333,
     rpcPort: 19332,
     magic: 0xfabfb5da,
-    bip44CoinType: 1337, // BIP44 path m/44'/1337'
-    genesisHash: '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0',
-    genesisMerkleRoot: '1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749',
+    bip44CoinType: 5050, // BIP44 path m/44'/5050'
+    genesisHash: '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e',
+    genesisMerkleRoot: 'eaf980618b3cde94360d83c4937c3bcebcba7cc1db9f3276eb8b180da3a2e921',
 };
 exports.TARCOIN_TESTNET = {
     name: 'testnet',
@@ -99,7 +99,7 @@ exports.TARCOIN_TESTNET = {
     rpcPort: 29332,
 };
 // BIP44 coin type for TARCOIN
-const COIN_TYPE = 1337;
+const COIN_TYPE = 5050;
 // ─── Supply Constants ─────────────────────────────────────────────────────────
 exports.SUPPLY = {
     MAX: 50000000000,
@@ -107,7 +107,7 @@ exports.SUPPLY = {
     MINING: 40000000000,
     BLOCK_REWARD_ERA1: 50000,
     HALVING_INTERVAL: 400000,
-    SATOSHIS_PER_TAR: 100000000, // 1 TAR = 100,000,000 Tar
+    TAR_PER_COIN: 100000000, // 1 TAR = 100,000,000 tar (smallest unit)
 };
 // ─── Address Derivation Helpers ───────────────────────────────────────────────
 /**
@@ -237,7 +237,7 @@ class TarcoinWallet {
     // ─── Address Generation ───────────────────────────────────────────────────
     /**
      * Get a new receiving address (native SegWit, tar1...).
-     * Derives from BIP44 path: m/44'/1337'/0'/0/{index}
+     * Derives from BIP44 path: m/44'/5050'/0'/0/{index}
      */
     async getNewReceiveAddress(type = 'bech32') {
         const root = await this._getRoot();
@@ -259,7 +259,7 @@ class TarcoinWallet {
     }
     /**
      * Get a change address for internal use.
-     * Derives from BIP44 path: m/44'/1337'/0'/1/{index}
+     * Derives from BIP44 path: m/44'/5050'/0'/1/{index}
      */
     async getChangeAddress(type = 'bech32') {
         const root = await this._getRoot();
@@ -431,10 +431,10 @@ class TarcoinWallet {
         const addrInfo = TarcoinWallet.validateAddress(toAddress);
         if (!addrInfo.isValid)
             throw new Error(`Invalid TARCOIN address: ${toAddress}`);
-        const amountSats = TarcoinWallet.toSatoshis(amountTar);
-        const feeSats = TarcoinWallet.toSatoshis(feeTar);
+        const amountSats = TarcoinWallet.toSmallestUnit(amountTar);
+        const feeSats = TarcoinWallet.toSmallestUnit(feeTar);
         const totalNeeded = amountSats + feeSats;
-        if (TarcoinWallet.toSatoshis(this._balance.confirmed) < totalNeeded) {
+        if (TarcoinWallet.toSmallestUnit(this._balance.confirmed) < totalNeeded) {
             throw new Error(`Insufficient balance: have ${this._balance.confirmed} TAR, need ${amountTar + feeTar} TAR`);
         }
         const root = await this._getRoot();
@@ -447,7 +447,7 @@ class TarcoinWallet {
             if (!utxo.spendable)
                 continue;
             selectedUtxos.push(utxo);
-            inputTotal += TarcoinWallet.toSatoshis(utxo.amount);
+            inputTotal += TarcoinWallet.toSmallestUnit(utxo.amount);
             if (inputTotal >= totalNeeded)
                 break;
         }
@@ -469,7 +469,7 @@ class TarcoinWallet {
                 index: utxo.vout,
                 witnessUtxo: {
                     script: p2wpkh.output,
-                    value: BigInt(TarcoinWallet.toSatoshis(utxo.amount)),
+                    value: BigInt(TarcoinWallet.toSmallestUnit(utxo.amount)),
                 },
             });
         }
@@ -548,7 +548,7 @@ class TarcoinWallet {
                 method: 'listunspent',
                 params: [0, 9999999, syncAddresses],
             }, {
-                auth: { username: 'tarcoin', password: 'tarcoin' },
+                auth: { username: process.env.RPC_USER || 'tarcoin', password: process.env.RPC_PASS || 'tarcoin' },
                 timeout: 10000,
             });
             if (response.data.result) {
@@ -609,13 +609,21 @@ class TarcoinWallet {
             blocksUntilHalving: nextHalvingBlock - blockHeight,
         };
     }
-    /** Convert TAR to Tar (satoshis) */
-    static toSatoshis(tar) {
-        return Math.round(tar * exports.SUPPLY.SATOSHIS_PER_TAR);
+    /** Convert TAR to smallest unit (tar) */
+    static toSmallestUnit(tar) {
+        return Math.round(tar * exports.SUPPLY.TAR_PER_COIN);
     }
-    /** Convert Tar (satoshis) to TAR */
+    /** @deprecated Use toSmallestUnit instead */
+    static toSatoshis(tar) {
+        return TarcoinWallet.toSmallestUnit(tar);
+    }
+    /** Convert smallest unit (tar) to TAR */
+    static fromSmallestUnit(smallestUnit) {
+        return smallestUnit / exports.SUPPLY.TAR_PER_COIN;
+    }
+    /** @deprecated Use fromSmallestUnit instead */
     static fromSatoshis(satoshis) {
-        return satoshis / exports.SUPPLY.SATOSHIS_PER_TAR;
+        return TarcoinWallet.fromSmallestUnit(satoshis);
     }
     /** Format TAR amount for display */
     static formatAmount(tar, decimals = 8) {

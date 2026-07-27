@@ -54,9 +54,9 @@ export const TARCOIN_MAINNET = {
   p2pPort: 19333,
   rpcPort: 19332,
   magic: 0xfabfb5da,
-  bip44CoinType: 1337,          // BIP44 path m/44'/1337'
-  genesisHash: '000074c6359f78730790275ea21bbd53f0bc3249604470bad49b9753f44bd7e0',
-  genesisMerkleRoot: '1fa777a38f96e44bb26591573ed2b22d5b40d7a63067201a40ad3b214152b749',
+  bip44CoinType: 5050,          // BIP44 path m/44'/5050'
+  genesisHash: '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e',
+  genesisMerkleRoot: 'eaf980618b3cde94360d83c4937c3bcebcba7cc1db9f3276eb8b180da3a2e921',
 };
 
 export const TARCOIN_TESTNET = {
@@ -69,7 +69,7 @@ export const TARCOIN_TESTNET = {
 };
 
 // BIP44 coin type for TARCOIN
-const COIN_TYPE = 1337;
+const COIN_TYPE = 5050;
 
 // ─── Supply Constants ─────────────────────────────────────────────────────────
 
@@ -331,7 +331,7 @@ export class TarcoinWallet {
 
   /**
    * Get a new receiving address (native SegWit, tar1...).
-   * Derives from BIP44 path: m/44'/1337'/0'/0/{index}
+   * Derives from BIP44 path: m/44'/5050'/0'/0/{index}
    */
   async getNewReceiveAddress(type: AddressType = 'bech32'): Promise<DerivedAddress> {
     const root = await this._getRoot();
@@ -354,7 +354,7 @@ export class TarcoinWallet {
 
   /**
    * Get a change address for internal use.
-   * Derives from BIP44 path: m/44'/1337'/0'/1/{index}
+   * Derives from BIP44 path: m/44'/5050'/0'/1/{index}
    */
   async getChangeAddress(type: AddressType = 'bech32'): Promise<DerivedAddress> {
     const root = await this._getRoot();

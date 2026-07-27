@@ -32,7 +32,7 @@ export declare const SUPPLY: {
     readonly MINING: 40000000000;
     readonly BLOCK_REWARD_ERA1: 50000;
     readonly HALVING_INTERVAL: 400000;
-    readonly SATOSHIS_PER_TAR: 100000000;
+    readonly TAR_PER_COIN: 100000000;
 };
 export type NetworkType = 'mainnet' | 'testnet' | 'regtest';
 export type AddressType = 'bech32' | 'base58' | 'p2sh';
@@ -142,12 +142,12 @@ export declare class TarcoinWallet {
     private _getRoot;
     /**
      * Get a new receiving address (native SegWit, tar1...).
-     * Derives from BIP44 path: m/44'/1337'/0'/0/{index}
+     * Derives from BIP44 path: m/44'/5050'/0'/0/{index}
      */
     getNewReceiveAddress(type?: AddressType): Promise<DerivedAddress>;
     /**
      * Get a change address for internal use.
-     * Derives from BIP44 path: m/44'/1337'/0'/1/{index}
+     * Derives from BIP44 path: m/44'/5050'/0'/1/{index}
      */
     getChangeAddress(type?: AddressType): Promise<DerivedAddress>;
     /**
@@ -206,9 +206,13 @@ export declare class TarcoinWallet {
     exportBackup(passphrase: string): Record<string, any>;
     /** Get block reward for a given block height */
     static getBlockReward(blockHeight: number): BlockRewardInfo;
-    /** Convert TAR to Tar (satoshis) */
+    /** Convert TAR to smallest unit (tar) */
+    static toSmallestUnit(tar: number): number;
+    /** @deprecated Use toSmallestUnit instead */
     static toSatoshis(tar: number): number;
-    /** Convert Tar (satoshis) to TAR */
+    /** Convert smallest unit (tar) to TAR */
+    static fromSmallestUnit(smallestUnit: number): number;
+    /** @deprecated Use fromSmallestUnit instead */
     static fromSatoshis(satoshis: number): number;
     /** Format TAR amount for display */
     static formatAmount(tar: number, decimals?: number): string;
