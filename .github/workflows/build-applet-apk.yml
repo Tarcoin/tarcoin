@@ -1,13 +1,7 @@
 name: Build Applet Android APK
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'wallet/applet/**'
-      - '.github/workflows/build-applet-apk.yml'
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger only from GitHub Actions tab
 
 jobs:
   build-apk:
