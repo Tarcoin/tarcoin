@@ -150,8 +150,10 @@ let count = 0;
 
 function rewriteUrl(val) {
   if (typeof val !== 'string') return val;
-  // Fix deleted BlueWallet fork
-  val = val.replace('BlueWallet/react-native-qrcode-local-image', 'remobile/react-native-qrcode-local-image');
+  // Fix deleted BlueWallet fork by using remobile and stripping the lost commit hash
+  if (val.includes('BlueWallet/react-native-qrcode-local-image')) {
+    val = 'https://github.com/remobile/react-native-qrcode-local-image';
+  }
   // github:Owner/Repo#commit  =>  https://github.com/Owner/Repo#commit
   val = val.replace(/^github:(.+)$/, 'https://github.com/\$1');
   // git+ssh://git@github.com/Owner/Repo  =>  https://github.com/Owner/Repo
