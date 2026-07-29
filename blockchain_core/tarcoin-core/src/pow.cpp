@@ -87,6 +87,26 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         }
     }
 
+    // Emergency Difficulty Adjustment (EDA) for Mainnet:
+    // If no block has been mined for > 6 hours, reduce difficulty proportionally
+    int64_t nTimeDiff = pblock->GetBlockTime() - pindexLast->GetBlockTime();
+    if (nTimeDiff > 6 * 3600) {
+        arith_uint256 bnTarget;
+        bnTarget.SetCompact(DarkGravityWave(pindexLast, params));
+
+        // For every 6-hour period without a block, double the target (half difficulty)
+        int64_t nPeriods = nTimeDiff / (6 * 3600);
+        for (int64_t i = 0; i < nPeriods && i < 10; i++) {
+            bnTarget *= 2;
+        }
+
+        const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
+        if (bnTarget > bnPowLimit) {
+            bnTarget = bnPowLimit;
+        }
+        return bnTarget.GetCompact();
+    }
+
     // Use Dark Gravity Wave for mainnet
     return DarkGravityWave(pindexLast, params);
 }
