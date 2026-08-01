@@ -83,23 +83,110 @@ export default function TokenomicsSection() {
           ))}
         </div>
 
-        {/* Ecosystem Treasury Note */}
+        {/* Transparency Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass rounded-xl p-6 mb-16 border-tarcoin-gold/10 max-w-4xl mx-auto"
+          className="glass rounded-2xl p-8 mb-16 border border-tarcoin-gold/20 max-w-5xl mx-auto"
         >
-          <div className="flex items-start gap-4">
-            <div className="w-1.5 h-16 bg-tarcoin-gold rounded-full flex-shrink-0 mt-1" />
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-10 bg-tarcoin-gold rounded-full flex-shrink-0" />
             <div>
-              <h4 className="text-sm font-orbitron text-tarcoin-gold mb-2">Long-Term Ecosystem Treasury — Transparent Cold Storage</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                20% of the total TAR supply (10 Billion TAR) is reserved in publicly verifiable cold storage wallets for ecosystem growth, infrastructure, and future development. These funds are allocated exclusively for network security, infrastructure sustainability, ecosystem development, mining infrastructure, public tooling, exchange integrations, and long-term ecosystem growth. No individual or entity has unilateral control. All treasury transactions are publicly recorded on the blockchain and subject to network-wide transparency.
-              </p>
+              <h3 className="text-lg font-orbitron text-tarcoin-gold">🔐 Reserved Supply — Fully Transparent & Verifiable</h3>
+              <p className="text-xs text-gray-400 mt-1">Our entire 10B TAR reserve is publicly verifiable on-chain. No trust needed — verify it yourself.</p>
             </div>
           </div>
+
+          {/* Live Wallet Verification */}
+          <div className="bg-black/40 rounded-xl p-5 mb-6 border border-tarcoin-gold/10">
+            <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-3">🔍 COLD STORAGE WALLET — VERIFY LIVE</div>
+            <a
+              href="https://explorer.tarcoin.org/address/tar1qn56jedak2gzxmaukh94cz0sampnhydnk3n3tah"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs text-tarcoin-cyan break-all hover:text-tarcoin-gold transition-colors"
+            >
+              tar1qn56jedak2gzxmaukh94cz0sampnhydnk3n3tah
+            </a>
+            <div className="flex flex-wrap gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-tarcoin-neon animate-pulse" />
+                <span className="text-xs text-gray-300">Balance: <span className="text-tarcoin-neon font-mono">10,000,000,000 TAR</span></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-tarcoin-neon animate-pulse" />
+                <span className="text-xs text-gray-300">Total Sent: <span className="text-tarcoin-neon font-mono">0 TAR</span> — Never moved</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-tarcoin-neon animate-pulse" />
+                <span className="text-xs text-gray-300">Mined: <span className="text-tarcoin-neon font-mono">23 June 2026</span></span>
+              </div>
+            </div>
+            <a
+              href="https://explorer.tarcoin.org/address/tar1qn56jedak2gzxmaukh94cz0sampnhydnk3n3tah"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-xs font-orbitron text-tarcoin-gold border border-tarcoin-gold/30 rounded-lg px-4 py-2 hover:bg-tarcoin-gold/10 transition-colors"
+            >
+              🔗 Verify on Explorer →
+            </a>
+          </div>
+
+          {/* Reserve Breakdown Table */}
+          <div className="mb-6">
+            <div className="text-xs font-orbitron text-gray-400 tracking-widest mb-3">RESERVE ALLOCATION BREAKDOWN</div>
+            <div className="overflow-x-auto rounded-xl border border-tarcoin-gold/10">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-tarcoin-gold/10 bg-black/30">
+                    <th className="text-left p-3 text-xs font-orbitron text-gray-400 uppercase tracking-wider">Purpose</th>
+                    <th className="text-right p-3 text-xs font-orbitron text-gray-400 uppercase tracking-wider">Amount</th>
+                    <th className="text-right p-3 text-xs font-orbitron text-gray-400 uppercase tracking-wider">Share</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { purpose: "Exchange Listings & Liquidity", amount: "3,000,000,000 TAR", share: "30%" },
+                    { purpose: "Developer Grants & Open Source", amount: "2,000,000,000 TAR", share: "20%" },
+                    { purpose: "Marketing & Community Growth", amount: "2,000,000,000 TAR", share: "20%" },
+                    { purpose: "Infrastructure & Node Support", amount: "1,500,000,000 TAR", share: "15%" },
+                    { purpose: "Emergency Reserve Fund", amount: "1,500,000,000 TAR", share: "15%" },
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b border-tarcoin-gold/5 hover:bg-tarcoin-gold/5 transition-colors">
+                      <td className="p-3 text-xs text-gray-300">{row.purpose}</td>
+                      <td className="p-3 text-xs font-mono text-right text-gray-300">{row.amount}</td>
+                      <td className="p-3 text-xs font-orbitron text-right text-tarcoin-gold">{row.share}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Vesting Schedule */}
+          <div className="bg-black/30 rounded-xl p-5 border border-tarcoin-gold/10">
+            <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-3">🔒 VESTING & RELEASE SCHEDULE</div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                { period: "Year 1–2", action: "Full Lock", note: "Zero coins released. Complete lock.", color: "text-red-400" },
+                { period: "Year 3", action: "1B TAR", note: "Released for exchange listings only.", color: "text-yellow-400" },
+                { period: "Year 4–10", action: "Max 1B/year", note: "Released for stated purposes with 30-day notice.", color: "text-tarcoin-neon" },
+              ].map((v, i) => (
+                <div key={i} className="bg-black/40 rounded-lg p-4 border border-tarcoin-gold/10">
+                  <div className="text-xs font-orbitron text-gray-400 mb-1">{v.period}</div>
+                  <div className={`text-sm font-orbitron font-bold mb-1 ${v.color}`}>{v.action}</div>
+                  <div className="text-xs text-gray-500">{v.note}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              ✅ All releases will be announced publicly <strong className="text-gray-400">30 days in advance</strong> with full explanation of usage. We will never sell reserved TAR on open markets to protect coin price.
+            </p>
+          </div>
         </motion.div>
+
 
         {/* Emission Schedule */}
         <motion.div

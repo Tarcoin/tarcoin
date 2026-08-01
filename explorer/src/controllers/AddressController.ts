@@ -31,10 +31,12 @@ export class AddressController {
           balance = scanResult.total_amount || 0;
           utxos = scanResult.unspents || [];
           txCount = utxos.length;
-          totalReceived = balance; // For unspent UTXOs, received >= balance
+          totalReceived = balance;
+        } else {
+          console.error('scantxoutset returned no success:', JSON.stringify(scanResult));
         }
-      } catch (scanErr) {
-        // scantxoutset not available — fall back to 0
+      } catch (scanErr: any) {
+        console.error('scantxoutset failed for address', address, ':', scanErr?.message || scanErr);
       }
 
       const result = {
