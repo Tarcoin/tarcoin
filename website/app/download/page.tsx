@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 
-const VERSION = "v1.0.0";
+const VERSION = "v1.2.0";
 const GITHUB_REPO        = `https://github.com/Tarcoin/tarcoin`;
 const GITHUB_RELEASE     = `https://github.com/Tarcoin/tarcoin/releases/tag/${VERSION}`;
 const GITHUB_RELEASE_DL  = `https://github.com/Tarcoin/tarcoin/releases/download/${VERSION}`;
@@ -27,7 +27,7 @@ const downloads: Download[] = [
     title: "Windows CLI Tools",
     icon: "🪟",
     desc: "Windows 10/11 64-bit · tarcoind.exe + tarcoin-cli.exe",
-    file: "tarcoin-wallet-win64.zip",
+    file: "tarcoin-windows-wallet-v1.2.0.zip",
     size: "~9.4 MB",
     source: "github",
   },
@@ -36,7 +36,7 @@ const downloads: Download[] = [
     title: "Linux Full Package",
     icon: "🐧",
     desc: "Ubuntu / Debian 22.04+ · tarcoind + tarcoin-cli + tarcoin-qt",
-    file: "tarcoin-linux-full.zip",
+    file: "tarcoin-linux-full-v1.2.0.zip",
     size: "~248 MB",
     source: "github",
   },
@@ -45,7 +45,7 @@ const downloads: Download[] = [
     title: "Linux Server Node",
     icon: "⌨️",
     desc: "Ubuntu / Debian 22.04+ · tarcoind + tarcoin-cli (server only, no GUI)",
-    file: "tarcoin-linux-daemon.zip",
+    file: "tarcoin-linux-server-v1.2.0.zip",
     size: "~115 MB",
     source: "github",
   },
@@ -230,7 +230,7 @@ cmake -B build && cmake --build build -j$(nproc)
               <p className="text-sm text-gray-400 font-space mb-3">
                 All releases are signed with GPG and include SHA256 checksums.
               </p>
-              <pre className="text-xs font-mono bg-black/40 rounded-lg p-3 overflow-x-auto text-gray-300 border border-white/5">{`sha256sum tarcoin-linux-full.zip
+              <pre className="text-xs font-mono bg-black/40 rounded-lg p-3 overflow-x-auto text-gray-300 border border-white/5">{`sha256sum tarcoin-linux-wallet-v1.2.0.zip
 # compare against SHA256SUMS in the GitHub release`}</pre>
               <a href={`${GITHUB_RELEASE_DL}/SHA256SUMS`} target="_blank" rel="noopener noreferrer"
                 className="inline-block mt-3 text-xs text-tarcoin-gold hover:text-white transition-colors">

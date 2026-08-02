@@ -54,7 +54,7 @@ function WhitepaperHero() {
         >
           <span className="w-2 h-2 rounded-full bg-tarcoin-gold animate-pulse" />
           <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase">
-            Technical Whitepaper v1.0.0 · Mainnet Live · Mining Active ⛏️
+            Technical Whitepaper v1.2.0 · Mainnet Live · Mining Active ⛏️
           </span>
         </motion.div>
 
@@ -987,7 +987,7 @@ export default function WhitepaperPage() {
       <footer className="border-t border-tarcoin-gold/10 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs text-gray-500 font-space">
-            TARCOIN — Technical Whitepaper v1.0.0 · June 2026 · Released under the MIT License
+            TARCOIN — Technical Whitepaper v1.2.0 · June 2026 · Released under the MIT License
           </p>
           <p className="text-[10px] text-gray-600 font-space mt-1">
             This whitepaper is for informational purposes only and does not constitute financial advice.

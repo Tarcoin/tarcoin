@@ -4,7 +4,7 @@ import fs from 'fs';
 
 // Map of download IDs to their actual file locations
 // Priority: 1. /public/downloads/  2. GitHub Releases redirect
-const RELEASE_VERSION = 'v1.0.0';
+const RELEASE_VERSION = 'v1.2.0';
 const GITHUB_RELEASE_BASE = `https://github.com/Tarcoin/tarcoin/releases/download/${RELEASE_VERSION}`;
 
 const FILE_MAP: Record<string, {
@@ -20,7 +20,7 @@ const FILE_MAP: Record<string, {
     localPaths: [
       'public/downloads/tarcoin-linux-full.zip',
     ],
-    githubAsset: 'tarcoin-linux-full.zip',
+    githubAsset: 'tarcoin-linux-full-v1.2.0.zip',
   },
   // Linux server-only package: tarcoind + tarcoin-cli (no GUI)
   'tarcoin-linux-daemon.zip': {
@@ -29,7 +29,7 @@ const FILE_MAP: Record<string, {
     localPaths: [
       'public/downloads/tarcoin-linux-daemon.zip',
     ],
-    githubAsset: 'tarcoin-linux-daemon.zip',
+    githubAsset: 'tarcoin-linux-server-v1.2.0.zip',
   },
   // Windows wallet (future release)
   'tarcoin-wallet-win64.zip': {
@@ -38,7 +38,7 @@ const FILE_MAP: Record<string, {
     localPaths: [
       'public/downloads/tarcoin-wallet-win64.zip',
     ],
-    githubAsset: 'tarcoin-wallet-win64.zip',
+    githubAsset: 'tarcoin-windows-wallet-v1.2.0.zip',
   },
   // macOS wallet
   'tarcoin-macos-app.zip': {
