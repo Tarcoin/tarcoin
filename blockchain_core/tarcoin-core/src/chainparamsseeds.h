@@ -6,29 +6,36 @@
 #define BITCOIN_CHAINPARAMSSEEDS_H
 /**
  * List of fixed seed nodes for the TARCOIN network
- * TARCOIN mainnet seeds on port 19333 (0x4B75 in big-endian)
  *
  * Each line contains a BIP155 serialized (networkID, addr, port) tuple.
- * networkID 0x01 = IPv4, length = 0x04 (4 bytes), then 4 IP bytes, then 2 port bytes
- *
  * Port 19333 = 0x4B75 in big-endian hex
  *
- * NOTE: These are TARCOIN-specific seeds on port 19333.
- * Bitcoin seeds (port 8333 = 0x208D) have been removed.
+ * NOTE: All Bitcoin mainnet fixed seeds (port 8333 = 0x208D) have been removed.
+ * TARCOIN uses DNS seed (seed.tarcoin.org) to discover peers instead.
  *
- * Add your TARCOIN node IPs here in BIP155 format:
- * Format for IPv4: 0x01, 0x04, <4 IP bytes>, 0x4B, 0x75
- * Example: IP 1.2.3.4 port 19333 = 0x01, 0x04, 0x01, 0x02, 0x03, 0x04, 0x4B, 0x75
+ * To add a TARCOIN node as a fixed seed (IPv4 format):
+ * Format: 0x01, 0x04, <byte1>, <byte2>, <byte3>, <byte4>, 0x4B, 0x75
+ * Example: IP 1.2.3.4 port 19333 = { 0x01, 0x04, 0x01, 0x02, 0x03, 0x04, 0x4B, 0x75 }
  */
+
+// TARCOIN mainnet fixed seeds - empty, using DNS seed instead
 static const uint8_t chainparams_seed_main[] = {
-    // TARCOIN mainnet node: seed.tarcoin.org (resolved IP goes here)
-    // Format: networkID=0x01(IPv4), len=0x04, IP bytes, port=19333(0x4B75)
-    // Add real TARCOIN node IPs below when available.
-    // Currently empty - wallet will use DNS seed (seed.tarcoin.org) to find peers.
+    // Add TARCOIN mainnet node IPs here when available
 };
 
+// TARCOIN testnet fixed seeds - empty
 static const uint8_t chainparams_seed_test[] = {
-    // TARCOIN testnet - no fixed seeds
+    // No testnet seeds
+};
+
+// TARCOIN testnet4 fixed seeds - empty
+static const uint8_t chainparams_seed_testnet4[] = {
+    // No testnet4 seeds
+};
+
+// TARCOIN signet fixed seeds - empty
+static const uint8_t chainparams_seed_signet[] = {
+    // No signet seeds
 };
 
 #endif // BITCOIN_CHAINPARAMSSEEDS_H
