@@ -180,8 +180,8 @@ const stratumServer = net.createServer((socket) => {
                 4, // extraNonce2 size
               ],
               error: null,
-            }) + '\\n');
-            socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }) + '\\n');
+            }) + "\n");
+            socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }) + "\n");
             sendWork(socket);
             break;
 
@@ -191,7 +191,7 @@ const stratumServer = net.createServer((socket) => {
               hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
               lastSeen: Date.now(), workerId, extraNonce1,
             });
-            socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + '\\n');
+            socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
             console.log(`Miner authorized: \${workerName}`);
             break;
@@ -237,21 +237,21 @@ function sendWork(socket) {
       t.nTime,
       true, // clean jobs
     ],
-  }) + '\\n');
+  }) + "\n");
 }
 
 // ====== Real SHA256d share/block verification ======
 async function handleSubmit(socket, message, workerName, extraNonce1) {
   const worker = poolState.miners.get(workerName);
   if (!worker) {
-    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }) + '\\n');
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }) + "\n");
     return;
   }
 
   const [_workerNameParam, jobId, extraNonce2, nTime, nonce] = message.params;
 
   if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
-    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + '\\n');
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + "\n");
     return;
   }
 
@@ -282,14 +282,14 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 
     if (!meetsPoolDiff) {
       worker.invalidShares++;
-      socket.write(JSON.stringify({ id: message.id, result: null, error: [23, 'Low difficulty share', null] }) + '\\n');
+      socket.write(JSON.stringify({ id: message.id, result: null, error: [23, 'Low difficulty share', null] }) + "\n");
       return;
     }
 
     worker.validShares++;
     worker.shares++;
     worker.lastSeen = Date.now();
-    socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + '\\n');
+    socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
 
     // Track in Redis
     if (redis) {
@@ -306,7 +306,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     console.log(`Share accepted from \${workerName} — hash: \${headerHash.reverse().toString('hex').slice(0, 16)}...`);
   } catch (err) {
     console.error('Share verification error:', err.message);
-    socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + '\\n');
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
   }
 }
 
