@@ -6,7 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { createClient } = require('redis');
-const { WebSocketServer, WebSocket } = require('ws');
+const net = require('net');
 const axios = require('axios');
 const cron = require('node-cron');
 const crypto = require('crypto');
@@ -133,6 +133,7 @@ function hashMeetsTarget(hashBuf, targetBuf) {
 }
 
 // ====== Pool state ======
+const activeSockets = new Set();
 let poolState = {
   difficulty: 1, // Fixed pool difficulty
   blockTemplate: null,
@@ -145,69 +146,84 @@ let poolState = {
   startTime: Date.now(),
 };
 
-// ====== Stratum WebSocket Server (port 3333) ======
-const wss = new WebSocketServer({ port: 3333 });
+// ====== Stratum TCP Server (port 3333) ======
 console.log('Stratum server listening on port 3333');
 
-wss.on('connection', (ws) => {
+const stratumServer = net.createServer((socket) => {
+  activeSockets.add(socket);
   let workerName = '';
+  let buffer = '';
   const workerId = crypto.randomBytes(8).toString('hex');
   const extraNonce1 = crypto.randomBytes(4).toString('hex');
 
-  console.log(`New miner connected: ${workerId}`);
+  console.log(`New miner connected: \${workerId}`);
 
-  ws.on('message', async (data) => {
-    try {
-      const message = JSON.parse(data.toString());
+  socket.on('data', async (data) => {
+    buffer += data.toString();
+    if (!buffer.includes('\\n')) return;
+    
+    const messages = buffer.split('\\n');
+    buffer = messages.pop(); // keep remainder
+    
+    for (const msg of messages) {
+      if (!msg.trim()) continue;
+      try {
+        const message = JSON.parse(msg);
 
-      switch (message.method) {
-        case 'mining.subscribe':
-          ws.send(JSON.stringify({
-            id: message.id,
-            result: [
-              [['mining.set_difficulty', 'tarcoin-' + workerId], ['mining.notify', 'tarcoin-' + workerId]],
-              extraNonce1,
-              4, // extraNonce2 size
-            ],
-            error: null,
-          }));
-          ws.send(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }));
-          sendWork(ws);
-          break;
+        switch (message.method) {
+          case 'mining.subscribe':
+            socket.write(JSON.stringify({
+              id: message.id,
+              result: [
+                [['mining.set_difficulty', 'tarcoin-' + workerId], ['mining.notify', 'tarcoin-' + workerId]],
+                extraNonce1,
+                4, // extraNonce2 size
+              ],
+              error: null,
+            }) + '\\n');
+            socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }) + '\\n');
+            sendWork(socket);
+            break;
 
-        case 'mining.authorize':
-          workerName = message.params[0];
-          poolState.miners.set(workerName, {
-            hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
-            lastSeen: Date.now(), workerId, extraNonce1,
-          });
-          ws.send(JSON.stringify({ id: message.id, result: true, error: null }));
-          poolState.activeWorkers = poolState.miners.size;
-          console.log(`Miner authorized: ${workerName}`);
-          break;
+          case 'mining.authorize':
+            workerName = message.params[0];
+            poolState.miners.set(workerName, {
+              hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
+              lastSeen: Date.now(), workerId, extraNonce1,
+            });
+            socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + '\\n');
+            poolState.activeWorkers = poolState.miners.size;
+            console.log(`Miner authorized: \${workerName}`);
+            break;
 
-        case 'mining.submit':
-          await handleSubmit(ws, message, workerName, extraNonce1);
-          break;
+          case 'mining.submit':
+            await handleSubmit(socket, message, workerName, extraNonce1);
+            break;
+        }
+      } catch (err) {
+        console.error('Stratum message error:', err.message);
       }
-    } catch (err) {
-      console.error('Stratum message error:', err.message);
     }
   });
 
-  ws.on('close', () => {
-    console.log(`Miner disconnected: ${workerName || workerId}`);
+  socket.on('close', () => {
+    activeSockets.delete(socket);
+    console.log(`Miner disconnected: \${workerName || workerId}`);
     if (workerName) {
       poolState.miners.delete(workerName);
       poolState.activeWorkers = poolState.miners.size;
     }
   });
+  
+  socket.on('error', (err) => {
+    console.warn(`Socket error from \${workerName || workerId}:`, err.message);
+  });
 });
 
-function sendWork(ws) {
+function sendWork(socket) {
   if (!poolState.blockTemplate) return;
   const t = poolState.blockTemplate;
-  ws.send(JSON.stringify({
+  socket.write(JSON.stringify({
     id: null,
     method: 'mining.notify',
     params: [
@@ -221,21 +237,21 @@ function sendWork(ws) {
       t.nTime,
       true, // clean jobs
     ],
-  }));
+  }) + '\\n');
 }
 
 // ====== Real SHA256d share/block verification ======
-async function handleSubmit(ws, message, workerName, extraNonce1) {
+async function handleSubmit(socket, message, workerName, extraNonce1) {
   const worker = poolState.miners.get(workerName);
   if (!worker) {
-    ws.send(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }));
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }) + '\\n');
     return;
   }
 
   const [_workerNameParam, jobId, extraNonce2, nTime, nonce] = message.params;
 
   if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
-    ws.send(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }));
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + '\\n');
     return;
   }
 
@@ -266,14 +282,14 @@ async function handleSubmit(ws, message, workerName, extraNonce1) {
 
     if (!meetsPoolDiff) {
       worker.invalidShares++;
-      ws.send(JSON.stringify({ id: message.id, result: null, error: [23, 'Low difficulty share', null] }));
+      socket.write(JSON.stringify({ id: message.id, result: null, error: [23, 'Low difficulty share', null] }) + '\\n');
       return;
     }
 
     worker.validShares++;
     worker.shares++;
     worker.lastSeen = Date.now();
-    ws.send(JSON.stringify({ id: message.id, result: true, error: null }));
+    socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + '\\n');
 
     // Track in Redis
     if (redis) {
@@ -287,20 +303,20 @@ async function handleSubmit(ws, message, workerName, extraNonce1) {
       await handleBlockFound(header, workerName);
     }
 
-    console.log(`Share accepted from ${workerName} — hash: ${headerHash.reverse().toString('hex').slice(0, 16)}...`);
+    console.log(`Share accepted from \${workerName} — hash: \${headerHash.reverse().toString('hex').slice(0, 16)}...`);
   } catch (err) {
     console.error('Share verification error:', err.message);
-    ws.send(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }));
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + '\\n');
   }
 }
 
 async function handleBlockFound(headerBuffer, workerName) {
-  console.log(`🎉 BLOCK FOUND by ${workerName}!`);
+  console.log(`🎉 BLOCK FOUND by \${workerName}!`);
   poolState.blocksFound++;
 
   try {
     const height = poolState.blockTemplate?.height || 0;
-    console.log(`Block found at height ~${height + 1} by ${workerName}`);
+    console.log(`Block found at height ~\${height + 1} by \${workerName}`);
 
     if (redis) {
       await redis.lPush('pool:blocks', JSON.stringify({
@@ -334,10 +350,10 @@ async function refreshBlockTemplate() {
         target: template.target,
       };
 
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) sendWork(client);
+      activeSockets.forEach((client) => {
+        if (!client.destroyed) sendWork(client);
       });
-      console.log(`Block template refreshed — height: ${template.height}, txs: ${(template.transactions || []).length}`);
+      console.log(`Block template refreshed — height: \${template.height}, txs: \${(template.transactions || []).length}`);
     }
   } catch (err) {
     console.warn('Template refresh failed (node may not be connected):', err.message);
@@ -384,8 +400,10 @@ async function start() {
   await initRedis();
   await refreshBlockTemplate();
   app.listen(PORT, () => {
-    console.log(`TARCOIN Mining Pool HTTP API running on port ${PORT}`);
-    console.log(`Stratum server running on port 3333`);
+    console.log(`TARCOIN Mining Pool HTTP API running on port \${PORT}`);
+  });
+  stratumServer.listen(3333, '0.0.0.0', () => {
+    console.log(`Stratum TCP server running on port 3333`);
   });
 }
 
