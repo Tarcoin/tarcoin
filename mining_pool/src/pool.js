@@ -20,8 +20,9 @@ const RPC_HOST = process.env.RPC_HOST || '127.0.0.1';
 const RPC_PORT = process.env.RPC_PORT || 19332;
 const RPC_USER = process.env.RPC_USER || 'tarcoin';
 const RPC_PASS = process.env.RPC_PASS || 'tarcoin';
+const RPC_WALLET = process.env.RPC_WALLET || ''; // e.g. "mining_pool"
 
-// TARCOIN constants
+// ====== TARCOIN constants ======
 const TARCOIN_NBITS = '1f00ffff';
 const POW_LIMIT = Buffer.from('0000ffff00000000000000000000000000000000000000000000000000000000', 'hex');
 
@@ -44,7 +45,11 @@ async function initRedis() {
 
 // ====== RPC helper ======
 async function rpcCall(method, params = []) {
-  const { data } = await axios.post(`http://${RPC_HOST}:${RPC_PORT}`, {
+  // Wallet commands like getbalance and sendmany need the /wallet/ path if a named wallet is used
+  const isWalletCommand = ['getbalance', 'sendmany', 'getnewaddress'].includes(method);
+  const urlPath = (isWalletCommand && RPC_WALLET) ? `/wallet/${RPC_WALLET}` : '/';
+  
+  const { data } = await axios.post(`http://${RPC_HOST}:${RPC_PORT}${urlPath}`, {
     jsonrpc: '2.0',
     id: Date.now(),
     method,
@@ -156,13 +161,13 @@ const stratumServer = net.createServer((socket) => {
   const workerId = crypto.randomBytes(8).toString('hex');
   const extraNonce1 = crypto.randomBytes(4).toString('hex');
 
-  console.log(`New miner connected: \${workerId}`);
+  console.log(`New miner connected: ${workerId}`);
 
   socket.on('data', async (data) => {
     buffer += data.toString();
-    if (!buffer.includes('\\n')) return;
+    if (!buffer.includes('\n')) return;
     
-    const messages = buffer.split('\\n');
+    const messages = buffer.split('\n');
     buffer = messages.pop(); // keep remainder
     
     for (const msg of messages) {
@@ -193,7 +198,7 @@ const stratumServer = net.createServer((socket) => {
             });
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
-            console.log(`Miner authorized: \${workerName}`);
+            console.log(`Miner authorized: ${workerName}`);
             break;
 
           case 'mining.submit':
@@ -208,7 +213,7 @@ const stratumServer = net.createServer((socket) => {
 
   socket.on('close', () => {
     activeSockets.delete(socket);
-    console.log(`Miner disconnected: \${workerName || workerId}`);
+    console.log(`Miner disconnected: ${workerName || workerId}`);
     if (workerName) {
       poolState.miners.delete(workerName);
       poolState.activeWorkers = poolState.miners.size;
@@ -216,7 +221,7 @@ const stratumServer = net.createServer((socket) => {
   });
   
   socket.on('error', (err) => {
-    console.warn(`Socket error from \${workerName || workerId}:`, err.message);
+    console.warn(`Socket error from ${workerName || workerId}:`, err.message);
   });
 });
 
@@ -303,7 +308,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await handleBlockFound(header, workerName);
     }
 
-    console.log(`Share accepted from \${workerName} — hash: \${headerHash.reverse().toString('hex').slice(0, 16)}...`);
+    console.log(`Share accepted from ${workerName} — hash: ${headerHash.reverse().toString('hex').slice(0, 16)}...`);
   } catch (err) {
     console.error('Share verification error:', err.message);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
@@ -311,12 +316,12 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 }
 
 async function handleBlockFound(headerBuffer, workerName) {
-  console.log(`🎉 BLOCK FOUND by \${workerName}!`);
+  console.log(`🎉 BLOCK FOUND by ${workerName}!`);
   poolState.blocksFound++;
 
   try {
     const height = poolState.blockTemplate?.height || 0;
-    console.log(`Block found at height ~\${height + 1} by \${workerName}`);
+    console.log(`Block found at height ~${height + 1} by ${workerName}`);
 
     if (redis) {
       await redis.lPush('pool:blocks', JSON.stringify({
@@ -353,7 +358,7 @@ async function refreshBlockTemplate() {
       activeSockets.forEach((client) => {
         if (!client.destroyed) sendWork(client);
       });
-      console.log(`Block template refreshed — height: \${template.height}, txs: \${(template.transactions || []).length}`);
+      console.log(`Block template refreshed — height: ${template.height}, txs: ${(template.transactions || []).length}`);
     }
   } catch (err) {
     console.warn('Template refresh failed (node may not be connected):', err.message);
@@ -368,13 +373,78 @@ async function processPayouts() {
   if (!redis) return;
 
   try {
+    // 1. Get mature, spendable balance
+    let balance = 0;
+    try {
+      balance = await rpcCall('getbalance', ['*', 6]); // At least 6 confirmations, but coinbase needs 100
+    } catch (e) {
+      console.warn('Could not fetch wallet balance for payouts:', e.message);
+      return;
+    }
+
+    if (balance < 50) {
+      console.log(`Balance too low for payouts (${balance} TAR). Waiting for blocks to mature...`);
+      return;
+    }
+
+    // 2. Fetch shares
     const shares = await redis.lRange('pool:shares', 0, -1);
+    if (shares.length === 0) {
+      console.log('No shares found to payout.');
+      return;
+    }
+
     const workerShares = {};
+    let totalShares = 0;
     shares.forEach((s) => {
       const { worker } = JSON.parse(s);
       workerShares[worker] = (workerShares[worker] || 0) + 1;
+      totalShares++;
     });
-    console.log('Worker shares:', workerShares);
+
+    console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers.`);
+
+    // 3. Calculate proportions
+    const feeWallet = process.env.FEE_WALLET || poolState.poolWallet;
+    const feePercentage = poolState.fee / 100;
+    const amountToDistribute = balance * (1 - feePercentage);
+    const feeAmount = balance * feePercentage;
+    
+    const payouts = {};
+    let totalAssigned = 0;
+
+    for (const [worker, shareCount] of Object.entries(workerShares)) {
+      const proportion = shareCount / totalShares;
+      const workerReward = parseFloat((amountToDistribute * proportion).toFixed(8));
+      
+      if (workerReward >= 1) { // Minimum payout 1 TAR to avoid dust
+        payouts[worker] = workerReward;
+        totalAssigned += workerReward;
+      }
+    }
+
+    // Assign any dust remainder and the 1% fee to the fee wallet
+    const finalFee = parseFloat((balance - totalAssigned).toFixed(8));
+    if (finalFee > 0 && feeWallet) {
+      if (payouts[feeWallet]) {
+        payouts[feeWallet] = parseFloat((payouts[feeWallet] + finalFee).toFixed(8));
+      } else {
+        payouts[feeWallet] = finalFee;
+      }
+    }
+
+    if (Object.keys(payouts).length === 0) return;
+
+    console.log('Executing sendmany:', payouts);
+
+    // 4. Send the transaction
+    const txid = await rpcCall('sendmany', ["", payouts]);
+    console.log(`✅ Payout successful! TXID: ${txid}`);
+
+    // 5. Clear the shares ONLY if successful
+    await redis.del('pool:shares');
+    console.log('Cleared processed shares from Redis.');
+
   } catch (err) {
     console.error('Payout error:', err.message);
   }
@@ -387,7 +457,7 @@ app.get('/', (_req, res) => {
   res.json({
     message: 'Welcome to TARCOIN Mining Pool',
     status: 'Online',
-    stratum: 'stratum+tcp://pool.tarcoin.org:3333',
+    stratum: 'stratum+tcp://stratum.tarcoin.org:3333',
     algorithm: 'SHA256d'
   });
 });
@@ -400,7 +470,7 @@ async function start() {
   await initRedis();
   await refreshBlockTemplate();
   app.listen(PORT, () => {
-    console.log(`TARCOIN Mining Pool HTTP API running on port \${PORT}`);
+    console.log(`TARCOIN Mining Pool HTTP API running on port ${PORT}`);
   });
   stratumServer.listen(3333, '0.0.0.0', () => {
     console.log(`Stratum TCP server running on port 3333`);
@@ -408,3 +478,4 @@ async function start() {
 }
 
 start();
+

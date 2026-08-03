@@ -27,7 +27,7 @@ export default function PoolPage() {
             <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
               className="text-lg text-gray-400 max-w-3xl mx-auto mb-10 font-space">
               Official TARCOIN mining pool. Stratum protocol, ASIC compatible, daily payouts.
-              Point your SHA256d miners to <code className="text-tarcoin-gold">stratum+tcp://pool.tarcoin.org:3333</code>
+              Point your SHA256d miners to <code className="text-tarcoin-gold">stratum+tcp://stratum.tarcoin.org:3333</code>
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-wrap justify-center gap-4 mb-16">

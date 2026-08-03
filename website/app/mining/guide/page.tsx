@@ -29,7 +29,7 @@ export default function MiningGuidePage() {
               className="space-y-8 text-left">
               {[
                 { step: "1", title: "Get a TAR Wallet", desc: "Download and install the TARCOIN Core wallet for your platform. Create a new wallet and generate a receiving address (starts with tar1...)." },
-                { step: "2", title: "Configure Your ASIC Miner", desc: "Access your ASIC miner's web interface and enter the pool configuration: URL: stratum+tcp://pool.tarcoin.org:3333, Worker: [Your TAR Address], Password: anything (or x)." },
+                { step: "2", title: "Configure Your ASIC Miner", desc: "Access your ASIC miner's web interface and enter the pool configuration: URL: stratum+tcp://stratum.tarcoin.org:3333, Worker: [Your TAR Address], Password: anything (or x)." },
                 { step: "3", title: "Set Pool Parameters", desc: "For most ASIC miners, you'll need to set the pool URL, worker name (your TAR address), and password. The TARCOIN pool uses the standard Stratum protocol on port 3333." },
                 { step: "4", title: "Monitor Your Mining", desc: "Check the pool dashboard to see your hashrate, shares, and earnings. The pool updates in real-time. Daily automatic payouts to your TAR wallet." },
               ].map((g) => (
