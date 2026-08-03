@@ -6,7 +6,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { createClient } = require('redis');
-const { WebSocketServer, WebSocket } = require('ws');
+const { WebSocket } = require('ws');
+const net = require('net');
 const axios = require('axios');
 const cron = require('node-cron');
 const crypto = require('crypto');
@@ -175,88 +176,102 @@ let poolState = {
 const connectionsByIP = new Map();
 const MAX_CONNECTIONS_PER_IP = 50;
 
-// ====== Stratum WebSocket Server (port 3333) ======
-const wss = new WebSocketServer({ port: 3333 });
-console.log('Stratum server listening on port 3333');
-
-wss.on('connection', (ws, req) => {
+// ====== Stratum TCP Server (port 3333) ======
+const tcpServer = net.createServer((socket) => {
   let workerName = '';
   const workerId = crypto.randomBytes(8).toString('hex');
   const extraNonce1 = crypto.randomBytes(4).toString('hex');
-  const clientIP = req.socket.remoteAddress || 'unknown';
+  const clientIP = socket.remoteAddress || 'unknown';
+  let buffer = '';
 
   // Per-IP rate limiting
   const ipCount = (connectionsByIP.get(clientIP) || 0) + 1;
   connectionsByIP.set(clientIP, ipCount);
   if (ipCount > MAX_CONNECTIONS_PER_IP) {
     console.warn(`Too many connections from ${clientIP} (${ipCount}), rejecting`);
-    ws.close();
+    socket.destroy();
     return;
   }
 
   console.log(`New miner connected: ${workerId} from ${clientIP}`);
 
-  ws.on('message', async (data) => {
-    try {
-      const message = JSON.parse(data.toString());
+  socket.setEncoding('utf8');
+  socket.setKeepAlive(true, 60000);
 
-      switch (message.method) {
-        case 'mining.subscribe':
-          ws.send(JSON.stringify({
-            id: message.id,
-            result: [
-              [['mining.set_difficulty', 'tarcoin-' + workerId], ['mining.notify', 'tarcoin-' + workerId]],
-              extraNonce1,
-              4, // extraNonce2 size
-            ],
-            error: null,
-          }));
-          ws.send(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }));
-          sendWork(ws);
-          break;
+  socket.on('data', async (data) => {
+    buffer += data;
+    const lines = buffer.split('\n');
+    buffer = lines.pop(); // keep incomplete line in buffer
 
-        case 'mining.authorize':
-          workerName = message.params[0];
-          // Validate TARCOIN address format
-          if (!isValidTarcoinAddress(workerName)) {
-            ws.send(JSON.stringify({ id: message.id, result: false, error: [24, 'Invalid TARCOIN address. Must start with T (base58) or tar1 (bech32)', null] }));
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const message = JSON.parse(line.trim());
+
+        switch (message.method) {
+          case 'mining.subscribe':
+            socket.write(JSON.stringify({
+              id: message.id,
+              result: [
+                [['mining.set_difficulty', 'tarcoin-' + workerId], ['mining.notify', 'tarcoin-' + workerId]],
+                extraNonce1,
+                4, // extraNonce2 size
+              ],
+              error: null,
+            }) + '\n');
+            socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }) + '\n');
+            sendWork(socket);
             break;
-          }
-          poolState.miners.set(workerName, {
-            hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
-            lastSeen: Date.now(), startTime: Date.now(), workerId, extraNonce1,
-          });
-          ws.send(JSON.stringify({ id: message.id, result: true, error: null }));
-          poolState.activeWorkers = poolState.miners.size;
-          console.log(`Miner authorized: ${workerName}`);
-          break;
 
-        case 'mining.submit':
-          await handleSubmit(ws, message, workerName, extraNonce1);
-          break;
+          case 'mining.authorize':
+            workerName = message.params[0];
+            if (!isValidTarcoinAddress(workerName)) {
+              socket.write(JSON.stringify({ id: message.id, result: false, error: [24, 'Invalid TARCOIN address. Must start with T (base58) or tar1 (bech32)', null] }) + '\n');
+              break;
+            }
+            poolState.miners.set(workerName, {
+              hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
+              lastSeen: Date.now(), startTime: Date.now(), workerId, extraNonce1,
+            });
+            socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + '\n');
+            poolState.activeWorkers = poolState.miners.size;
+            console.log(`Miner authorized: ${workerName}`);
+            break;
+
+          case 'mining.submit':
+            await handleSubmit(socket, message, workerName, extraNonce1);
+            break;
+        }
+      } catch (err) {
+        console.error('Stratum message error:', err.message);
       }
-    } catch (err) {
-      console.error('Stratum message error:', err.message);
     }
   });
 
-  ws.on('close', () => {
+  socket.on('close', () => {
     console.log(`Miner disconnected: ${workerName || workerId}`);
     if (workerName) {
       poolState.miners.delete(workerName);
       poolState.activeWorkers = poolState.miners.size;
     }
-    // Decrement IP connection count
     const current = connectionsByIP.get(clientIP) || 1;
     if (current <= 1) connectionsByIP.delete(clientIP);
     else connectionsByIP.set(clientIP, current - 1);
   });
+
+  socket.on('error', (err) => {
+    console.warn(`Miner socket error (${clientIP}): ${err.message}`);
+  });
 });
 
-function sendWork(ws) {
+tcpServer.listen(3333, '0.0.0.0', () => {
+  console.log('Stratum TCP server listening on port 3333');
+});
+
+function sendWork(socket) {
   if (!poolState.blockTemplate) return;
   const t = poolState.blockTemplate;
-  ws.send(JSON.stringify({
+  socket.write(JSON.stringify({
     id: null,
     method: 'mining.notify',
     params: [
@@ -270,21 +285,21 @@ function sendWork(ws) {
       t.nTime,
       true, // clean jobs
     ],
-  }));
+  }) + '\n');
 }
 
 // ====== Real SHA256d share/block verification ======
 async function handleSubmit(ws, message, workerName, extraNonce1) {
   const worker = poolState.miners.get(workerName);
   if (!worker) {
-    ws.send(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }));
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }) + '\n');
     return;
   }
 
   const [_workerNameParam, jobId, extraNonce2, nTime, nonce] = message.params;
 
   if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
-    ws.send(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }));
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + '\n');
     return;
   }
 
@@ -314,14 +329,14 @@ async function handleSubmit(ws, message, workerName, extraNonce1) {
 
     if (!meetsPoolDiff) {
       worker.invalidShares++;
-      ws.send(JSON.stringify({ id: message.id, result: null, error: [23, 'Low difficulty share', null] }));
+      socket.write(JSON.stringify({ id: message.id, result: null, error: [23, 'Low difficulty share', null] }) + '\n');
       return;
     }
 
     worker.validShares++;
     worker.shares++;
     worker.lastSeen = Date.now();
-    ws.send(JSON.stringify({ id: message.id, result: true, error: null }));
+    socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + '\n');
 
     // Track in Redis
     if (redis) {
@@ -338,7 +353,7 @@ async function handleSubmit(ws, message, workerName, extraNonce1) {
     console.log(`Share accepted from ${workerName} — hash: ${Buffer.from(headerHash).reverse().toString('hex').slice(0, 16)}...`);
   } catch (err) {
     console.error('Share verification error:', err.message);
-    ws.send(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }));
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + '\n');
   }
 }
 
