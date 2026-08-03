@@ -65,6 +65,16 @@ function sha256d(buffer) {
 }
 
 // ====== nBits → target (256-bit Buffer) ======
+function swapWords(hex) {
+  let res = "";
+  for(let i=0; i<hex.length; i+=8) {
+    const word = hex.slice(i, i+8);
+    res += word.match(/../g).reverse().join("");
+  }
+  return res;
+}
+
+// ====== nBits   target (256-bit Buffer) ======
 function nBitsToTarget(nBits) {
   const nBitsInt = parseInt(nBits, 16);
   const exponent = (nBitsInt >>> 24) & 0xff;
@@ -95,14 +105,14 @@ function buildBlockHeader(version, prevHash, merkleRoot, nTime, nBits, nonce) {
   const merkleRootBuf = Buffer.from(merkleRoot, 'hex').reverse();
   merkleRootBuf.copy(buf, offset); offset += 32;
 
-  // nTime (Stratum sends exact bytes)
-  Buffer.from(nTime, 'hex').copy(buf, offset); offset += 4;
+  // nTime (LE 4 bytes)
+  buf.writeUInt32LE(parseInt(nTime, 16), offset); offset += 4;
 
-  // nBits (Big-endian hex -> Little-endian bytes)
+  // nBits (LE 4 bytes)
   buf.writeUInt32LE(parseInt(nBits, 16), offset); offset += 4;
 
-  // nonce (Stratum sends exact bytes)
-  Buffer.from(nonce, 'hex').copy(buf, offset);
+  // nonce (LE 4 bytes)
+  buf.writeUInt32LE(parseInt(nonce, 16), offset);
 
   return buf;
 }
@@ -321,7 +331,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     }
 
     // Build 80-byte block header
-    const header = buildBlockHeader(t.version, t.prevHash, merkleRoot.toString('hex'), nTime, t.nBits, nonce);
+    const header = buildBlockHeader(t.version, t.prevHashBE || t.prevHash, merkleRoot.toString('hex'), nTime, t.nBits, nonce);
 
     // Compute SHA256d of the header
     const headerHash = sha256d(header);
@@ -463,7 +473,8 @@ async function refreshBlockTemplate() {
 
       poolState.blockTemplate = {
         jobId: crypto.randomBytes(4).toString('hex'),
-        prevHash: template.previousblockhash || '0000000000000000000000000000000000000000000000000000000000000000',
+        prevHash: swapWords(template.previousblockhash || '0000000000000000000000000000000000000000000000000000000000000000'),
+        prevHashBE: template.previousblockhash || '0000000000000000000000000000000000000000000000000000000000000000',
         coinbase1: coinbase1,
         coinbase2: coinbase2,
         merkleBranch: (template.transactions || []).map((t) => t.hash),
