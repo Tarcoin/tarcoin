@@ -69,7 +69,7 @@ const swaggerSpec = swaggerJsdoc({
     },
     servers: [{ url: 'https://api.tarcoin.org', description: 'Mainnet' }],
   },
-  apis: ['./src/routes/*.ts'],
+  apis: ['./src/**/*.ts', './dist/**/*.js', './src/routes/*.ts', './dist/routes/*.js'],
 });
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none !important; }',

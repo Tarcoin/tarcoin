@@ -95,14 +95,14 @@ function buildBlockHeader(version, prevHash, merkleRoot, nTime, nBits, nonce) {
   const merkleRootBuf = Buffer.from(merkleRoot, 'hex').reverse();
   merkleRootBuf.copy(buf, offset); offset += 32;
 
-  // nTime (LE 4 bytes)
-  buf.writeUInt32LE(parseInt(nTime, 16), offset); offset += 4;
+  // nTime (Stratum sends exact bytes)
+  Buffer.from(nTime, 'hex').copy(buf, offset); offset += 4;
 
-  // nBits (LE 4 bytes)
+  // nBits (Big-endian hex -> Little-endian bytes)
   buf.writeUInt32LE(parseInt(nBits, 16), offset); offset += 4;
 
-  // nonce (LE 4 bytes)
-  buf.writeUInt32LE(parseInt(nonce, 16), offset);
+  // nonce (Stratum sends exact bytes)
+  Buffer.from(nonce, 'hex').copy(buf, offset);
 
   return buf;
 }
@@ -175,6 +175,7 @@ let poolState = {
 // ====== Per-IP connection tracking ======
 const connectionsByIP = new Map();
 const MAX_CONNECTIONS_PER_IP = 50;
+const activeSockets = new Set();
 
 // ====== Stratum TCP Server (port 3333) ======
 const tcpServer = net.createServer((socket) => {
@@ -194,6 +195,7 @@ const tcpServer = net.createServer((socket) => {
   }
 
   console.log(`New miner connected: ${workerId} from ${clientIP}`);
+  activeSockets.add(socket);
 
   socket.setEncoding('utf8');
   socket.setKeepAlive(true, 60000);
@@ -249,6 +251,7 @@ const tcpServer = net.createServer((socket) => {
   });
 
   socket.on('close', () => {
+    activeSockets.delete(socket);
     console.log(`Miner disconnected: ${workerName || workerId}`);
     if (workerName) {
       poolState.miners.delete(workerName);
@@ -289,7 +292,7 @@ function sendWork(socket) {
 }
 
 // ====== Real SHA256d share/block verification ======
-async function handleSubmit(ws, message, workerName, extraNonce1) {
+async function handleSubmit(socket, message, workerName, extraNonce1) {
   const worker = poolState.miners.get(workerName);
   if (!worker) {
     socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Unknown worker', null] }) + '\n');
@@ -474,8 +477,8 @@ async function refreshBlockTemplate() {
       };
 
       // Broadcast new work to all connected miners
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) sendWork(client);
+      activeSockets.forEach((client) => {
+        if (!client.destroyed) sendWork(client);
       });
       console.log(`Block template refreshed — height: ${template.height}, txs: ${(template.transactions || []).length}`);
     }
