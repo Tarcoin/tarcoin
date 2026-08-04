@@ -170,7 +170,7 @@ export default function TokenomicsSection() {
             <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-3">🔒 VESTING & RELEASE SCHEDULE</div>
             <div className="grid sm:grid-cols-3 gap-4">
               {[
-                { period: "Year 1–2", action: "Full Lock", note: "Zero coins released. Complete lock.", color: "text-red-400" },
+                { period: "Year 1–2", action: "Genesis Lock*", note: "*5M TAR unlocked early for Genesis Faucet & Miner Bounties. Remainder fully locked.", color: "text-red-400" },
                 { period: "Year 3", action: "1B TAR", note: "Released for exchange listings only.", color: "text-yellow-400" },
                 { period: "Year 4–10", action: "Max 1B/year", note: "Released for stated purposes with 30-day notice.", color: "text-tarcoin-neon" },
               ].map((v, i) => (

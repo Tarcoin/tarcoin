@@ -44,10 +44,11 @@ async function initRedis() {
 }
 
 // ====== RPC helper ======
-async function rpcCall(method, params = []) {
-  // Wallet commands like getbalance and sendmany need the /wallet/ path if a named wallet is used
-  const isWalletCommand = ['getbalance', 'sendmany', 'getnewaddress'].includes(method);
-  const urlPath = (isWalletCommand && RPC_WALLET) ? `/wallet/${RPC_WALLET}` : '/';
+async function rpcCall(method, params = [], walletOverride = null) {
+  // Wallet commands like getbalance, sendmany, sendtoaddress need the /wallet/ path if a named wallet is used
+  const isWalletCommand = ['getbalance', 'sendmany', 'sendtoaddress', 'validateaddress', 'getnewaddress'].includes(method);
+  const activeWallet = walletOverride || RPC_WALLET;
+  const urlPath = (isWalletCommand && activeWallet) ? `/wallet/${activeWallet}` : '/';
   
   const { data } = await axios.post(`http://${RPC_HOST}:${RPC_PORT}${urlPath}`, {
     jsonrpc: '2.0',
@@ -439,11 +440,44 @@ async function processPayouts() {
 
     // 4. Send the transaction
     const txid = await rpcCall('sendmany', ["", payouts]);
-    console.log(`✅ Payout successful! TXID: ${txid}`);
+    console.log(`💸 Payout successful! TXID: ${txid}`);
 
     // 5. Clear the shares ONLY if successful
     await redis.del('pool:shares');
     console.log('Cleared processed shares from Redis.');
+
+    // 6. Bonus Engine (Miner Bounty Program)
+    try {
+      const faucetBalance = await rpcCall('getbalance', ['*', 1], 'faucet');
+      if (faucetBalance >= 1000) {
+        for (const [worker, reward] of Object.entries(payouts)) {
+          if (worker === feeWallet) continue; // Skip fee wallet
+
+          const lifetimeKey = `miner:lifetime:${worker}`;
+          const lifetime = await redis.incrByFloat(lifetimeKey, reward);
+
+          if (lifetime >= 20000) {
+            const bonusClaimedKey = `miner:bonus:${worker}`;
+            const alreadyClaimed = await redis.get(bonusClaimedKey);
+
+            if (!alreadyClaimed) {
+              const globalBountyKey = `miner:bounty_count`;
+              const bountyCount = parseInt((await redis.get(globalBountyKey)) || '0');
+
+              if (bountyCount < 4000) {
+                // Execute Bonus Payout from Faucet Wallet
+                const bonusTxid = await rpcCall('sendtoaddress', [worker, 1000], 'faucet');
+                await redis.incr(globalBountyKey);
+                await redis.set(bonusClaimedKey, '1');
+                console.log(`🎉 MINER BOUNTY AWARDED! 1,000 TAR to ${worker} (Miner #${bountyCount + 1}). TXID: ${bonusTxid}`);
+              }
+            }
+          }
+        }
+      }
+    } catch (bonusErr) {
+      console.error('Bonus Engine error:', bonusErr.message);
+    }
 
   } catch (err) {
     console.error('Payout error:', err.message);
@@ -464,6 +498,77 @@ app.get('/', (_req, res) => {
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tarcoin-mining-pool', timestamp: Date.now() });
+});
+
+// ====== Faucet API ======
+app.post('/api/faucet', async (req, res) => {
+  try {
+    const { address, token } = req.body;
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    if (!address) {
+      return res.status(400).json({ error: 'Address is required' });
+    }
+
+    if (!token) {
+      return res.status(400).json({ error: 'Bot verification token is required' });
+    }
+
+    // 0. Cloudflare Turnstile Verification
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+    if (turnstileSecret) {
+      const verifyRes = await axios.post(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        `secret=${encodeURIComponent(turnstileSecret)}&response=${encodeURIComponent(token)}&remoteip=${encodeURIComponent(ip)}`,
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+      );
+      if (!verifyRes.data.success) {
+        return res.status(400).json({ error: 'Bot verification failed. Please refresh and try again.' });
+      }
+    }
+
+    // 1. Basic format validation
+    if (!address.startsWith('tar1') && !address.startsWith('T')) {
+      return res.status(400).json({ error: 'Invalid address format' });
+    }
+
+    // 2. Rate limiting check via Redis
+    if (redis) {
+      const ipCheck = await redis.get(`faucet:ip:${ip}`);
+      if (ipCheck) return res.status(429).json({ error: 'You have already claimed TAR today. Please come back in 24 hours!' });
+      
+      const addrCheck = await redis.get(`faucet:address:${address}`);
+      if (addrCheck) return res.status(429).json({ error: 'This address has already claimed TAR today.' });
+    }
+
+    // 3. Cryptographic validation via Tarcoind
+    const validation = await rpcCall('validateaddress', [address], 'faucet');
+    if (!validation.isvalid) {
+      return res.status(400).json({ error: 'Address is invalid on the blockchain' });
+    }
+
+    // 4. Check faucet wallet balance
+    const balance = await rpcCall('getbalance', ['*', 1], 'faucet');
+    if (balance < 100) {
+      return res.status(503).json({ error: 'The Faucet reward limit has been reached. Thank you to the 10,000 early adopters who joined the TARCOIN network!' });
+    }
+
+    // 5. Send TAR
+    const txid = await rpcCall('sendtoaddress', [address, 100], 'faucet');
+
+    // 6. Record rate limits (86400 seconds = 24 hours)
+    if (redis) {
+      await redis.setEx(`faucet:ip:${ip}`, 86400, '1');
+      await redis.setEx(`faucet:address:${address}`, 86400, '1');
+    }
+
+    console.log(`🚰 Faucet payout sent! 100 TAR to ${address}. TXID: ${txid}`);
+    res.json({ success: true, txid, amount: 100 });
+
+  } catch (err) {
+    console.error('Faucet error:', err.message);
+    res.status(500).json({ error: 'Internal server error processing faucet claim' });
+  }
 });
 
 async function start() {

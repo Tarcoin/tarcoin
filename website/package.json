@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.5.4",
     "@react-three/drei": "^9.88.0",
     "@react-three/fiber": "^8.15.0",
     "@types/nodemailer": "^8.0.1",
