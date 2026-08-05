@@ -339,7 +339,7 @@ async function handleBlockFound(headerBuffer, workerName) {
 // ====== Block template refresh ======
 async function refreshBlockTemplate() {
   try {
-    const template = await rpcCall('getblocktemplate', [{ rules: ['segwit'] }]);
+    const template = await rpcCall('getblocktemplate', []);
     if (template) {
       const originalPrevHash = template.previousblockhash || '0000000000000000000000000000000000000000000000000000000000000000';
       poolState.blockTemplate = {
