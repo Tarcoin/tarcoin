@@ -36,10 +36,8 @@ export default function FaucetPage() {
     setLoading(true);
 
     try {
-      // Connect to the mining pool backend which hosts the faucet API
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://31.70.104.158:3001";
-      
-      const res = await fetch(`${apiUrl}/api/faucet`, {
+      // Call our secure Next.js Proxy Route to bypass CORS
+      const res = await fetch(`/api/faucet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address, token })
