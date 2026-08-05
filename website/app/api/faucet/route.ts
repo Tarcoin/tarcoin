@@ -4,9 +4,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // Proxy the request server-to-server to the Mining Pool backend (Port 8000)
+    // Proxy the request server-to-server to the Mining Pool backend (Port 3001)
     // This completely bypasses CORS and HTTPS mixed-content blocks!
-    const response = await fetch('http://localhost:8000/api/faucet', {
+    const response = await fetch('http://localhost:3001/api/faucet', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
