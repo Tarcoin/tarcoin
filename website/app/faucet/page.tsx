@@ -116,7 +116,7 @@ export default function FaucetPage() {
                   className="w-full bg-tarcoin-black border border-tarcoin-gray-800 rounded-lg px-4 py-3 text-white font-mono focus:border-tarcoin-cyan focus:ring-1 focus:ring-tarcoin-cyan transition-colors disabled:opacity-50 outline-none"
                 />
                 <p className="text-xs text-gray-500 mt-2 font-space">
-                  Limit: 1 claim per IP Address & Wallet Address.
+                  Limit: 1 claim per person.
                 </p>
               </div>
 
