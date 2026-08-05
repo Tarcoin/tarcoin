@@ -33,6 +33,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          allowUpdates: true
           tag: ${{ github.ref_name }}
           name: TARCOIN ${{ github.ref_name }}
           body: |
