@@ -78,9 +78,22 @@ export default function FaucetPage() {
           </motion.h1>
           
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-gray-400 font-space max-w-2xl mx-auto">
+            className="text-gray-400 font-space max-w-2xl mx-auto mb-8">
             To help bootstrap the network and allow new users to test the TARCOIN ecosystem, the developers have allocated funds from the Treasury to give away free TAR.
           </motion.p>
+
+          {/* Miner Bounty Banner */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="bg-tarcoin-gold/10 border border-tarcoin-gold/30 rounded-xl p-6 max-w-2xl mx-auto text-left relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-tarcoin-gold/10 rounded-full blur-3xl group-hover:bg-tarcoin-gold/20 transition-all duration-500" />
+            <h3 className="text-xl font-orbitron font-bold text-tarcoin-gold mb-2 flex items-center gap-2">
+              <FaTint className="w-5 h-5" />
+              Bonus: 1,000 TAR Miner Bounty
+            </h3>
+            <p className="text-sm text-gray-300 font-space">
+              We are actively rewarding hashrate! The first 4,000 miners to accumulate 20,000 TAR in mining rewards on our official pool will instantly receive an automatic <strong>1,000 TAR Bonus</strong> deposited directly to their wallet!
+            </p>
+          </motion.div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
@@ -103,7 +116,7 @@ export default function FaucetPage() {
                   className="w-full bg-tarcoin-black border border-tarcoin-gray-800 rounded-lg px-4 py-3 text-white font-mono focus:border-tarcoin-cyan focus:ring-1 focus:ring-tarcoin-cyan transition-colors disabled:opacity-50 outline-none"
                 />
                 <p className="text-xs text-gray-500 mt-2 font-space">
-                  Limit: 1 claim per IP Address & Wallet Address every 24 hours.
+                  Limit: 1 claim per IP Address & Wallet Address.
                 </p>
               </div>
 

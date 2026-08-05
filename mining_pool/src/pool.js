@@ -556,10 +556,10 @@ app.post('/api/faucet', async (req, res) => {
     // 5. Send TAR
     const txid = await rpcCall('sendtoaddress', [address, 100], 'faucet');
 
-    // 6. Record rate limits (86400 seconds = 24 hours)
+    // 6. Record rate limits (10 years = one time claim)
     if (redis) {
-      await redis.setEx(`faucet:ip:${ip}`, 86400, '1');
-      await redis.setEx(`faucet:address:${address}`, 86400, '1');
+      await redis.setEx(`faucet:ip:${ip}`, 315360000, '1');
+      await redis.setEx(`faucet:address:${address}`, 315360000, '1');
     }
 
     console.log(`🚰 Faucet payout sent! 100 TAR to ${address}. TXID: ${txid}`);
