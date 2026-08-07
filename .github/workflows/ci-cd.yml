@@ -228,13 +228,21 @@ jobs:
 
       - name: Tag and Push images
         if: github.event_name == 'release' || github.ref == 'refs/heads/master'
+        env:
+          DOCKER_BUILDKIT: 0
         run: |
           # Convert repo name to lowercase for GHCR
           REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          
-          # (Images are now already tagged correctly by docker-compose build)
-          
-          # Push to GHCR
+
+          # Retag images built by docker-compose to GHCR paths
+          docker tag tarcoin-tarcoind:latest  ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest       || true
+          docker tag tarcoin-website:latest   ${{ env.DOCKER_REGISTRY }}/$REPO/website:latest        || true
+          docker tag tarcoin-explorer:latest  ${{ env.DOCKER_REGISTRY }}/$REPO/explorer:latest       || true
+          docker tag tarcoin-explorer-frontend:latest ${{ env.DOCKER_REGISTRY }}/$REPO/explorer-frontend:latest || true
+          docker tag tarcoin-api:latest       ${{ env.DOCKER_REGISTRY }}/$REPO/api:latest            || true
+          docker tag tarcoin-mining-pool:latest ${{ env.DOCKER_REGISTRY }}/$REPO/mining-pool:latest  || true
+
+          # Push to GHCR (BuildKit disabled to avoid unknown blob / provenance errors)
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/tarcoind:latest
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/website:latest
           docker push ${{ env.DOCKER_REGISTRY }}/$REPO/explorer:latest
