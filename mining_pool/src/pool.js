@@ -5,6 +5,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { createClient } = require('redis');
 const net = require('net');
 const axios = require('axios');
@@ -13,6 +14,33 @@ const crypto = require('crypto');
 const dotenv = require('dotenv');
 
 dotenv.config();
+
+// Helper: sanitize miner-supplied strings before logging (prevent log injection)
+function sanitizeLog(str) {
+  if (typeof str !== 'string') return String(str || '');
+  return str.replace(/[\r\n\t]/g, '_').slice(0, 128);
+}
+
+// Helper: safely extract real client IP (prevent x-forwarded-for spoofing)
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    // Take only the first IP in the chain (the original client)
+    const first = forwarded.split(',')[0].trim();
+    // Validate it looks like an IP address
+    if (/^[\d.a-fA-F:]+$/.test(first)) return first;
+  }
+  return req.socket.remoteAddress || '0.0.0.0';
+}
+
+// Rate limiter for faucet endpoint (max 5 requests per IP per hour)
+const faucetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many faucet requests. Please try again later.' },
+});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -199,7 +227,7 @@ const stratumServer = net.createServer((socket) => {
             });
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
-            console.log(`Miner authorized: ${workerName}`);
+            console.log(`Miner authorized: ${sanitizeLog(workerName)}`);
             break;
 
           case 'mining.submit':
@@ -214,7 +242,7 @@ const stratumServer = net.createServer((socket) => {
 
   socket.on('close', () => {
     activeSockets.delete(socket);
-    console.log(`Miner disconnected: ${workerName || workerId}`);
+    console.log(`Miner disconnected: ${sanitizeLog(workerName || workerId)}`);
     if (workerName) {
       poolState.miners.delete(workerName);
       poolState.activeWorkers = poolState.miners.size;
@@ -222,7 +250,7 @@ const stratumServer = net.createServer((socket) => {
   });
   
   socket.on('error', (err) => {
-    console.warn(`Socket error from ${workerName || workerId}:`, err.message);
+    console.warn(`Socket error from ${sanitizeLog(workerName || workerId)}:`, err.message);
   });
 });
 
@@ -309,7 +337,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await handleBlockFound(header, workerName);
     }
 
-    console.log(`Share accepted from ${workerName} — hash: ${headerHash.reverse().toString('hex').slice(0, 16)}...`);
+    console.log(`Share accepted from ${sanitizeLog(workerName)} — hash: ${headerHash.reverse().toString('hex').slice(0, 16)}...`);
   } catch (err) {
     console.error('Share verification error:', err.message);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
@@ -317,12 +345,13 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 }
 
 async function handleBlockFound(headerBuffer, workerName) {
-  console.log(`🎉 BLOCK FOUND by ${workerName}!`);
+  const safeWorker = sanitizeLog(workerName);
+  console.log(`🎉 BLOCK FOUND by ${safeWorker}!`);
   poolState.blocksFound++;
 
   try {
     const height = poolState.blockTemplate?.height || 0;
-    console.log(`Block found at height ~${height + 1} by ${workerName}`);
+    console.log(`Block found at height ~${height + 1} by ${safeWorker}`);
 
     if (redis) {
       await redis.lPush('pool:blocks', JSON.stringify({
@@ -501,10 +530,10 @@ app.get('/health', (_req, res) => {
 });
 
 // ====== Faucet API ======
-app.post('/api/faucet', async (req, res) => {
+app.post('/api/faucet', faucetLimiter, async (req, res) => {
   try {
     const { address, token } = req.body;
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ip = getClientIp(req);
 
     if (!address) {
       return res.status(400).json({ error: 'Address is required' });
@@ -553,16 +582,16 @@ app.post('/api/faucet', async (req, res) => {
       return res.status(503).json({ error: 'The Faucet reward limit has been reached. Thank you to the 10,000 early adopters who joined the TARCOIN network!' });
     }
 
-    // 5. Send TAR
-    const txid = await rpcCall('sendtoaddress', [address, 100], 'faucet');
-
-    // 6. Record rate limits (10 years = one time claim)
+    // 5. Record rate limits BEFORE sending (prevent double-spend if Redis fails after send)
     if (redis) {
       await redis.setEx(`faucet:ip:${ip}`, 315360000, '1');
       await redis.setEx(`faucet:address:${address}`, 315360000, '1');
     }
 
-    console.log(`🚰 Faucet payout sent! 100 TAR to ${address}. TXID: ${txid}`);
+    // 6. Send TAR
+    const txid = await rpcCall('sendtoaddress', [address, 100], 'faucet');
+
+    console.log(`🚰 Faucet payout sent! 100 TAR to ${sanitizeLog(address)}. TXID: ${txid}`);
     res.json({ success: true, txid, amount: 100 });
 
   } catch (err) {

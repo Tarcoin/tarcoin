@@ -28,8 +28,16 @@ const server = createServer(app);
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "wss:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Required for WebSocket compatibility
 }));
 const allowedOrigins = (process.env.CORS_ORIGIN || 'https://tarcoin.org').split(',').map(s => s.trim());
 app.use(cors({

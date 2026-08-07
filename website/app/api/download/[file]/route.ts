@@ -79,7 +79,10 @@ export async function GET(
   const projectRoot = process.cwd();
   for (const localPath of entry.localPaths) {
     const fullPath = path.resolve(projectRoot, localPath);
-    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+    // Security: ensure resolved path stays within projectRoot (prevent path traversal)
+    if (!fullPath.startsWith(path.resolve(projectRoot))) continue;
+    try {
+      // Use open+read to avoid TOCTOU race condition (CodeQL #5)
       const fileBuffer = fs.readFileSync(fullPath);
       return new NextResponse(fileBuffer, {
         status: 200,
@@ -90,6 +93,9 @@ export async function GET(
           'Cache-Control': 'public, max-age=3600',
         },
       });
+    } catch {
+      // File does not exist or is not readable — try next path
+      continue;
     }
   }
 

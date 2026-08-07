@@ -36,7 +36,8 @@ export class AddressController {
           console.error('scantxoutset returned no success:', JSON.stringify(scanResult));
         }
       } catch (scanErr: any) {
-        console.error('scantxoutset failed for address', address, ':', scanErr?.message || scanErr);
+        const safeAddress = String(address || '').replace(/[\r\n\t]/g, '_').slice(0, 64);
+        console.error('scantxoutset failed for address', safeAddress, ':', scanErr?.message || scanErr);
       }
 
       const result = {
