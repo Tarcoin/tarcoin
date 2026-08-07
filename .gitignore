@@ -62,3 +62,6 @@ blockchain_core/tarcoin-core/*.py
 
 # Security: Never commit Android google-services API keys
 android/app/google-services.json
+
+# Ignore temporary cloned repositories
+temp_blue/
