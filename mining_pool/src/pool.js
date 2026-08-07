@@ -227,7 +227,7 @@ const stratumServer = net.createServer((socket) => {
             });
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
-            console.log(`Miner authorized: ${sanitizeLog(workerName)}`);
+            console.log('Miner authorized: %s', sanitizeLog(workerName));
             break;
 
           case 'mining.submit':
@@ -242,7 +242,7 @@ const stratumServer = net.createServer((socket) => {
 
   socket.on('close', () => {
     activeSockets.delete(socket);
-    console.log(`Miner disconnected: ${sanitizeLog(workerName || workerId)}`);
+    console.log('Miner disconnected: %s', sanitizeLog(workerName || workerId));
     if (workerName) {
       poolState.miners.delete(workerName);
       poolState.activeWorkers = poolState.miners.size;
@@ -250,7 +250,7 @@ const stratumServer = net.createServer((socket) => {
   });
   
   socket.on('error', (err) => {
-    console.warn(`Socket error from ${sanitizeLog(workerName || workerId)}:`, err.message);
+    console.warn('Socket error from %s: %s', sanitizeLog(workerName || workerId), err.message);
   });
 });
 
@@ -337,7 +337,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await handleBlockFound(header, workerName);
     }
 
-    console.log(`Share accepted from ${sanitizeLog(workerName)} — hash: ${headerHash.reverse().toString('hex').slice(0, 16)}...`);
+    console.log('Share accepted from %s — hash: %s...', sanitizeLog(workerName), headerHash.reverse().toString('hex').slice(0, 16));
   } catch (err) {
     console.error('Share verification error:', err.message);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
@@ -346,12 +346,12 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 
 async function handleBlockFound(headerBuffer, workerName) {
   const safeWorker = sanitizeLog(workerName);
-  console.log(`🎉 BLOCK FOUND by ${safeWorker}!`);
+  console.log('🎉 BLOCK FOUND by %s!', safeWorker);
   poolState.blocksFound++;
 
   try {
     const height = poolState.blockTemplate?.height || 0;
-    console.log(`Block found at height ~${height + 1} by ${safeWorker}`);
+    console.log('Block found at height ~%d by %s', height + 1, safeWorker);
 
     if (redis) {
       await redis.lPush('pool:blocks', JSON.stringify({
@@ -498,7 +498,7 @@ async function processPayouts() {
                 const bonusTxid = await rpcCall('sendtoaddress', [worker, 1000], 'faucet');
                 await redis.incr(globalBountyKey);
                 await redis.set(bonusClaimedKey, '1');
-                console.log(`🎉 MINER BOUNTY AWARDED! 1,000 TAR to ${worker} (Miner #${bountyCount + 1}). TXID: ${bonusTxid}`);
+                console.log('🎉 MINER BOUNTY AWARDED! 1,000 TAR to %s (Miner #%d). TXID: %s', sanitizeLog(worker), bountyCount + 1, bonusTxid);
               }
             }
           }
@@ -591,7 +591,7 @@ app.post('/api/faucet', faucetLimiter, async (req, res) => {
     // 6. Send TAR
     const txid = await rpcCall('sendtoaddress', [address, 100], 'faucet');
 
-    console.log(`🚰 Faucet payout sent! 100 TAR to ${sanitizeLog(address)}. TXID: ${txid}`);
+    console.log('🚰 Faucet payout sent! 100 TAR to %s. TXID: %s', sanitizeLog(address), txid);
     res.json({ success: true, txid, amount: 100 });
 
   } catch (err) {

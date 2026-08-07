@@ -12,12 +12,16 @@ const path = require('path');
 const log = (msg) => console.log(`[PATCH] ${msg}`);
 
 function replaceInFile(filePath, target, replacement) {
-  if (!fs.existsSync(filePath)) {
-    console.error(`[ERROR] File not found: ${filePath}`);
-    process.exit(1);
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.error(`[ERROR] File not found: ${filePath}`);
+      process.exit(1);
+    }
+    throw err;
   }
-  
-  let content = fs.readFileSync(filePath, 'utf8');
   
   // Normalize line endings to avoid match failures
   const normalizedContent = content.replace(/\r\n/g, '\n');
