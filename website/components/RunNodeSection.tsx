@@ -38,7 +38,7 @@ export default function RunNodeSection() {
             Want to support Tarcoin?
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto font-space">
-            Help secure the blockchain by running your own node. You don't need to be a developer. Rent a cheap Linux VPS and deploy a full Tarcoin node in exactly <span className="text-gold font-bold">60 seconds</span>.
+            Help secure the blockchain by running your own node. You don&apos;t need to be a developer. Rent a cheap Linux VPS and deploy a full Tarcoin node in exactly <span className="text-gold font-bold">60 seconds</span>.
           </p>
         </motion.div>
 
