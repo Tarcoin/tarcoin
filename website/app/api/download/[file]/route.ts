@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Map of download IDs to their actual file locations
-// Priority: 1. /public/downloads/  2. GitHub Releases redirect
+// Priority: 1. /public/downloads/ or /public/  2. GitHub Releases redirect
 const RELEASE_VERSION = 'v1.2.0';
 const GITHUB_RELEASE_BASE = `https://github.com/Tarcoin/tarcoin/releases/download/${RELEASE_VERSION}`;
 
@@ -11,7 +11,7 @@ const FILE_MAP: Record<string, {
   filename: string;
   contentType: string;
   localPaths: string[];
-  githubAsset: string;
+  githubAsset?: string;
 }> = {
   // Linux full package: tarcoind + tarcoin-cli + tarcoin-qt (GUI wallet)
   'tarcoin-linux-full.zip': {
@@ -19,6 +19,7 @@ const FILE_MAP: Record<string, {
     contentType: 'application/zip',
     localPaths: [
       'public/downloads/tarcoin-linux-full.zip',
+      'public/tarcoin-linux-full.zip',
     ],
     githubAsset: 'tarcoin-linux-full-v1.2.0.zip',
   },
@@ -28,15 +29,17 @@ const FILE_MAP: Record<string, {
     contentType: 'application/zip',
     localPaths: [
       'public/downloads/tarcoin-linux-daemon.zip',
+      'public/tarcoin-linux-daemon.zip',
     ],
     githubAsset: 'tarcoin-linux-server-v1.2.0.zip',
   },
-  // Windows wallet (future release)
+  // Windows wallet
   'tarcoin-wallet-win64.zip': {
     filename: 'tarcoin-wallet-win64.zip',
     contentType: 'application/zip',
     localPaths: [
       'public/downloads/tarcoin-wallet-win64.zip',
+      'public/tarcoin-wallet-win64.zip',
     ],
     githubAsset: 'tarcoin-windows-wallet-v1.2.0.zip',
   },
@@ -46,8 +49,18 @@ const FILE_MAP: Record<string, {
     contentType: 'application/zip',
     localPaths: [
       'public/downloads/tarcoin-macos-app.zip',
+      'public/tarcoin-macos-app.zip',
     ],
     githubAsset: 'tarcoin-macos-app.zip',
+  },
+  // Android mobile wallet (local file in /public/ or /public/downloads/)
+  'tarcoin-wallet.apk': {
+    filename: 'tarcoin-wallet.apk',
+    contentType: 'application/vnd.android.package-archive',
+    localPaths: [
+      'public/tarcoin-wallet.apk',
+      'public/downloads/tarcoin-wallet.apk',
+    ],
   },
 };
 
@@ -80,12 +93,16 @@ export async function GET(
     }
   }
 
-  // Fallback: redirect to GitHub Releases
-  const githubUrl = `${GITHUB_RELEASE_BASE}/${entry.githubAsset}`;
-  return NextResponse.redirect(githubUrl, {
-    status: 302,
-    headers: {
-      'X-Download-Source': 'github-releases',
-    },
-  });
+  // Fallback to GitHub if githubAsset exists
+  if (entry.githubAsset) {
+    const githubUrl = `${GITHUB_RELEASE_BASE}/${entry.githubAsset}`;
+    return NextResponse.redirect(githubUrl, {
+      status: 302,
+      headers: {
+        'X-Download-Source': 'github-releases',
+      },
+    });
+  }
+
+  return NextResponse.json({ error: 'File not found on server' }, { status: 404 });
 }

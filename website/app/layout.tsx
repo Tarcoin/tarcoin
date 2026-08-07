@@ -21,6 +21,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://tarcoin.org'),
   title: "TARCOIN | The Future of Decentralized Digital Currency",
   description:
     "TARCOIN (TAR) is a UTXO-based, SHA256d proof-of-work blockchain with a 50 billion supply cap. Mine, trade, and build on the most secure decentralized ecosystem.",

@@ -23,6 +23,15 @@ interface Download {
 
 const downloads: Download[] = [
   {
+    id: "android",
+    title: "Android Mobile Wallet",
+    icon: "📱",
+    desc: "Android 8.0+ · APK direct download for mobile devices",
+    file: "tarcoin-wallet.apk",
+    size: "~15 MB",
+    source: "local",
+  },
+  {
     id: "windows",
     title: "Windows CLI Tools",
     icon: "🪟",
@@ -124,14 +133,14 @@ function DownloadButton({ d }: { d: Download }) {
         {labels[state]}
       </button>
 
-      {/* Always-visible direct GitHub link as fallback */}
+      {/* Direct link as fallback */}
       <a
-        href={`${GITHUB_RELEASE_DL}/${d.file}`}
+        href={d.source === "local" ? `/${d.file}` : `${GITHUB_RELEASE_DL}/${d.file}`}
         target="_blank"
         rel="noopener noreferrer"
         className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors font-mono"
       >
-        via GitHub ↗
+        {d.source === "local" ? "Direct link ↗" : "via GitHub ↗"}
       </a>
     </div>
   );
