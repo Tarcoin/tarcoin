@@ -11,6 +11,7 @@ import MainnetStatus from "@/components/MainnetStatus";
 import RoadmapSection from "@/components/RoadmapSection";
 import MiningSection from "@/components/MiningSection";
 import DownloadSection from "@/components/DownloadSection";
+import RunNodeSection from "@/components/RunNodeSection";
 import ExplorerPreview from "@/components/ExplorerPreview";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -43,6 +44,7 @@ export default function Home() {
         <MainnetStatus />
         <RoadmapSection />
         <MiningSection />
+        <RunNodeSection />
         <ExplorerPreview />
         <DownloadSection />
         <Footer />
