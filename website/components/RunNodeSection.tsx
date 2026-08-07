@@ -17,7 +17,7 @@ export default function RunNodeSection() {
   };
 
   return (
-    <section className="py-24 relative overflow-hidden bg-black/40 border-y border-gold/10" id="run-node">
+    <section className="py-24 relative overflow-hidden bg-black/40" id="run-node">
       {/* Decorative Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px] pointer-events-none" />
 
