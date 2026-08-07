@@ -18,7 +18,7 @@ dotenv.config();
 // Helper: sanitize miner-supplied strings before logging (prevent log injection)
 function sanitizeLog(str) {
   if (typeof str !== 'string') return String(str || '');
-  return str.replace(/[\r\n\t]/g, '_').slice(0, 128);
+  return encodeURIComponent(str.slice(0, 128));
 }
 
 // Helper: safely extract real client IP (prevent x-forwarded-for spoofing)
