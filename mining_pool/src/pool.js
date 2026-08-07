@@ -250,7 +250,7 @@ const stratumServer = net.createServer((socket) => {
   });
   
   socket.on('error', (err) => {
-    console.warn('Socket error from %s: %s', sanitizeLog(workerName || workerId), err.message);
+    console.warn('Socket error from %s: %s', sanitizeLog(workerName || workerId), sanitizeLog(err.message));
   });
 });
 
