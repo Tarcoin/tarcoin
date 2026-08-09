@@ -134,55 +134,11 @@ export default function TokenomicsSection() {
             </a>
           </div>
 
-          {/* Reserve Breakdown Table */}
-          <div className="mb-6">
-            <div className="text-xs font-orbitron text-gray-400 tracking-widest mb-3">RESERVE ALLOCATION BREAKDOWN</div>
-            <div className="overflow-x-auto rounded-xl border border-tarcoin-gold/10">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-tarcoin-gold/10 bg-black/30">
-                    <th className="text-left p-3 text-xs font-orbitron text-gray-400 uppercase tracking-wider">Purpose</th>
-                    <th className="text-right p-3 text-xs font-orbitron text-gray-400 uppercase tracking-wider">Amount</th>
-                    <th className="text-right p-3 text-xs font-orbitron text-gray-400 uppercase tracking-wider">Share</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { purpose: "Exchange Listings & Liquidity", amount: "3,000,000,000 TAR", share: "30%" },
-                    { purpose: "Developer Grants & Open Source", amount: "2,000,000,000 TAR", share: "20%" },
-                    { purpose: "Marketing & Community Growth", amount: "2,000,000,000 TAR", share: "20%" },
-                    { purpose: "Infrastructure & Node Support", amount: "1,500,000,000 TAR", share: "15%" },
-                    { purpose: "Emergency Reserve Fund", amount: "1,500,000,000 TAR", share: "15%" },
-                  ].map((row, i) => (
-                    <tr key={i} className="border-b border-tarcoin-gold/5 hover:bg-tarcoin-gold/5 transition-colors">
-                      <td className="p-3 text-xs text-gray-300">{row.purpose}</td>
-                      <td className="p-3 text-xs font-mono text-right text-gray-300">{row.amount}</td>
-                      <td className="p-3 text-xs font-orbitron text-right text-tarcoin-gold">{row.share}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Vesting Schedule */}
+          {/* Reserve Management Statement */}
           <div className="bg-black/30 rounded-xl p-5 border border-tarcoin-gold/10">
-            <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-3">🔒 VESTING & RELEASE SCHEDULE</div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              {[
-                { period: "Year 1–2", action: "Genesis Lock*", note: "*5M TAR unlocked early for Genesis Faucet & Miner Bounties. Remainder fully locked.", color: "text-red-400" },
-                { period: "Year 3", action: "1B TAR", note: "Released for exchange listings only.", color: "text-yellow-400" },
-                { period: "Year 4–10", action: "Max 1B/year", note: "Released for stated purposes with 30-day notice.", color: "text-tarcoin-neon" },
-              ].map((v, i) => (
-                <div key={i} className="bg-black/40 rounded-lg p-4 border border-tarcoin-gold/10">
-                  <div className="text-xs font-orbitron text-gray-400 mb-1">{v.period}</div>
-                  <div className={`text-sm font-orbitron font-bold mb-1 ${v.color}`}>{v.action}</div>
-                  <div className="text-xs text-gray-500">{v.note}</div>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-4">
-              ✅ All releases will be announced publicly <strong className="text-gray-400">30 days in advance</strong> with full explanation of usage. We will never sell reserved TAR on open markets to protect coin price.
+            <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-3">📋 RESERVE MANAGEMENT</div>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              The 10 Billion TAR reserve is managed by the TARCOIN founding team and will be deployed strategically for ecosystem growth, exchange listings, infrastructure, developer compensation, and community initiatives. Reserve deployments will be communicated through official channels. The founding team retains full discretion over the timing and allocation of reserved funds to best serve the long-term growth of the network.
             </p>
           </div>
         </motion.div>
