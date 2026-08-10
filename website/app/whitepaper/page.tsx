@@ -164,7 +164,7 @@ const overviewCards = [
     title: "Immutable Supply",
     subtitle: "50 Billion Fixed Cap",
     description:
-      "Total supply of 50,000,000,000 TAR — 80% allocated to public mining (40B) and 20% to a Long-Term Ecosystem Treasury (10B). Halving every 400,000 blocks (~7.6 years) with a block reward of 50,000 TAR. No inflation, no admin override.",
+      "Total supply of 50,000,000,000 TAR — 80% allocated to public mining (40B) and 20% to a Founder-managed ecosystem reserve (10B). Halving every 400,000 blocks (~7.6 years) with a block reward of 50,000 TAR. No inflation, no admin override.",
     accent: "from-tarcoin-cyan to-tarcoin-cyan-dark",
     icon: "🔒",
   },
@@ -180,7 +180,7 @@ const overviewCards = [
     title: "Fully Decentralized",
     subtitle: "No Governance, No Admin",
     description:
-      "No foundation, no corporation, no administrative keys, no governance tokens, no upgrade authority. The blockchain is governed solely by its consensus rules — identical to Bitcoin. Community-driven open-source development.",
+      "Community-driven open-source development led by the founding team. The blockchain is governed solely by its consensus rules — identical to Bitcoin. No governance tokens, no upgrade authority over the consensus layer.",
     accent: "from-tarcoin-purple to-purple-500",
     icon: "🌐",
   },
