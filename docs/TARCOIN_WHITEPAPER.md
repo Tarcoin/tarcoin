@@ -198,7 +198,6 @@ The treasury private key:
 
 The founding team manages the ecosystem reserve with the following commitments:
 - All reserve transactions are publicly recorded on the blockchain
-- The reserve is managed by the founding team for ecosystem growth, exchange listings, infrastructure, developer compensation, and community initiatives
 - Reserve deployments will be communicated through official channels
 - The blockchain consensus layer operates independently of any developer or entity
 - Mining rewards are fully decentralized with no central authority over block production

@@ -264,9 +264,9 @@ The Long-Term Ecosystem Treasury wallet is created **entirely offline** using an
 - Private keys never touch the internet
 - Encrypted USB and paper backups
 - Geographically separated cold storage
-- No individual has unilateral control of treasury keys
+- Managed by the founding team
 
-Loss of the treasury private key results in permanent loss of access — exactly like Bitcoin.
+
 
 ## Contributing
 
@@ -280,4 +280,4 @@ See [`CONTRIBUTING.md`](docs/CONTRIBUTING.md) for contribution guidelines.
 
 ---
 
-**TARCOIN — Decentralized. Immutable. Proof-of-Work.**
+**TARCOIN — Decentralized. Transparent. Proof-of-Work.**
