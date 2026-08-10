@@ -171,7 +171,7 @@ The genesis block is **hardcoded** into [`chainparams.cpp`](../blockchain_core/t
 
 ---
 
-## 5. Long-Term Ecosystem Treasury Security
+## 5. Ecosystem Reserve Management
 
 ### 5.1 Offline Generation
 
@@ -194,14 +194,14 @@ The treasury private key:
 - **MUST** have geographically separated backups
 - **MUST** follow industry-standard cold storage key management best practices
 
-### 5.3 Transparency & Immutability
+### 5.3 Transparency & Management
 
-Once the genesis block is mined:
-- The ecosystem treasury allocation is permanent and immutable
-- No mechanism exists to modify the supply or allocation
-- All treasury transactions are publicly recorded on the blockchain
-- No individual or entity has unilateral control over treasury funds
-- The blockchain operates independently of any developer or entity
+The founding team manages the ecosystem reserve with the following commitments:
+- All reserve transactions are publicly recorded on the blockchain
+- The reserve is managed by the founding team for ecosystem growth, exchange listings, infrastructure, developer compensation, and community initiatives
+- Reserve deployments will be communicated through official channels
+- The blockchain consensus layer operates independently of any developer or entity
+- Mining rewards are fully decentralized with no central authority over block production
 
 ---
 
