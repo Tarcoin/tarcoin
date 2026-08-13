@@ -68,6 +68,10 @@ export const metadata: Metadata = {
   },
 };
 
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
+
 export default function RootLayout({
   children,
 }: {
@@ -78,7 +82,17 @@ export default function RootLayout({
       <body
         className={`${orbitron.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-space bg-tarcoin-black text-white antialiased`}
       >
-        {children}
+        <div className="relative min-h-screen flex flex-col">
+          <div className="scanlines" />
+          <div className="cyber-bg flex flex-col flex-grow">
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+            <ScrollToTop />
+          </div>
+        </div>
       </body>
     </html>
   );

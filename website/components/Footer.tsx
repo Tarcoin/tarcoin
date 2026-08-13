@@ -7,6 +7,7 @@ const footerLinks = {
   blockchain: [
     { name: "Explorer", href: "/explorer" },
     { name: "Whitepaper", href: "/whitepaper" },
+    { name: "You Need To Know", href: "/you-need-to-know" },
     { name: "Network Status", href: "/network" },
     { name: "Rich List", href: "/richlist" },
     { name: "Verify Signature", href: "/verify" },
@@ -34,6 +35,8 @@ const footerLinks = {
     { name: "Mining Guide", href: "/mining/guide" },
     { name: "Security", href: "/security" },
     { name: "Brand Assets", href: "/brand" },
+    { name: "Legal", href: "/legal" },
+    { name: "Privacy Policy", href: "/privacy" },
   ],
 };
 

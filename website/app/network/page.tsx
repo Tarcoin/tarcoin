@@ -54,7 +54,7 @@ export default function NetworkPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const blockHeight = stats?.blocks ?? stats?.blockHeight ?? 0;
+  const blockHeight = stats?.blockHeight ?? stats?.blocks ?? 0;
   const hashrate = stats?.hashrate ?? 0;
   const difficulty = stats?.difficulty ?? 0;
   const connections = stats?.connections ?? 0;
@@ -69,9 +69,7 @@ export default function NetworkPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-tarcoin-black">
-      <div className="scanlines" />
-      <div className="cyber-bg min-h-screen pt-20">
+    <div className="min-h-screen pt-24">
         <section className="relative min-h-screen flex items-center justify-center">
           <div className="absolute inset-0">
             <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-tarcoin-gold/5 rounded-full blur-3xl animate-float" />
@@ -125,7 +123,6 @@ export default function NetworkPage() {
             </div>
           </div>
         </section>
-      </div>
-    </main>
+    </div>
   );
 }
