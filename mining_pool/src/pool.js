@@ -12,6 +12,7 @@ const axios = require('axios');
 const cron = require('node-cron');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
+const { bech32 } = require('bech32');
 
 dotenv.config();
 
@@ -132,6 +133,18 @@ function encodeVarInt(n) {
   buf[0] = 0xfd;
   buf.writeUInt16LE(n, 1);
   return buf.toString('hex');
+}
+
+// ====== Segwit Address Decoder ======
+function decodeSegwitAddress(address) {
+  try {
+    const decoded = bech32.decode(address);
+    const data = bech32.fromWords(decoded.words.slice(1));
+    return '0014' + Buffer.from(data).toString('hex');
+  } catch (err) {
+    console.error('Failed to decode POOL_WALLET address:', err.message);
+    return null;
+  }
 }
 
 // ====== Build 80-byte block header ======
@@ -426,7 +439,11 @@ async function refreshBlockTemplate() {
       const blockReward = template.coinbasevalue || 5000000000000;
       const rewardBuf = Buffer.alloc(8);
       rewardBuf.writeBigUInt64LE(BigInt(blockReward), 0);
-      const poolScriptPubKey = '00149100546b7732f12c4920bc8861b2961ad8acad97'; // tar1qjyq9g6mhxtcjcjfqhjyxrv5krtv2etvh24mfz9
+      
+      const poolWalletAddr = process.env.POOL_WALLET || 'tar1qjyq9g6mhxtcjcjfqhjyxrv5krtv2etvh24mfz9';
+      const poolScriptPubKey = decodeSegwitAddress(poolWalletAddr);
+      if (!poolScriptPubKey) throw new Error('Invalid POOL_WALLET address in .env');
+
       const rewardOutput = rewardBuf.toString('hex') + encodeVarInt(poolScriptPubKey.length / 2) + poolScriptPubKey;
 
       let witnessOutput = '';
