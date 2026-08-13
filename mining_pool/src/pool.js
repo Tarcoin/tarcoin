@@ -440,9 +440,13 @@ async function refreshBlockTemplate() {
       const rewardBuf = Buffer.alloc(8);
       rewardBuf.writeBigUInt64LE(BigInt(blockReward), 0);
       
-      const poolWalletAddr = process.env.POOL_WALLET || 'tar1qjyq9g6mhxtcjcjfqhjyxrv5krtv2etvh24mfz9';
-      const poolScriptPubKey = decodeSegwitAddress(poolWalletAddr);
-      if (!poolScriptPubKey) throw new Error('Invalid POOL_WALLET address in .env');
+      let poolWalletAddr = process.env.POOL_WALLET || 'tar1qjyq9g6mhxtcjcjfqhjyxrv5krtv2etvh24mfz9';
+      let poolScriptPubKey = decodeSegwitAddress(poolWalletAddr);
+      if (!poolScriptPubKey) {
+         console.warn('Invalid POOL_WALLET address in .env (must be tar1... SegWit). Falling back to default address.');
+         poolWalletAddr = 'tar1qjyq9g6mhxtcjcjfqhjyxrv5krtv2etvh24mfz9';
+         poolScriptPubKey = decodeSegwitAddress(poolWalletAddr);
+      }
 
       const rewardOutput = rewardBuf.toString('hex') + encodeVarInt(poolScriptPubKey.length / 2) + poolScriptPubKey;
 
