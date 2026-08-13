@@ -125,6 +125,15 @@ function formatPrevHashForStratum(hex) {
   return swapped.toString('hex');
 }
 
+// ====== VarInt helper ======
+function encodeVarInt(n) {
+  if (n < 0xfd) return n.toString(16).padStart(2, '0');
+  const buf = Buffer.alloc(3);
+  buf[0] = 0xfd;
+  buf.writeUInt16LE(n, 1);
+  return buf.toString('hex');
+}
+
 // ====== Build 80-byte block header ======
 function buildBlockHeader(version, prevHash, merkleRoot, nTime, nBits, nonce) {
   const buf = Buffer.alloc(80);
@@ -334,7 +343,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     // Check if meets network block difficulty (powLimit or t.nBits)
     const networkTarget = nBitsToTarget(t.nBits);
     if (hashMeetsTarget(headerHash, networkTarget)) {
-      await handleBlockFound(header, workerName);
+      await handleBlockFound(header, coinbaseHex, workerName);
     }
 
     console.log('Share accepted from %s — hash: %s...', sanitizeLog(workerName), headerHash.reverse().toString('hex').slice(0, 16));
@@ -344,14 +353,30 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
   }
 }
 
-async function handleBlockFound(headerBuffer, workerName) {
+async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
   const safeWorker = sanitizeLog(workerName);
   console.log('🎉 BLOCK FOUND by %s!', safeWorker);
   poolState.blocksFound++;
 
   try {
-    const height = poolState.blockTemplate?.height || 0;
-    console.log('Block found at height ~%d by %s', height + 1, safeWorker);
+    const t = poolState.blockTemplate;
+    const height = t?.height || 0;
+    
+    // Construct full serialized block (Header + TxCount + Coinbase + Txs)
+    const txCount = 1 + (t.txData ? t.txData.length : 0);
+    let blockHex = headerBuffer.toString('hex');
+    blockHex += encodeVarInt(txCount);
+    blockHex += coinbaseHex;
+    if (t.txData) {
+      for (const tx of t.txData) {
+        blockHex += tx;
+      }
+    }
+
+    console.log('Submitting block height %d to network...', height + 1);
+    // submitblock requires the raw hex of the full block
+    const submissionResult = await rpcCall('submitblock', [blockHex]);
+    console.log('submitblock result:', submissionResult || 'accepted');
 
     if (redis) {
       await redis.lPush('pool:blocks', JSON.stringify({
@@ -378,6 +403,7 @@ async function refreshBlockTemplate() {
         coinbase1: '01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff',
         coinbase2: 'ffffffff01',
         merkleBranch: (template.transactions || []).map((t) => t.hash),
+        txData: (template.transactions || []).map((t) => t.data),
         version: template.version.toString(16).padStart(8, '0'),
         nBits: template.bits,
         nTime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
