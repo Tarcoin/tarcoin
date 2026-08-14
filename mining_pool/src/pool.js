@@ -329,16 +329,6 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     // Compute SHA256d of the header
     const headerHash = sha256d(header);
 
-    // Accept all shares to keep Bitaxe alive, and forward them to tarcoind
-    // tarcoind will safely reject non-blocks and accept the real block!
-    worker.validShares++;
-    worker.shares++;
-    worker.lastSeen = Date.now();
-    socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
-    
-    // Always attempt to submit to network. If it's not a real block, tarcoind will just ignore it.
-    await handleBlockFound(header, coinbaseHex, workerName);
-
     worker.validShares++;
     worker.shares++;
     worker.lastSeen = Date.now();
@@ -427,18 +417,44 @@ async function refreshBlockTemplate() {
       const rewardBuf = Buffer.alloc(8);
       rewardBuf.writeBigUInt64LE(BigInt(blockReward), 0);
       
-      // Pool wallet scriptPubKey (tar1qc0u53nq5tvxr58hgnw9uf7paee9m0yvvh7jmxp)
       const poolScriptPubKey = '0014c3f948cc145b0c3a1ee89b8bc4f83dce4bb7918c';
-      const numOutputs = '01';
-      const coinbase2 = 'ffffffff' + numOutputs + rewardBuf.toString('hex') + encodeVarInt(poolScriptPubKey.length / 2) + poolScriptPubKey + '00000000';
+      const rewardOutput = rewardBuf.toString('hex') + encodeVarInt(poolScriptPubKey.length / 2) + poolScriptPubKey;
+
+      let witnessOutput = '';
+      if (template.default_witness_commitment) {
+          const witValBuf = Buffer.alloc(8, 0); // 0 value
+          witnessOutput = witValBuf.toString('hex') + encodeVarInt(template.default_witness_commitment.length / 2) + template.default_witness_commitment;
+      }
+      
+      const numOutputs = witnessOutput ? '02' : '01';
+      const coinbase2 = 'ffffffff' + numOutputs + rewardOutput + witnessOutput + '00000000';
+
+      const txHashes = (template.transactions || []).map(t => t.txid || t.hash);
+      const merkleBranch = [];
+      if (txHashes.length > 0) {
+        let hashes = [null, ...txHashes.map(h => Buffer.from(h, 'hex').reverse())];
+        while (hashes.length > 1) {
+          if (hashes.length % 2 !== 0) hashes.push(hashes[hashes.length - 1]);
+          const nextLevel = [];
+          for (let i = 0; i < hashes.length; i += 2) {
+            if (i === 0) {
+              merkleBranch.push(hashes[1]);
+              nextLevel.push(null);
+            } else {
+              nextLevel.push(sha256d(Buffer.concat([hashes[i], hashes[i + 1]])));
+            }
+          }
+          hashes = nextLevel;
+        }
+      }
 
       poolState.blockTemplate = {
         jobId: crypto.randomBytes(4).toString('hex'),
-        prevHashBE: originalPrevHash, // Keep for header assembly
-        stratumPrevHash: formatPrevHashForStratum(originalPrevHash), // For mining.notify
+        prevHashBE: originalPrevHash,
+        stratumPrevHash: formatPrevHashForStratum(originalPrevHash),
         coinbase1: coinbase1,
         coinbase2: coinbase2,
-        merkleBranch: (template.transactions || []).map((t) => t.hash),
+        merkleBranch: merkleBranch.map(b => b.toString('hex')),
         txData: (template.transactions || []).map((t) => t.data),
         version: template.version.toString(16).padStart(8, '0'),
         nBits: template.bits,
