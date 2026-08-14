@@ -276,7 +276,7 @@ export default function HomePage() {
       const res = await fetch(`${API_BASE}/api/mempool?limit=10`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const list: Tx[] = Array.isArray(data) ? data : data.txs ?? [];
+      const list: Tx[] = Array.isArray(data) ? data : data.transactions ?? data.txs ?? [];
       setTxs(list);
       setLoadingTxs(false);
     } catch {
@@ -333,7 +333,7 @@ export default function HomePage() {
   const blockHeight = stats.blocks ?? stats.blockHeight ?? (blocks[0]?.height ?? 0);
   const hashrate = stats.hashrate ?? 0;
   const difficulty = stats.difficulty ?? (blocks[0]?.difficulty ?? 0);
-  const mempoolSize = stats.mempoolSize ?? stats.mempoolCount ?? 0;
+  const mempoolSize = (stats as any).mempool?.size ?? stats.mempoolSize ?? stats.mempoolCount ?? 0;
   // Circulating supply = mined coins only (block rewards so far).
   // Do NOT fall back to 10B — that's the cold storage reserve, not circulating.
   const rawCirculating = stats.circulating ?? stats.circulatingSupply ?? 0;

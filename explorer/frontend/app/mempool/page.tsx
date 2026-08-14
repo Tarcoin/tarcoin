@@ -160,7 +160,7 @@ export default function MempoolPage() {
       const res = await fetch(`${API_BASE}/api/mempool?limit=200`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const list: MempoolTx[] = Array.isArray(data) ? data : data.txs ?? [];
+      const list: MempoolTx[] = Array.isArray(data) ? data : data.transactions ?? data.txs ?? [];
       setTxs(list);
       setLoadingTxs(false);
       setLastUpdated(new Date());
@@ -215,7 +215,9 @@ export default function MempoolPage() {
   // ─ derived stats ─
   const txCount = stats.count ?? stats.txCount ?? txs.length;
   const totalSize = stats.totalSize ?? stats.total_size ?? stats.bytes ?? txs.reduce((s, t) => s + (t.size ?? t.vsize ?? 0), 0);
-  const minFeeRate = stats.minFeeRate ?? stats.min_fee_rate ?? stats.minfeerate ?? 0;
+  // API returns mempoolMinFee in TAR/kB — convert to Tar/vByte: multiply by 1e8 (TAR→Tar) ÷ 1000 (kB→B) = ×100000
+  const rawMinFee = (stats as any).mempoolMinFee ?? stats.minFeeRate ?? stats.min_fee_rate ?? stats.minfeerate ?? 0;
+  const minFeeRate = rawMinFee > 0 ? rawMinFee * 100000 : 0;
 
   // ─ sort ─
   function handleSort(key: SortKey) {
@@ -432,7 +434,7 @@ export default function MempoolPage() {
           <StatCard
             label="MIN FEE RATE"
             value={loadingStats ? '…' : (minFeeRate > 0 ? `${minFeeRate.toFixed(2)}` : '—')}
-            sub="sat/vByte"
+            sub="Tar/vByte"
             loading={loadingStats}
           />
         </div>
@@ -563,7 +565,7 @@ export default function MempoolPage() {
                         onClick={() => handleSort('feerate')}
                         style={{ textAlign: 'right', color: sortKey === 'feerate' ? 'var(--gold)' : undefined }}
                       >
-                        Fee Rate (sat/vB) <SortIcon col="feerate" />
+                        Fee Rate (Tar/vB) <SortIcon col="feerate" />
                       </th>
                       <th
                         className="sort-th"
@@ -655,9 +657,9 @@ export default function MempoolPage() {
                   FEE RATE:
                 </span>
                 {[
-                  { color: 'var(--neon, #00ff88)', label: 'High (>50 sat/vB)' },
+                  { color: 'var(--neon, #00ff88)', label: 'High (>50 Tar/vB)' },
                   { color: 'var(--gold)', label: 'Normal' },
-                  { color: '#ff8c00', label: 'Low (<2 sat/vB)' },
+                  { color: '#ff8c00', label: 'Low (<2 Tar/vB)' },
                 ].map(({ color, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block', boxShadow: `0 0 4px ${color}` }} />

@@ -383,7 +383,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
       }
     }
 
-    console.log('Submitting block height %d to network...', height + 1);
+    console.log('Submitting block height %d to network...', height);
     // submitblock requires the raw hex of the full block
     const submissionResult = await rpcCall('submitblock', [blockHex]);
     console.log('submitblock result:', submissionResult || 'accepted');
@@ -496,11 +496,14 @@ async function processPayouts() {
 
     console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers.`);
 
+    // Reserve 0.1 TAR for network transaction fees
+    const sendableBalance = balance - 0.1;
+
     // 3. Calculate proportions
     const feeWallet = process.env.FEE_WALLET || poolState.poolWallet;
     const feePercentage = poolState.fee / 100;
-    const amountToDistribute = balance * (1 - feePercentage);
-    const feeAmount = balance * feePercentage;
+    const amountToDistribute = sendableBalance * (1 - feePercentage);
+    const feeAmount = sendableBalance * feePercentage;
     
     const payouts = {};
     let totalAssigned = 0;
@@ -516,7 +519,7 @@ async function processPayouts() {
     }
 
     // Assign any dust remainder and the 1% fee to the fee wallet
-    const finalFee = parseFloat((balance - totalAssigned).toFixed(8));
+    const finalFee = parseFloat((sendableBalance - totalAssigned).toFixed(8));
     if (finalFee > 0 && feeWallet) {
       if (payouts[feeWallet]) {
         payouts[feeWallet] = parseFloat((payouts[feeWallet] + finalFee).toFixed(8));
