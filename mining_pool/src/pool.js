@@ -369,7 +369,16 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
     const txCount = 1 + (t.txData ? t.txData.length : 0);
     let blockHex = headerBuffer.toString('hex');
     blockHex += encodeVarInt(txCount);
-    blockHex += coinbaseHex;
+    
+    if (t.hasWitnessCommitment) {
+      const v = coinbaseHex.substring(0, 8);
+      const r = coinbaseHex.substring(8, coinbaseHex.length - 8);
+      const l = coinbaseHex.substring(coinbaseHex.length - 8);
+      blockHex += v + '0001' + r + '01200000000000000000000000000000000000000000000000000000000000000000' + l;
+    } else {
+      blockHex += coinbaseHex;
+    }
+
     if (t.txData) {
       for (const tx of t.txData) {
         blockHex += tx;
@@ -464,6 +473,7 @@ async function refreshBlockTemplate() {
         nTime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
         height: template.height,
         target: template.target,
+        hasWitnessCommitment: !!witnessOutput,
       };
 
       activeSockets.forEach((client) => {
