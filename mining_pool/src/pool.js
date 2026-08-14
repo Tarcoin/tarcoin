@@ -450,13 +450,8 @@ async function refreshBlockTemplate() {
 
       const rewardOutput = rewardBuf.toString('hex') + encodeVarInt(poolScriptPubKey.length / 2) + poolScriptPubKey;
 
-      let witnessOutput = '';
-      if (template.default_witness_commitment) {
-          const witValBuf = Buffer.alloc(8, 0); // 0 value
-          witnessOutput = witValBuf.toString('hex') + encodeVarInt(template.default_witness_commitment.length / 2) + template.default_witness_commitment;
-      }
-      const numOutputs = witnessOutput ? '02' : '01';
-      const coinbase2 = 'ffffffff' + numOutputs + rewardOutput + witnessOutput + '00000000';
+      const numOutputs = '01';
+      const coinbase2 = 'ffffffff' + numOutputs + rewardOutput + '00000000';
 
       poolState.blockTemplate = {
         jobId: crypto.randomBytes(4).toString('hex'),
