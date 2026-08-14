@@ -294,9 +294,12 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
   workerName = message.params[0]; // Always trust the submit message for worker name
 
   const [_workerNameParam, jobId, extraNonce2, nTime, nonce] = message.params;
+  
+  // Sanitize jobId to prevent log injection vulnerabilities
+  const safeJobId = String(jobId).replace(/[\r\n]/g, '').substring(0, 32);
 
   if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
-    console.log(`[DEBUG] Share rejected: Job not found (Miner sent: ${jobId}, Current: ${poolState.blockTemplate?.jobId})`);
+    console.log(`[DEBUG] Share rejected: Job not found (Miner sent: ${safeJobId}, Current: ${poolState.blockTemplate?.jobId})`);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + "\n");
     return;
   }
