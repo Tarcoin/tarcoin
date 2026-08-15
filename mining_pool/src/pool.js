@@ -369,16 +369,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
     const txCount = 1 + (t.txData ? t.txData.length : 0);
     let blockHex = headerBuffer.toString('hex');
     blockHex += encodeVarInt(txCount);
-    
-    if (t.hasWitnessCommitment) {
-      const v = coinbaseHex.substring(0, 8);
-      const r = coinbaseHex.substring(8, coinbaseHex.length - 8);
-      const l = coinbaseHex.substring(coinbaseHex.length - 8);
-      blockHex += v + '0001' + r + '01200000000000000000000000000000000000000000000000000000000000000000' + l;
-    } else {
-      blockHex += coinbaseHex;
-    }
-
+    blockHex += coinbaseHex;
     if (t.txData) {
       for (const tx of t.txData) {
         blockHex += tx;
@@ -429,7 +420,7 @@ async function refreshBlockTemplate() {
       const rewardBuf = Buffer.alloc(8);
       rewardBuf.writeBigUInt64LE(BigInt(blockReward), 0);
       
-      const poolScriptPubKey = '0014c3f948cc145b0c3a1ee89b8bc4f83dce4bb7918c';
+      const poolScriptPubKey = '00140de17bfae2199542aefe26f3dc8d0bd475475e31';
       const rewardOutput = rewardBuf.toString('hex') + encodeVarInt(poolScriptPubKey.length / 2) + poolScriptPubKey;
 
       let witnessOutput = '';
@@ -473,7 +464,6 @@ async function refreshBlockTemplate() {
         nTime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
         height: template.height,
         target: template.target,
-        hasWitnessCommitment: !!witnessOutput,
       };
 
       activeSockets.forEach((client) => {
@@ -497,7 +487,7 @@ async function processPayouts() {
     // 1. Get mature, spendable balance
     let balance = 0;
     try {
-      balance = await rpcCall('getbalance', ['*', 6]); // At least 6 confirmations, but coinbase needs 100
+      balance = await rpcCall('getbalance', ['*', 101]); // At least 6 confirmations, but coinbase needs 100
     } catch (e) {
       console.warn('Could not fetch wallet balance for payouts:', e.message);
       return;
@@ -562,7 +552,7 @@ async function processPayouts() {
     console.log('Executing sendmany:', payouts);
 
     // 4. Send the transaction
-    const txid = await rpcCall('sendmany', ["", payouts]);
+    const txid = await rpcCall('sendmany', ["", payouts, 101]);
     console.log(`💸 Payout successful! TXID: ${txid}`);
 
     // 5. Clear the shares ONLY if successful
