@@ -19,17 +19,41 @@ export class AddressController {
         return res.status(404).json({ error: 'Address not found', message: 'Invalid address' });
       }
 
-      // Use scantxoutset to get real UTXO balance — works without addressindex
+      // Use scantxoutset to get real UTXO balance — works without addressindex.
+      // We scan with multiple descriptors to cover all script types:
+      //   addr()        — P2WPKH, P2SH, P2PKH standard addresses
+      //   raw(script)   — P2PK and any non-standard script (cold storage / early coinbase)
       let balance = 0;
       let totalReceived = 0;
       let txCount = 0;
       let utxos: any[] = [];
 
       try {
-        const scanResult = await this.rpc.call<any>('scantxoutset', ['start', [`addr(${address})`]]);
+        // Build descriptor list — always include addr()
+        const descriptors: string[] = [`addr(${address})`];
+
+        // Also try raw(scriptPubKey) for P2PK / cold-storage outputs
+        try {
+          const addrInfo = await this.rpc.call<any>('getaddressinfo', [address]);
+          if (addrInfo?.scriptPubKey) {
+            descriptors.push(`raw(${addrInfo.scriptPubKey})`);
+          }
+        } catch {
+          // getaddressinfo may not be available — continue with addr() only
+        }
+
+        // Run all descriptors in a single scantxoutset call
+        const scanResult = await this.rpc.call<any>('scantxoutset', ['start', descriptors]);
         if (scanResult && scanResult.success) {
-          balance = scanResult.total_amount || 0;
-          utxos = scanResult.unspents || [];
+          // Deduplicate UTXOs by txid:vout in case descriptors overlap
+          const seen = new Set<string>();
+          const deduped: any[] = [];
+          for (const u of (scanResult.unspents || [])) {
+            const key = `${u.txid}:${u.vout}`;
+            if (!seen.has(key)) { seen.add(key); deduped.push(u); }
+          }
+          utxos = deduped;
+          balance = utxos.reduce((s: number, u: any) => s + (u.amount || 0), 0);
           txCount = utxos.length;
           totalReceived = balance;
         } else {
@@ -72,8 +96,21 @@ export class AddressController {
       // Use scantxoutset to find UTXOs and their transaction IDs
       let result: any[] = [];
       try {
-        const scanResult = await this.rpc.call<any>('scantxoutset', ['start', [`addr(${address})`]]);
+        // Build descriptors (same logic as getByAddress)
+        const descriptors: string[] = [`addr(${address})`];
+        try {
+          const addrInfo = await this.rpc.call<any>('getaddressinfo', [address]);
+          if (addrInfo?.scriptPubKey) descriptors.push(`raw(${addrInfo.scriptPubKey})`);
+        } catch { /* ignore */ }
+
+        const scanResult = await this.rpc.call<any>('scantxoutset', ['start', descriptors]);
         if (scanResult && scanResult.success && scanResult.unspents) {
+          // Deduplicate
+          const seen = new Set<string>();
+          scanResult.unspents = scanResult.unspents.filter((u: any) => {
+            const key = `${u.txid}:${u.vout}`;
+            return seen.has(key) ? false : (seen.add(key), true);
+          });
           // Fetch full transaction details for each UTXO
           const txDetails = await Promise.all(
             scanResult.unspents.slice(skip, skip + count).map(async (utxo: any) => {
@@ -128,9 +165,21 @@ export class AddressController {
       // Use scantxoutset for reliable UTXO lookup without addressindex
       let utxos: any[] = [];
       try {
-        const scanResult = await this.rpc.call<any>('scantxoutset', ['start', [`addr(${address})`]]);
+        // Build descriptors (same logic as getByAddress)
+        const descriptors: string[] = [`addr(${address})`];
+        try {
+          const addrInfo = await this.rpc.call<any>('getaddressinfo', [address]);
+          if (addrInfo?.scriptPubKey) descriptors.push(`raw(${addrInfo.scriptPubKey})`);
+        } catch { /* ignore */ }
+
+        const scanResult = await this.rpc.call<any>('scantxoutset', ['start', descriptors]);
         if (scanResult && scanResult.success) {
-          utxos = scanResult.unspents || [];
+          // Deduplicate UTXOs
+          const seen = new Set<string>();
+          utxos = (scanResult.unspents || []).filter((u: any) => {
+            const key = `${u.txid}:${u.vout}`;
+            return seen.has(key) ? false : (seen.add(key), true);
+          });
         }
       } catch {
         // fallback to listunspent (only works for wallet addresses)
