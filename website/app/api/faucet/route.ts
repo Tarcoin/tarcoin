@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1';
     
     // Proxy the request server-to-server to the Mining Pool backend (Port 3001)
     // This completely bypasses CORS and HTTPS mixed-content blocks!
@@ -10,6 +11,7 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-forwarded-for': ip,
       },
       body: JSON.stringify(body),
     });
