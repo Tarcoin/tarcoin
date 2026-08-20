@@ -10,15 +10,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  gitleaks:
+
+  secret-scan:
     name: Secret Detection
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+      - name: TruffleHog Secret Scanner
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
 
   npm-audit:
     name: Dependency Audit
