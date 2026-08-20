@@ -509,7 +509,8 @@ async function processPayouts() {
     let totalShares = 0;
     shares.forEach((s) => {
       const { worker } = JSON.parse(s);
-      workerShares[worker] = (workerShares[worker] || 0) + 1;
+      const walletAddress = worker.split('.')[0];
+      workerShares[walletAddress] = (workerShares[walletAddress] || 0) + 1;
       totalShares++;
     });
 
@@ -548,6 +549,26 @@ async function processPayouts() {
     }
 
     if (Object.keys(payouts).length === 0) return;
+
+    // 3.5 Address Validation & Safety Check (Donation Approach)
+    for (const address of Object.keys(payouts)) {
+      if (address === feeWallet) continue;
+      
+      try {
+        const validation = await rpcCall('validateaddress', [address]);
+        if (!validation.isvalid) {
+          console.warn(`[SAFETY] Invalid address detected: ${address}. Reassigning their reward to the pool fee wallet!`);
+          const invalidReward = payouts[address];
+          delete payouts[address];
+          
+          if (feeWallet) {
+            payouts[feeWallet] = parseFloat(((payouts[feeWallet] || 0) + invalidReward).toFixed(8));
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to validate address ${address}:`, err.message);
+      }
+    }
 
     console.log('Executing sendmany:', payouts);
 
