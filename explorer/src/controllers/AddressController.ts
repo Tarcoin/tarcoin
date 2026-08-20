@@ -62,6 +62,27 @@ export class AddressController {
       } catch (scanErr: any) {
         const safeAddress = JSON.stringify(String(address || '').slice(0, 64));
         console.error('scantxoutset failed for address %s :', safeAddress, scanErr?.message || scanErr);
+        
+        // FAST FALLBACK: Since scantxoutset timed out, we fallback to listtransactions
+        // to manually sum up the balance for this address.
+        try {
+          const txs = await this.rpc.call<any[]>('listtransactions', ['*', 1000, 0, true]);
+          if (Array.isArray(txs)) {
+            const addrTxs = txs.filter((tx: any) => tx.address === address);
+            txCount = addrTxs.length;
+            for (const tx of addrTxs) {
+              if (tx.amount > 0) {
+                 totalReceived += tx.amount;
+              }
+              balance += tx.amount;
+              if (tx.fee && tx.amount < 0) {
+                 balance += tx.fee; // account for network fees
+              }
+            }
+          }
+        } catch (fbErr) {
+           console.error('Fallback listtransactions failed for %s', safeAddress);
+        }
       }
 
       const result = {
