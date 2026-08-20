@@ -505,6 +505,28 @@ async function processPayouts() {
       return;
     }
 
+    // 2.5 Fetch blocks found in this cycle
+    const recentBlocks = await redis.lRange('pool:blocks', 0, -1);
+    const blocksFound = recentBlocks.length;
+
+    if (blocksFound === 0) {
+      console.log('No new blocks found this cycle. Shares will roll over to the next hour.');
+      return; // Do not clear shares, let them accumulate until a block is found!
+    }
+
+    console.log(`Pool found ${blocksFound} blocks! Calculating proportional rewards...`);
+    
+    // Calculate the exact reward earned (50,000 TAR per block)
+    const expectedReward = blocksFound * 50000;
+    
+    // Reserve 0.1 TAR for network transaction fees
+    let sendableBalance = expectedReward - 0.1;
+
+    // Safety check: If the mature wallet balance is less than expected, just pay whatever is mature
+    if (sendableBalance > balance - 0.1) {
+      sendableBalance = balance - 0.1;
+    }
+
     const workerShares = {};
     let totalShares = 0;
     shares.forEach((s) => {
@@ -514,10 +536,7 @@ async function processPayouts() {
       totalShares++;
     });
 
-    console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers.`);
-
-    // Reserve 0.1 TAR for network transaction fees
-    const sendableBalance = balance - 0.1;
+    console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers. Total reward pool: ${sendableBalance} TAR.`);
 
     // 3. Calculate proportions
     const feeWallet = process.env.FEE_WALLET || poolState.poolWallet;
@@ -576,9 +595,10 @@ async function processPayouts() {
     const txid = await rpcCall('sendmany', ["", payouts, 101]);
     console.log(`💸 Payout successful! TXID: ${txid}`);
 
-    // 5. Clear the shares ONLY if successful
+    // 5. Clear the shares and blocks ONLY if successful
     await redis.del('pool:shares');
-    console.log('Cleared processed shares from Redis.');
+    await redis.del('pool:blocks');
+    console.log('Cleared processed shares and blocks from Redis.');
 
     // 6. Bonus Engine (Miner Bounty Program)
     try {
