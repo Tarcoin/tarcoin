@@ -157,6 +157,7 @@ async function initialize() {
 
     // Transaction routes
     app.get('/api/tx/:txid', transactionController.getByTxid.bind(transactionController));
+    app.post('/api/tx/broadcast', transactionController.broadcast.bind(transactionController));
 
     // Address routes
     app.get('/api/address/:address', addressController.getByAddress.bind(addressController));

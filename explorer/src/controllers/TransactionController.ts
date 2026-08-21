@@ -38,4 +38,21 @@ export class TransactionController {
       res.status(404).json({ error: 'Transaction not found' });
     }
   }
+
+  async broadcast(req: Request, res: Response) {
+    try {
+      const { rawtx } = req.body;
+      if (!rawtx || typeof rawtx !== 'string') {
+        return res.status(400).json({ error: 'Missing rawtx string' });
+      }
+
+      // Use the generic call method for sendrawtransaction
+      const txid = await this.rpc.call<string>('sendrawtransaction', [rawtx]);
+      
+      res.json({ success: true, txid });
+    } catch (error: any) {
+      console.error('Broadcast failed:', error.message || error);
+      res.status(500).json({ error: 'Broadcast failed', details: error.message || error });
+    }
+  }
 }
