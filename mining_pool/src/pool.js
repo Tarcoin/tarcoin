@@ -620,15 +620,60 @@ async function processPayouts() {
 
 cron.schedule('0 * * * *', processPayouts);
 
-// ====== HTTP API ======
-app.get('/', (_req, res) => {
-  res.json({
-    message: 'Welcome to TARCOIN Mining Pool',
-    status: 'Online',
-    stratum: 'stratum+tcp://stratum.tarcoin.org:3333',
-    algorithm: 'SHA256d'
+    // ====== HTTP API ======
+  app.get('/api/pool/stats', async (req, res) => {
+    try {
+      if (!redis) {
+        return res.json({ status: 'offline', workers: {}, totalShares: 0, blocksFound: [], poolHashrate: 0 });
+      }
+
+      // 1. Fetch shares
+      const sharesData = await redis.lRange('pool:shares', 0, -1);
+      const workers = {};
+      let totalShares = 0;
+
+      sharesData.forEach((s) => {
+        try {
+          const { worker, time } = JSON.parse(s);
+          const wallet = worker.split('.')[0];
+          if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0 };
+          workers[wallet].shares++;
+          if (time > workers[wallet].lastSeen) workers[wallet].lastSeen = time;
+          totalShares++;
+        } catch(e) {}
+      });
+
+      // 2. Fetch recent blocks
+      const blocksData = await redis.lRange('pool:blocks', 0, 9);
+      const blocksFound = blocksData.map(b => JSON.parse(b));
+
+      // 3. Fetch Network Hashrate (since pool finds ~100% of blocks, Network Hashrate = Pool Hashrate)
+      let poolHashrate = 0;
+      try {
+        poolHashrate = await rpcCall('getnetworkhashps');
+      } catch (e) {
+        console.warn('Could not fetch getnetworkhashps:', e.message);
+      }
+
+      res.json({
+        status: 'Online',
+        stratum: 'stratum+tcp://stratum.tarcoin.org:3333',
+        algorithm: 'SHA256d',
+        activeMiners: Object.keys(workers).length,
+        totalShares,
+        workers,
+        blocksFound,
+        poolHashrate
+      });
+    } catch (e) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   });
-});
+
+  const path = require('path');
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+  });
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tarcoin-mining-pool', timestamp: Date.now() });
@@ -717,4 +762,8 @@ async function start() {
 }
 
 start();
+
+
+
+
 

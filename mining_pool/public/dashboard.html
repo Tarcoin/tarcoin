@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TARCOIN Mining Pool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'tarcoin-gold': '#FFD700',
+                        'tarcoin-cyan': '#00FFFF',
+                        'tarcoin-black': '#0a0a0a'
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        space: ['Space Grotesk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #050505; color: #fff; font-family: 'Space Grotesk', sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            border-radius: 12px;
+        }
+        .text-glow {
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden">
+    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-tarcoin-gold/5 rounded-full blur-[100px] -z-10"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-tarcoin-cyan/5 rounded-full blur-[100px] -z-10"></div>
+
+    <div class="max-w-6xl mx-auto px-4 py-12" id="app">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-tarcoin-gold/20 bg-tarcoin-gold/5 mb-8">
+                <span class="w-2 h-2 rounded-full bg-tarcoin-gold pulse-dot"></span>
+                <span class="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase" id="statusText">Connecting...</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-orbitron font-black mb-4">
+                <span class="text-white">TARCOIN</span><br />
+                <span class="text-tarcoin-gold text-glow">Mining Pool</span>
+            </h1>
+            <p class="text-gray-400 font-space text-lg max-w-2xl mx-auto">
+                Connect your ASIC miner to <code class="text-tarcoin-cyan bg-tarcoin-cyan/10 px-2 py-1 rounded">stratum+tcp://stratum.tarcoin.org:3333</code>
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="glass p-6 text-center">
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Active Miners</div>
+                <div class="text-4xl font-orbitron font-bold text-white" id="statMiners">-</div>
+            </div>
+            <div class="glass p-6 text-center">
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Pool Hashrate</div>
+                <div class="text-4xl font-orbitron font-bold text-tarcoin-cyan" id="statHashrate">- TH/s</div>
+            </div>
+            <div class="glass p-6 text-center">
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Current Cycle Shares</div>
+                <div class="text-4xl font-orbitron font-bold text-tarcoin-gold" id="statShares">-</div>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Active Workers</h2>
+        <div class="glass overflow-hidden mb-12">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-white/5 border-b border-white/10 text-xs font-orbitron tracking-wider text-gray-400 uppercase">
+                        <th class="p-4">Wallet Address</th>
+                        <th class="p-4">Valid Shares</th>
+                        <th class="p-4 text-right">Last Share Found</th>
+                    </tr>
+                </thead>
+                <tbody id="workerTable" class="text-sm font-space">
+                    <tr><td colspan="3" class="p-8 text-center text-gray-500">Loading miners...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Recent Blocks Found by Pool</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="blocksGrid">
+            <div class="text-gray-500 p-4">Loading blocks...</div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/pool/stats');
+                const data = await res.json();
+
+                document.getElementById('statusText').innerText = 'POOL ' + data.status.toUpperCase();
+                document.getElementById('statMiners').innerText = data.activeMiners;
+                document.getElementById('statShares').innerText = data.totalShares;
+                
+                // Use the true network hashrate fetched from the node!
+                let estHashrateTh = 0;
+                if (data.poolHashrate) {
+                    estHashrateTh = (data.poolHashrate / 1000000000000).toFixed(2);
+                } else {
+                    estHashrateTh = ((data.totalShares * 4294967296) / 3600 / 1000000000000).toFixed(2);
+                }
+                document.getElementById('statHashrate').innerText = estHashrateTh > 0 ? estHashrateTh + ' TH/s' : '0.00 TH/s';
+
+                const tbody = document.getElementById('workerTable');
+                tbody.innerHTML = '';
+                const sortedWorkers = Object.entries(data.workers).sort((a,b) => b[1].shares - a[1].shares);
+                
+                if (sortedWorkers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-500">No active workers in the current cycle.</td></tr>';
+                } else {
+                    sortedWorkers.forEach(([wallet, info]) => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b border-white/5 hover:bg-white/5 transition-colors';
+                        const timeAgo = Math.floor((Date.now() - info.lastSeen) / 1000);
+                        const timeStr = timeAgo < 0 ? 'just now' : (timeAgo < 60 ? timeAgo + 's ago' : Math.floor(timeAgo/60) + 'm ago');
+                        
+                        let walletTrunc = wallet;
+                        if(wallet.length > 20) {
+                            walletTrunc = wallet.substring(0,12) + '...' + wallet.substring(wallet.length-8);
+                        }
+
+                        tr.innerHTML = `
+                            <td class="p-4 font-mono text-tarcoin-cyan">${walletTrunc}</td>
+                            <td class="p-4 font-bold text-white">${info.shares}</td>
+                            <td class="p-4 text-right text-gray-400">${timeStr} <span class="inline-block w-2 h-2 rounded-full bg-green-500 ml-2"></span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                const grid = document.getElementById('blocksGrid');
+                grid.innerHTML = '';
+                if (data.blocksFound.length === 0) {
+                    grid.innerHTML = '<div class="text-gray-500 p-4">No blocks found in the recent cache.</div>';
+                } else {
+                    data.blocksFound.forEach(b => {
+                        const div = document.createElement('div');
+                        div.className = 'glass p-5 border-l-4 border-l-tarcoin-gold';
+                        
+                        let workerTrunc = b.worker || 'Unknown';
+                        if (workerTrunc.includes('.')) workerTrunc = workerTrunc.split('.')[0];
+                        if (workerTrunc.length > 20) workerTrunc = workerTrunc.substring(0,12) + '...';
+
+                        const timeAgo = Math.floor((Date.now() - b.time) / 1000 / 60);
+
+                        div.innerHTML = `
+                            <div class="text-xs text-tarcoin-gold font-orbitron mb-1">BLOCK #${b.height}</div>
+                            <div class="text-lg text-white font-bold mb-2 break-all font-mono text-sm">Found ${timeAgo} minutes ago</div>
+                            <div class="text-xs text-gray-400">Mined by: <span class="text-tarcoin-cyan">${workerTrunc}</span></div>
+                        `;
+                        grid.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('statusText').innerText = 'OFFLINE';
+            }
+        }
+
+        fetchStats();
+        setInterval(fetchStats, 10000);
+    </script>
+</body>
+</html>
