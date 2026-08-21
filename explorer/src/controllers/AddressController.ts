@@ -108,7 +108,7 @@ export class AddressController {
   async getTransactions(req: Request, res: Response) {
     try {
       const { address } = req.params;
-      const count = parseInt(req.query.count as string) || 50;
+      const count = parseInt(req.query.count as string) || 999999;
       const skip = parseInt(req.query.skip as string) || 0;
 
       const cached = await this.cache.get(this.cache.addressTxsKey(address));
