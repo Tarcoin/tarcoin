@@ -3,6 +3,14 @@
 'use strict';
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60, // Limit each IP to 60 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -57,6 +65,7 @@ const POW_LIMIT = Buffer.from('0000ffff00000000000000000000000000000000000000000
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use('/', apiLimiter);
 
 // ====== Redis client ======
 let redis;
@@ -762,6 +771,7 @@ async function start() {
 }
 
 start();
+
 
 
 

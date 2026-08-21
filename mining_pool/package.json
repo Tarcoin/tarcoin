@@ -7,18 +7,19 @@
     "dev": "node src/pool.js"
   },
   "dependencies": {
-    "express": "^4.18.0",
-    "cors": "^2.8.5",
-    "helmet": "^3.23.3",
-    "redis": "^4.6.0",
     "axios": "^1.6.0",
-    "node-cron": "^3.0.0",
+    "bignumber.js": "^9.1.0",
+    "bitcoinjs-lib": "^6.1.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.0",
+    "express": "^4.18.0",
+    "express-rate-limit": "^8.6.2",
+    "helmet": "^3.23.3",
+    "merkle-lib": "^2.0.10",
+    "node-cron": "^3.0.0",
+    "redis": "^4.6.0",
     "winston": "^3.11.0",
     "ws": "^8.16.0",
-    "merkle-lib": "^2.0.10",
-    "bitcoinjs-lib": "^6.1.0",
-    "bignumber.js": "^9.1.0",
     "zeromq": "^6.0.0"
   }
 }
