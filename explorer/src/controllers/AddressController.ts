@@ -160,6 +160,42 @@ export class AddressController {
           );
           result = txDetails;
         }
+        // --- CUSTOM MEMPOOL SCANNER FOR UNCONFIRMED TXS ---
+        try {
+          const rawMempool = await this.rpc.getRawMempool(false); // Array of txids
+          const limit = Math.min(rawMempool.length, 250); // limit to 250 txs to prevent CPU overload
+          for (let i = 0; i < limit; i++) {
+            try {
+              const txid = rawMempool[i];
+              const tx = await this.rpc.getRawTransaction(txid, true);
+              let isMatch = false;
+              let amount = 0;
+              if (tx.vout) {
+                for (const vout of tx.vout) {
+                  const outAddr = vout.scriptPubKey?.address || (vout.scriptPubKey?.addresses ? vout.scriptPubKey.addresses[0] : null);
+                  if (outAddr === address) {
+                    isMatch = true;
+                    amount = vout.value;
+                  }
+                }
+              }
+              if (isMatch) {
+                result.unshift({
+                  txid: tx.txid,
+                  amount: amount,
+                  height: -1, // Pending
+                  confirmations: 0,
+                  coinbase: false,
+                  blockhash: '',
+                  time: tx.time || Math.floor(Date.now() / 1000),
+                });
+              }
+            } catch (e) {}
+          }
+        } catch (e) {
+          console.error('Mempool scanner error:', e);
+        }
+        // --- END MEMPOOL SCANNER ---
       } catch (scanErr) {
         // fallback: try listtransactions
         try {
@@ -218,3 +254,4 @@ export class AddressController {
     }
   }
 }
+
