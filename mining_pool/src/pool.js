@@ -3,7 +3,6 @@
 'use strict';
 
 const express = require('express');
-const apiLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -44,6 +43,7 @@ const faucetLimiter = rateLimit({
 });
 
 const app = express();
+const apiLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
 const PORT = process.env.PORT || 3001;
 const RPC_HOST = process.env.RPC_HOST || '127.0.0.1';
 const RPC_PORT = process.env.RPC_PORT || 19332;
@@ -764,6 +764,7 @@ async function start() {
 }
 
 start();
+
 
 
 
