@@ -3,14 +3,7 @@
 'use strict';
 
 const express = require('express');
-const rateLimit = require('express-rate-limit');
-
-const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 60, // Limit each IP to 60 requests per minute
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const apiLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -771,6 +764,7 @@ async function start() {
 }
 
 start();
+
 
 
 

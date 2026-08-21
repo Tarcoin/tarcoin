@@ -18,10 +18,20 @@ interface Download {
   size: string;
   // "local" = served from /api/download (file exists in public/downloads)
   // "github" = redirect to GitHub release asset
-  source: "local" | "github";
+  // "external" = generic external link
+  source: "local" | "github" | "external";
 }
 
 const downloads: Download[] = [
+  {
+    id: "web-wallet",
+    title: "Web Wallet (iOS/Android/Browser)",
+    icon: "🌐",
+    desc: "No install required · Works on iOS, Android, Windows, Mac",
+    file: "https://my-wallet.tarcoin.org",
+    size: "PWA App",
+    source: "external",
+  },
   {
     id: "android",
     title: "Android Mobile Wallet",
@@ -78,15 +88,15 @@ function DownloadButton({ d }: { d: Download }) {
 
     setState("downloading");
 
-    const href =
-      d.source === "local"
-        ? `/api/download/${encodeURIComponent(d.file)}`
-        : `${GITHUB_RELEASE_DL}/${d.file}`;
+    let href = "";
+    if (d.source === "local") href = `/api/download/${encodeURIComponent(d.file)}`;
+    else if (d.source === "external") href = d.file;
+    else href = `${GITHUB_RELEASE_DL}/${d.file}`;
 
     const a = document.createElement("a");
     a.href = href;
     a.download = d.file;
-    if (d.source === "github") a.target = "_blank";
+    if (d.source === "github" || d.source === "external") a.target = "_blank";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -114,7 +124,7 @@ function DownloadButton({ d }: { d: Download }) {
     ),
   };
 
-  const labels = { idle: "Download", downloading: "Starting…", done: "Done ✓" };
+  const labels = { idle: d.source === "external" ? "Open App" : "Download", downloading: "Starting…", done: d.source === "external" ? "Opened ✓" : "Done ✓" };
 
   return (
     <div className="flex flex-col items-end gap-1.5">
@@ -135,12 +145,12 @@ function DownloadButton({ d }: { d: Download }) {
 
       {/* Direct link as fallback */}
       <a
-        href={d.source === "local" ? `/${d.file}` : `${GITHUB_RELEASE_DL}/${d.file}`}
+        href={d.source === "local" ? `/${d.file}` : d.source === "external" ? d.file : `${GITHUB_RELEASE_DL}/${d.file}`}
         target="_blank"
         rel="noopener noreferrer"
         className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors font-mono"
       >
-        {d.source === "local" ? "Direct link ↗" : "via GitHub ↗"}
+        {d.source === "local" ? "Direct link ↗" : d.source === "external" ? "Open Web App ↗" : "via GitHub ↗"}
       </a>
     </div>
   );
