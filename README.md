@@ -152,8 +152,7 @@ TARCOIN uses **SHA256d** Proof-of-Work, making it compatible with Bitcoin ASIC m
 
 ### Pool Mining
 Connect your miners to:
-- **Stratum URL:** `stratum+tcp://pool.tarcoin.org:3333`
-- **Backup URL:** `stratum+tcp://pool2.tarcoin.org:3333`
+- **Stratum URL:** `stratum+tcp://stratum.tarcoin.org:3333`
 - **Username:** Your TAR wallet address
 - **Password:** Anything (or d= difficulty)
 

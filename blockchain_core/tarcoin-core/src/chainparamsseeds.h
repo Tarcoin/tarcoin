@@ -18,9 +18,12 @@
  * Example: IP 1.2.3.4 port 19333 = { 0x01, 0x04, 0x01, 0x02, 0x03, 0x04, 0x4B, 0x75 }
  */
 
-// TARCOIN mainnet fixed seeds - empty, using DNS seed instead
+// TARCOIN mainnet fixed seeds
 static const uint8_t chainparams_seed_main[] = {
-    // Add TARCOIN mainnet node IPs here when available
+    // VPS-1: 31.70.104.158:19333
+    0x01, 0x04, 0x1F, 0x46, 0x68, 0x9E, 0x4B, 0x75,
+    // VPS-2: 66.175.236.170:19333
+    0x01, 0x04, 0x42, 0xAF, 0xEC, 0xAA, 0x4B, 0x75,
 };
 
 // TARCOIN testnet fixed seeds - empty
