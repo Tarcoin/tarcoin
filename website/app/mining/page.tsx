@@ -85,7 +85,7 @@ export default function MiningPage() {
                 <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">Getting Started</h3>
                 <ol className="space-y-2 text-sm text-gray-400 list-decimal list-inside">
                   <li>Configure your ASIC miner for SHA256d</li>
-                  <li>Point to <code className="text-tarcoin-gold">stratum+tcp://stratum.tarcoin.org:3333</code></li>
+                  <li>Point to <code className="text-tarcoin-gold">stratum+tcp://stratum.tarcoin.org:3333</code> (Primary) and <code className="text-tarcoin-gold">stratum2.tarcoin.org:3333</code> (Backup)</li>
                   <li>Set your TAR address as the worker username</li>
                   <li>Start mining and track shares on the pool dashboard</li>
                 </ol>

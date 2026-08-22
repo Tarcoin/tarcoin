@@ -25,7 +25,8 @@ TARCOIN uses SHA256d Proof-of-Work, making it fully compatible with Bitcoin ASIC
 ### Official TARCOIN Pool
 
 ```
-Stratum URL:  stratum+tcp://stratum.tarcoin.org:3333
+Primary URL:  stratum+tcp://stratum.tarcoin.org:3333
+Backup URL:   stratum+tcp://stratum2.tarcoin.org:3333
 Port:         3333
 Username:     <YOUR_TAR_ADDRESS>
 Password:     x (or any value)

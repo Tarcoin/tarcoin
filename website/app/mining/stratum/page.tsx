@@ -30,8 +30,12 @@ export default function MiningStratumPage() {
               <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">Stratum Connection Details</h3>
               <div className="space-y-3 text-sm font-mono">
                 <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
-                  <span className="text-gray-400">URL</span>
+                  <span className="text-gray-400">URL (Primary)</span>
                   <span className="text-white">stratum+tcp://stratum.tarcoin.org:3333</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
+                  <span className="text-gray-400">URL (Backup)</span>
+                  <span className="text-white">stratum+tcp://stratum2.tarcoin.org:3333</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
                   <span className="text-gray-400">Port</span>

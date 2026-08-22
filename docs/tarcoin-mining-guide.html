@@ -416,8 +416,12 @@
         <thead><tr><th>Field</th><th>Value to Enter</th></tr></thead>
         <tbody>
           <tr>
-            <td>Pool URL (Stratum)</td>
+            <td>Primary Pool URL</td>
             <td><code>stratum+tcp://stratum.tarcoin.org:3333</code></td>
+          </tr>
+          <tr>
+            <td>Backup Pool URL</td>
+            <td><code>stratum+tcp://stratum2.tarcoin.org:3333</code></td>
           </tr>
           <tr>
             <td>Worker / Username</td>
@@ -549,7 +553,7 @@
   </div>
   <div class="faq-item">
     <div class="faq-q">What if the main pool is down?</div>
-    <div class="faq-a">The pool server at <code>stratum.tarcoin.org</code> is load-balanced across multiple servers for high availability. If you experience a connection issue, simply restart your miner — it will reconnect automatically.</div>
+    <div class="faq-a">To ensure 100% uptime, configure <strong>Pool 1</strong> as <code>stratum.tarcoin.org</code> and <strong>Pool 2</strong> as <code>stratum2.tarcoin.org</code> in your miner settings. If the main server undergoes maintenance, your miner will automatically jump to the backup pool without losing any shares!</div>
   </div>
   <div class="faq-item">
     <div class="faq-q">What is the block reward?</div>

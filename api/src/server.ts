@@ -1,3 +1,9 @@
+// Load environment variables FIRST before any other imports
+// This must use require() not import because TypeScript hoists static imports
+// above dotenv.config(), causing env var checks in modules to fail
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -5,10 +11,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import dotenv from 'dotenv';
 import { createLogger, format, transports } from 'winston';
-
-dotenv.config();
 
 const app = express();
 app.set('trust proxy', 1);
