@@ -43,6 +43,7 @@ const faucetLimiter = rateLimit({
 });
 
 const app = express();
+app.set('trust proxy', 1);
 app.set('trust proxy', 1); // Trust Nginx proxy for accurate IP rate limiting
 const apiLimiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
 const PORT = process.env.PORT || 3001;
