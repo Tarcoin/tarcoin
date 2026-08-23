@@ -160,18 +160,18 @@ export default function BlockPage() {
               </div>
               <div style={{ padding: '0.5rem 1.25rem' }}>
                 {[
-                  ['Hash', <span className="hash" style={{ fontSize: '0.8rem', userSelect: 'all' }}>{block.hash}</span>],
-                  ['Height', <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--gold)' }}>{block.height?.toLocaleString()}</span>],
+                  ['Hash', <span key="hash" className="hash" style={{ fontSize: '0.8rem', userSelect: 'all' }}>{block.hash}</span>],
+                  ['Height', <span key="height" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--gold)' }}>{block.height?.toLocaleString()}</span>],
                   ['Timestamp', `${fmtTime(block.time)} (${timeAgo(block.time)})`],
                   ['Confirmations', block.confirmations?.toLocaleString() ?? '—'],
                   ['Transactions', block.nTx ?? block.tx?.length ?? 0],
                   ['Size', fmtBytes(block.size)],
                   ['Weight', block.weight ? `${block.weight.toLocaleString()} WU` : '—'],
                   ['Difficulty', block.difficulty?.toFixed(8) ?? '—'],
-                  ['nBits', <span className="hash" style={{ fontSize: '0.8rem' }}>{block.bits}</span>],
-                  ['Nonce', <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{block.nonce?.toLocaleString()}</span>],
-                  ['Version', <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>0x{block.versionHex ?? block.version?.toString(16)}</span>],
-                  ['Merkle Root', <span className="hash" style={{ fontSize: '0.75rem', userSelect: 'all' }}>{block.merkleroot}</span>],
+                  ['nBits', <span key="nbits" className="hash" style={{ fontSize: '0.8rem' }}>{block.bits}</span>],
+                  ['Nonce', <span key="nonce" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{block.nonce?.toLocaleString()}</span>],
+                  ['Version', <span key="version" style={{ fontFamily: 'JetBrains Mono, monospace' }}>0x{block.versionHex ?? block.version?.toString(16)}</span>],
+                  ['Merkle Root', <span key="merkle" className="hash" style={{ fontSize: '0.75rem', userSelect: 'all' }}>{block.merkleroot}</span>],
                   ['Previous Block', block.previousblockhash
                     ? <Link href={`/block/${block.previousblockhash}`} className="hash link" style={{ fontSize: '0.8rem' }}>{truncate(block.previousblockhash)}</Link>
                     : <span style={{ color: 'var(--text-dim)' }}>Genesis — no previous block</span>],

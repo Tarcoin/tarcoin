@@ -107,7 +107,7 @@ export default function TxPage() {
               </div>
               <div style={{ padding: '0.5rem 1.25rem' }}>
                 {[
-                  ['TxID', <span className="hash" style={{ fontSize: '0.78rem', userSelect: 'all' }}>{tx.txid}</span>],
+                  ['TxID', <span key="txid" className="hash" style={{ fontSize: '0.78rem', userSelect: 'all' }}>{tx.txid}</span>],
                   ['Block Hash', tx.blockhash
                     ? <Link href={`/block/${tx.blockhash}`} className="hash link" style={{ fontSize: '0.78rem' }}>{truncate(tx.blockhash)}</Link>
                     : <span style={{ color: 'var(--text-dim)' }}>Unconfirmed</span>],
@@ -118,11 +118,11 @@ export default function TxPage() {
                   ['Weight', tx.weight ? `${tx.weight.toLocaleString()} WU` : '—'],
                   ['Version', tx.version],
                   ['LockTime', tx.locktime],
-                  ['Total Output', <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--neon, #00ff88)' }}>{totalOut.toFixed(8)} TAR</span>],
+                  ['Total Output', <span key="totalOut" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--neon, #00ff88)' }}>{totalOut.toFixed(8)} TAR</span>],
                   ['Fee', isCoinbase
                     ? <span style={{ color: 'var(--text-dim)' }}>N/A (coinbase)</span>
                     : fee > 0
-                      ? <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--gold)' }}>{fee.toFixed(8)} TAR</span>
+                      ? <span key="fee" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--gold)' }}>{fee.toFixed(8)} TAR</span>
                       : <span style={{ color: 'var(--text-dim)' }}>—</span>],
                 ].map(([label, value]) => (
                   <div key={String(label)} className="detail-row">
