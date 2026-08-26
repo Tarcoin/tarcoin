@@ -218,6 +218,21 @@ const stratumServer = net.createServer((socket) => {
         const message = JSON.parse(msg);
 
         switch (message.method) {
+          case 'mining.configure':
+            let mask = "1fffe000";
+            if (message.params && message.params[1] && message.params[1]["version-rolling.mask"]) {
+                mask = message.params[1]["version-rolling.mask"];
+            }
+            socket.write(JSON.stringify({
+              id: message.id,
+              result: {
+                "version-rolling": true,
+                "version-rolling.mask": mask
+              },
+              error: null
+            }) + "\n");
+            break;
+
           case 'mining.subscribe':
             socket.write(JSON.stringify({
               id: message.id,
