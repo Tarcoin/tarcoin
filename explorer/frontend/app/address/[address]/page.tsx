@@ -152,8 +152,6 @@ export default function AddressPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0' }}>
                 {[
                   { label: 'Balance', value: <span className="stat-value">{((info?.balance ?? 0)).toFixed(4)} <span style={{ fontSize: '0.7rem' }}>TAR</span></span> },
-                  { label: 'Total Received', value: <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--neon, #00ff88)', fontSize: '1.1rem' }}>+{(info?.totalReceived ?? 0).toFixed(4)} TAR</span> },
-                  { label: 'Total Sent', value: <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#ff6b6b', fontSize: '1.1rem' }}>-{(info?.totalSent ?? 0).toFixed(4)} TAR</span> },
                   { label: 'Transactions', value: <span style={{ fontFamily: 'Orbitron, sans-serif', color: 'var(--gold)', fontSize: '1.3rem', fontWeight: 700 }}>{(info?.txCount ?? txs.length).toLocaleString()}</span> },
                 ].map(({ label, value }) => (
                   <div key={label} style={{
