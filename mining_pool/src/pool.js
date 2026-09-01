@@ -183,7 +183,7 @@ function hashMeetsTarget(hashBuf, targetBuf) {
 const VARDIFF = {
   startDiff:   10000,    // Default starting difficulty (same as before, vardiff adjusts from here)
   minDiff:     64,       // Absolute minimum (protects server from tiny miners)
-  maxDiff:     3000000,  // Absolute maximum (protects server from whale ASICs)
+  maxDiff:     30000000, // Absolute maximum (protects server from whale ASICs)
   targetTime:  10,       // Target seconds between shares
   retargetEvery: 60000,  // Retarget interval in ms (60 seconds)
   variance:    0.25,     // Allow 25% variance before adjusting
