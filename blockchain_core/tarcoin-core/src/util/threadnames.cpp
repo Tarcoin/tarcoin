@@ -11,6 +11,8 @@
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
 #include <pthread.h>
 #include <pthread_np.h>
+#elif defined(__APPLE__)
+#include <pthread.h>
 #endif
 
 #if __has_include(<sys/prctl.h>)
