@@ -13,7 +13,8 @@
                     colors: {
                         'tarcoin-gold': '#FFD700',
                         'tarcoin-cyan': '#00FFFF',
-                        'tarcoin-black': '#0a0a0a'
+                        'tarcoin-black': '#0a0a0a',
+                        'tarcoin-green': '#00FF88',
                     },
                     fontFamily: {
                         orbitron: ['Orbitron', 'sans-serif'],
@@ -31,16 +32,20 @@
             border: 1px solid rgba(255, 215, 0, 0.1);
             border-radius: 12px;
         }
-        .text-glow {
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        .glass-solo {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.15);
+            border-radius: 12px;
         }
-        .pulse-dot {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
+        .text-glow { text-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+        .text-glow-green { text-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
+        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .tab-active-pool { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.6); color: #FFD700; }
+        .tab-active-solo { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.6); color: #00FF88; }
+        .tab-inactive { background: transparent; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+        #soloSection { display: none; }
     </style>
 </head>
 <body class="min-h-screen relative overflow-x-hidden">
@@ -48,7 +53,8 @@
     <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-tarcoin-cyan/5 rounded-full blur-[100px] -z-10"></div>
 
     <div class="max-w-6xl mx-auto px-4 py-12" id="app">
-        <div class="text-center mb-16">
+        <!-- Header -->
+        <div class="text-center mb-10">
             <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-tarcoin-gold/20 bg-tarcoin-gold/5 mb-8">
                 <span class="w-2 h-2 rounded-full bg-tarcoin-gold pulse-dot"></span>
                 <span class="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase" id="statusText">Connecting...</span>
@@ -57,125 +63,219 @@
                 <span class="text-white">TARCOIN</span><br />
                 <span class="text-tarcoin-gold text-glow">Mining Pool</span>
             </h1>
-            <p class="text-gray-400 font-space text-lg max-w-2xl mx-auto">
-                Connect your ASIC miner to <code class="text-tarcoin-cyan bg-tarcoin-cyan/10 px-2 py-1 rounded">stratum+tcp://stratum.tarcoin.org:3333</code>
+        </div>
+
+        <!-- Tab Switcher -->
+        <div class="flex justify-center gap-4 mb-10">
+            <button id="tabPool" onclick="switchTab('pool')"
+                class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool">
+                ⛏ POOL
+            </button>
+            <button id="tabSolo" onclick="switchTab('solo')"
+                class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive">
+                🎯 SOLO
+            </button>
+        </div>
+
+        <!-- ====== POOL SECTION ====== -->
+        <div id="poolSection">
+            <p class="text-center text-gray-400 font-space text-lg max-w-2xl mx-auto mb-10">
+                Connect to <code class="text-tarcoin-cyan bg-tarcoin-cyan/10 px-2 py-1 rounded">stratum+tcp://stratum.tarcoin.org:3333</code>
+                &nbsp;·&nbsp; Fee: 1% &nbsp;·&nbsp; Algorithm: SHA256d
             </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="glass p-6 text-center">
+                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Active Miners</div>
+                    <div class="text-4xl font-orbitron font-bold text-white" id="statMiners">-</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Pool Hashrate</div>
+                    <div class="text-4xl font-orbitron font-bold text-tarcoin-cyan" id="statHashrate">- TH/s</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Current Cycle Shares</div>
+                    <div class="text-4xl font-orbitron font-bold text-tarcoin-gold" id="statShares">-</div>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Active Workers</h2>
+            <div class="glass overflow-hidden mb-12">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/10 text-xs font-orbitron tracking-wider text-gray-400 uppercase">
+                            <th class="p-4">Wallet Address</th>
+                            <th class="p-4">Valid Shares</th>
+                            <th class="p-4 text-right">Last Share Found</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workerTable" class="text-sm font-space">
+                        <tr><td colspan="3" class="p-8 text-center text-gray-500">Loading miners...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Recent Blocks Found by Pool</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="blocksGrid">
+                <div class="text-gray-500 p-4">Loading blocks...</div>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Active Miners</div>
-                <div class="text-4xl font-orbitron font-bold text-white" id="statMiners">-</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Pool Hashrate</div>
-                <div class="text-4xl font-orbitron font-bold text-tarcoin-cyan" id="statHashrate">- TH/s</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Current Cycle Shares</div>
-                <div class="text-4xl font-orbitron font-bold text-tarcoin-gold" id="statShares">-</div>
-            </div>
-        </div>
+        <!-- ====== SOLO SECTION ====== -->
+        <div id="soloSection">
+            <p class="text-center text-gray-400 font-space text-lg max-w-2xl mx-auto mb-10">
+                Connect to <code class="text-tarcoin-green bg-tarcoin-green/10 px-2 py-1 rounded">stratum+tcp://stratum.tarcoin.org:3334</code>
+                &nbsp;·&nbsp; Fee: 1% &nbsp;·&nbsp; Reward: 49,500 TAR per block
+            </p>
+            <p class="text-center text-gray-500 text-sm mb-10">Solo miners keep 99% of the full 50,000 TAR block reward. No share splitting.</p>
 
-        <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Active Workers</h2>
-        <div class="glass overflow-hidden mb-12">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-white/5 border-b border-white/10 text-xs font-orbitron tracking-wider text-gray-400 uppercase">
-                        <th class="p-4">Wallet Address</th>
-                        <th class="p-4">Valid Shares</th>
-                        <th class="p-4 text-right">Last Share Found</th>
-                    </tr>
-                </thead>
-                <tbody id="workerTable" class="text-sm font-space">
-                    <tr><td colspan="3" class="p-8 text-center text-gray-500">Loading miners...</td></tr>
-                </tbody>
-            </table>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="glass-solo p-6 text-center">
+                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Solo Miners</div>
+                    <div class="text-4xl font-orbitron font-bold text-white" id="soloStatMiners">-</div>
+                </div>
+                <div class="glass-solo p-6 text-center">
+                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Solo Hashrate</div>
+                    <div class="text-4xl font-orbitron font-bold text-tarcoin-green" id="soloStatHashrate">- TH/s</div>
+                </div>
+                <div class="glass-solo p-6 text-center">
+                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Block Reward</div>
+                    <div class="text-4xl font-orbitron font-bold text-tarcoin-green text-glow-green">49,500 TAR</div>
+                </div>
+            </div>
 
-        <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Recent Blocks Found by Pool</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="blocksGrid">
-            <div class="text-gray-500 p-4">Loading blocks...</div>
+            <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-tarcoin-green/20 pb-4">Solo Miners</h2>
+            <div class="glass-solo overflow-hidden mb-12">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/10 text-xs font-orbitron tracking-wider text-gray-400 uppercase">
+                            <th class="p-4">Wallet Address</th>
+                            <th class="p-4">Shares Submitted</th>
+                            <th class="p-4 text-right">Last Share</th>
+                        </tr>
+                    </thead>
+                    <tbody id="soloWorkerTable" class="text-sm font-space">
+                        <tr><td colspan="3" class="p-8 text-center text-gray-500">No solo miners connected yet. Be the first!</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="text-2xl font-orbitron font-bold text-white mb-6 border-b border-tarcoin-green/20 pb-4">Recent Solo Blocks Found</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="soloBlocksGrid">
+                <div class="text-gray-500 p-4">No solo blocks found yet.</div>
+            </div>
         </div>
     </div>
 
     <script>
-        async function fetchStats() {
+        let currentTab = 'pool';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            if (tab === 'pool') {
+                document.getElementById('poolSection').style.display = 'block';
+                document.getElementById('soloSection').style.display = 'none';
+                document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool';
+                document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
+            } else {
+                document.getElementById('poolSection').style.display = 'none';
+                document.getElementById('soloSection').style.display = 'block';
+                document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
+                document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-solo';
+            }
+        }
+
+        function formatHashrate(h) {
+            if (!h || h === 0) return '0.00 TH/s';
+            const th = h / 1e12;
+            if (th >= 1) return th.toFixed(2) + ' TH/s';
+            const gh = h / 1e9;
+            if (gh >= 1) return gh.toFixed(2) + ' GH/s';
+            return (h / 1e6).toFixed(2) + ' MH/s';
+        }
+
+        function renderWorkers(workers, tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            const sorted = Object.entries(workers).sort((a, b) => b[1].shares - a[1].shares);
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-500">No active workers.</td></tr>';
+                return;
+            }
+            sorted.forEach(([wallet, info]) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-white/5 hover:bg-white/5 transition-colors';
+                const timeAgo = Math.floor((Date.now() - info.lastSeen) / 1000);
+                const timeStr = timeAgo < 0 ? 'just now' : (timeAgo < 60 ? timeAgo + 's ago' : Math.floor(timeAgo / 60) + 'm ago');
+                let walletTrunc = wallet.length > 20 ? wallet.substring(0, 12) + '...' + wallet.substring(wallet.length - 8) : wallet;
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-tarcoin-cyan">${walletTrunc}</td>
+                    <td class="p-4 font-bold text-white">${info.shares}</td>
+                    <td class="p-4 text-right text-gray-400">${timeStr} <span class="inline-block w-2 h-2 rounded-full bg-green-500 ml-2"></span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderBlocks(blocks, gridId, accentColor) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+            if (blocks.length === 0) {
+                grid.innerHTML = '<div class="text-gray-500 p-4">No blocks found yet.</div>';
+                return;
+            }
+            blocks.forEach(b => {
+                const div = document.createElement('div');
+                div.className = `glass p-5 border-l-4 border-l-${accentColor}`;
+                let workerTrunc = b.worker || 'Unknown';
+                if (workerTrunc.includes('.')) workerTrunc = workerTrunc.split('.')[0];
+                if (workerTrunc.length > 20) workerTrunc = workerTrunc.substring(0, 12) + '...';
+                const timeAgo = Math.floor((Date.now() - b.time) / 1000 / 60);
+                div.innerHTML = `
+                    <div class="text-xs font-orbitron mb-1" style="color:${accentColor === 'tarcoin-gold' ? '#FFD700' : '#00FF88'}">BLOCK #${b.height}</div>
+                    <div class="text-lg text-white font-bold mb-2 font-mono text-sm">Found ${timeAgo} minutes ago</div>
+                    <div class="text-xs text-gray-400">Mined by: <span class="text-tarcoin-cyan">${workerTrunc}</span></div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        async function fetchPoolStats() {
             try {
                 const res = await fetch('/api/pool/stats');
                 const data = await res.json();
-
                 document.getElementById('statusText').innerText = 'POOL ' + data.status.toUpperCase();
                 document.getElementById('statMiners').innerText = data.activeMiners;
                 document.getElementById('statShares').innerText = data.totalShares;
-                
-                // Use the true network hashrate fetched from the node!
-                let estHashrateTh = 0;
-                if (data.poolHashrate) {
-                    estHashrateTh = (data.poolHashrate / 1000000000000).toFixed(2);
-                } else {
-                    estHashrateTh = ((data.totalShares * 4294967296) / 3600 / 1000000000000).toFixed(2);
-                }
-                document.getElementById('statHashrate').innerText = estHashrateTh > 0 ? estHashrateTh + ' TH/s' : '0.00 TH/s';
-
-                const tbody = document.getElementById('workerTable');
-                tbody.innerHTML = '';
-                const sortedWorkers = Object.entries(data.workers).sort((a,b) => b[1].shares - a[1].shares);
-                
-                if (sortedWorkers.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-500">No active workers in the current cycle.</td></tr>';
-                } else {
-                    sortedWorkers.forEach(([wallet, info]) => {
-                        const tr = document.createElement('tr');
-                        tr.className = 'border-b border-white/5 hover:bg-white/5 transition-colors';
-                        const timeAgo = Math.floor((Date.now() - info.lastSeen) / 1000);
-                        const timeStr = timeAgo < 0 ? 'just now' : (timeAgo < 60 ? timeAgo + 's ago' : Math.floor(timeAgo/60) + 'm ago');
-                        
-                        let walletTrunc = wallet;
-                        if(wallet.length > 20) {
-                            walletTrunc = wallet.substring(0,12) + '...' + wallet.substring(wallet.length-8);
-                        }
-
-                        tr.innerHTML = `
-                            <td class="p-4 font-mono text-tarcoin-cyan">${walletTrunc}</td>
-                            <td class="p-4 font-bold text-white">${info.shares}</td>
-                            <td class="p-4 text-right text-gray-400">${timeStr} <span class="inline-block w-2 h-2 rounded-full bg-green-500 ml-2"></span></td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-
-                const grid = document.getElementById('blocksGrid');
-                grid.innerHTML = '';
-                if (data.blocksFound.length === 0) {
-                    grid.innerHTML = '<div class="text-gray-500 p-4">No blocks found in the recent cache.</div>';
-                } else {
-                    data.blocksFound.forEach(b => {
-                        const div = document.createElement('div');
-                        div.className = 'glass p-5 border-l-4 border-l-tarcoin-gold';
-                        
-                        let workerTrunc = b.worker || 'Unknown';
-                        if (workerTrunc.includes('.')) workerTrunc = workerTrunc.split('.')[0];
-                        if (workerTrunc.length > 20) workerTrunc = workerTrunc.substring(0,12) + '...';
-
-                        const timeAgo = Math.floor((Date.now() - b.time) / 1000 / 60);
-
-                        div.innerHTML = `
-                            <div class="text-xs text-tarcoin-gold font-orbitron mb-1">BLOCK #${b.height}</div>
-                            <div class="text-lg text-white font-bold mb-2 break-all font-mono text-sm">Found ${timeAgo} minutes ago</div>
-                            <div class="text-xs text-gray-400">Mined by: <span class="text-tarcoin-cyan">${workerTrunc}</span></div>
-                        `;
-                        grid.appendChild(div);
-                    });
-                }
+                document.getElementById('statHashrate').innerText = formatHashrate(data.poolHashrate);
+                renderWorkers(data.workers || {}, 'workerTable');
+                renderBlocks(data.blocksFound || [], 'blocksGrid', 'tarcoin-gold');
             } catch (err) {
                 console.error(err);
                 document.getElementById('statusText').innerText = 'OFFLINE';
             }
         }
 
-        fetchStats();
-        setInterval(fetchStats, 10000);
+        async function fetchSoloStats() {
+            try {
+                const res = await fetch('/api/solo/stats');
+                const data = await res.json();
+                document.getElementById('soloStatMiners').innerText = data.activeMiners;
+                document.getElementById('soloStatHashrate').innerText = formatHashrate(data.soloHashrate);
+                renderWorkers(data.workers || {}, 'soloWorkerTable');
+                renderBlocks(data.blocksFound || [], 'soloBlocksGrid', 'tarcoin-green');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function fetchAll() {
+            fetchPoolStats();
+            fetchSoloStats();
+        }
+
+        fetchAll();
+        setInterval(fetchAll, 10000);
     </script>
-</body>
+</body>>
 </html>

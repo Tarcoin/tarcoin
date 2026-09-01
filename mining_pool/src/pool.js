@@ -214,6 +214,14 @@ let poolState = {
   startTime: Date.now(),
 };
 
+// ====== Solo state ======
+const activeSoloSockets = new Set();
+let soloState = {
+  miners: new Map(),
+  blocksFound: 0,
+  fee: 1, // 1% solo fee
+};
+
 // ====== Stratum TCP Server (port 3333) ======
 console.log('Stratum server listening on port 3333');
 
@@ -379,6 +387,183 @@ function sendWork(socket) {
   }) + "\n");
 }
 
+// ====== Solo Stratum TCP Server (port 3334) ======
+console.log('Solo Stratum server listening on port 3334');
+
+const soloStratumServer = net.createServer((socket) => {
+  activeSoloSockets.add(socket);
+  let workerName = '';
+  let buffer = '';
+  const workerId = crypto.randomBytes(8).toString('hex');
+  const extraNonce1 = crypto.randomBytes(4).toString('hex');
+
+  let socketDiff = VARDIFF.startDiff;
+  let diffOverridden = false;
+  let shareTimestamps = [];
+  let vardiffTimer = null;
+
+  function sendSoloDifficulty(diff) {
+    socketDiff = diff;
+    socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [diff] }) + "\n");
+    if (workerName && soloState.miners.has(workerName)) {
+      soloState.miners.get(workerName).difficulty = diff;
+    }
+  }
+
+  function startSoloVardiff() {
+    if (diffOverridden) return;
+    vardiffTimer = setInterval(() => {
+      if (shareTimestamps.length < 2) return;
+      const window = VARDIFF.retargetEvery / 1000;
+      const now = Date.now() / 1000;
+      const recentShares = shareTimestamps.filter(t => (now - t) <= window).length;
+      const actualTime = recentShares > 0 ? window / recentShares : VARDIFF.targetTime * 2;
+      const ratio = actualTime / VARDIFF.targetTime;
+      if (ratio < (1 - VARDIFF.variance) || ratio > (1 + VARDIFF.variance)) {
+        let newDiff = Math.round(socketDiff * (VARDIFF.targetTime / actualTime));
+        newDiff = Math.min(VARDIFF.maxDiff, Math.max(VARDIFF.minDiff, newDiff));
+        if (newDiff !== socketDiff) {
+          console.log(`[Solo Vardiff] ${sanitizeLog(workerName)}: ${socketDiff} → ${newDiff}`);
+          sendSoloDifficulty(newDiff);
+        }
+      }
+      shareTimestamps = [];
+    }, VARDIFF.retargetEvery);
+  }
+
+  console.log(`New SOLO miner connected: ${workerId}`);
+
+  socket.on('data', async (data) => {
+    buffer += data.toString();
+    if (!buffer.includes('\n')) return;
+    const messages = buffer.split('\n');
+    buffer = messages.pop();
+    for (const msg of messages) {
+      if (!msg.trim()) continue;
+      try {
+        const message = JSON.parse(msg);
+        switch (message.method) {
+          case 'mining.configure':
+            let mask = "1fffe000";
+            if (message.params && message.params[1] && message.params[1]["version-rolling.mask"]) {
+              mask = message.params[1]["version-rolling.mask"];
+            }
+            socket.write(JSON.stringify({ id: message.id, result: { "version-rolling": true, "version-rolling.mask": mask }, error: null }) + "\n");
+            break;
+
+          case 'mining.subscribe':
+            socket.write(JSON.stringify({
+              id: message.id,
+              result: [
+                [['mining.set_difficulty', 'tarcoin-solo-' + workerId], ['mining.notify', 'tarcoin-solo-' + workerId]],
+                extraNonce1,
+                4,
+              ],
+              error: null,
+            }) + "\n");
+            sendSoloDifficulty(socketDiff);
+            sendWork(socket);
+            break;
+
+          case 'mining.authorize':
+            workerName = message.params[0];
+            const password = message.params[1] || '';
+            const overrideDiff = parseDiffOverride(password);
+            if (overrideDiff !== null) {
+              diffOverridden = true;
+              socketDiff = overrideDiff;
+              sendSoloDifficulty(overrideDiff);
+            }
+            soloState.miners.set(workerName, {
+              shares: 0, validShares: 0, lastSeen: Date.now(),
+              workerId, extraNonce1, difficulty: socketDiff,
+            });
+            socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
+            console.log('[SOLO] Miner authorized: %s', sanitizeLog(workerName));
+            startSoloVardiff();
+            break;
+
+          case 'mining.submit':
+            shareTimestamps.push(Date.now() / 1000);
+            if (shareTimestamps.length > 500) shareTimestamps.shift();
+            await handleSoloSubmit(socket, message, workerName, extraNonce1);
+            break;
+        }
+      } catch (err) {
+        console.error('[SOLO] Stratum message error:', err.message);
+      }
+    }
+  });
+
+  socket.on('close', () => {
+    activeSoloSockets.delete(socket);
+    if (vardiffTimer) clearInterval(vardiffTimer);
+    console.log('[SOLO] Miner disconnected: %s', sanitizeLog(workerName || workerId));
+    if (workerName) soloState.miners.delete(workerName);
+  });
+
+  socket.on('error', (err) => {
+    console.warn('[SOLO] Socket error from %s: %s', sanitizeLog(workerName || workerId), sanitizeLog(err.message));
+  });
+});
+
+soloStratumServer.listen(3334, () => console.log('Solo Stratum server ready on port 3334'));
+
+// ====== Solo share handler ======
+async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
+  let worker = soloState.miners.get(workerName) || soloState.miners.get(message.params[0]);
+  if (!worker) {
+    worker = { shares: 0, validShares: 0, lastSeen: Date.now(), workerId: extraNonce1, extraNonce1, difficulty: VARDIFF.startDiff };
+    soloState.miners.set(message.params[0], worker);
+  }
+  workerName = message.params[0];
+
+  const [_w, jobId, extraNonce2, nTime, nonce] = message.params;
+  const safeJobId = String(jobId).replace(/[\r\n]/g, '').substring(0, 32);
+
+  if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + "\n");
+    return;
+  }
+
+  const t = poolState.blockTemplate;
+  try {
+    const coinbaseHex = t.coinbase1 + extraNonce1 + extraNonce2 + t.coinbase2;
+    const coinbaseBuf = Buffer.from(coinbaseHex, 'hex');
+    const coinbaseTxid = sha256d(coinbaseBuf);
+
+    let merkleRoot = coinbaseTxid;
+    for (const branch of t.merkleBranch) {
+      merkleRoot = sha256d(Buffer.concat([merkleRoot, Buffer.from(branch, 'hex')]));
+    }
+
+    let finalVersion = t.version;
+    if (message.params.length > 5) {
+      const versionBits = parseInt(message.params[5], 16);
+      const baseVersion = parseInt(t.version, 16);
+      finalVersion = (baseVersion | versionBits).toString(16).padStart(8, '0');
+    }
+
+    const header = buildBlockHeader(finalVersion, t.prevHashBE, merkleRoot.toString('hex'), nTime, t.nBits, nonce);
+    const headerHash = sha256d(header);
+
+    worker.validShares++;
+    worker.shares++;
+    worker.lastSeen = Date.now();
+    socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
+
+    const networkTarget = nBitsToTarget(t.nBits);
+    if (hashMeetsTarget(headerHash, networkTarget)) {
+      await handleSoloBlockFound(header, coinbaseHex, workerName);
+    }
+
+    console.log('[SOLO] Share accepted from %s', sanitizeLog(workerName));
+  } catch (err) {
+    console.error('[SOLO] Share verification error:', err.message);
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
+  }
+}
+
 // ====== Real SHA256d share/block verification ======
 async function handleSubmit(socket, message, workerName, extraNonce1) {
   let worker = poolState.miners.get(workerName) || poolState.miners.get(message.params[0]);
@@ -486,6 +671,71 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
     }
   } catch (err) {
     console.error('Block found handling error:', err.message);
+  }
+}
+
+async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
+  const safeWorker = sanitizeLog(workerName);
+  console.log('🎉 SOLO BLOCK FOUND by %s!', safeWorker);
+  soloState.blocksFound++;
+
+  try {
+    const t = poolState.blockTemplate;
+    const height = t?.height || 0;
+
+    // Construct full serialized block
+    const txCount = 1 + (t.txData ? t.txData.length : 0);
+    let blockHex = headerBuffer.toString('hex');
+    blockHex += encodeVarInt(txCount);
+    blockHex += coinbaseHex;
+    if (t.txData) {
+      for (const tx of t.txData) {
+        blockHex += tx;
+      }
+    }
+
+    console.log('[SOLO] Submitting block height %d to network...', height);
+    const submissionResult = await rpcCall('submitblock', [blockHex]);
+    console.log('[SOLO] submitblock result:', submissionResult || 'accepted');
+
+    // Store solo block record in Redis
+    if (redis) {
+      await redis.lPush('solo:blocks', JSON.stringify({
+        worker: workerName,
+        height: height + 1,
+        time: Date.now(),
+      }));
+      await redis.lTrim('solo:blocks', 0, 99);
+    }
+
+    // Pay the solo miner directly: full block reward minus 1% fee
+    // The coinbase already went to pool wallet via the block template.
+    // We wait for 101 confirmations then send the reward to the miner.
+    // Use a background async to not block share processing.
+    const minerWallet = workerName.split('.')[0];
+    const blockRewardTAR = 50000; // 50,000 TAR block reward
+    const feeAmount = parseFloat((blockRewardTAR * (soloState.fee / 100)).toFixed(8));
+    const minerAmount = parseFloat((blockRewardTAR - feeAmount - 0.1).toFixed(8)); // 0.1 for tx fee
+
+    console.log('[SOLO] Will pay %s TAR to %s after 101 confirmations...', minerAmount, sanitizeLog(minerWallet));
+
+    // Schedule payout after ~101 blocks (~5 hours at 3 min/block)
+    setTimeout(async () => {
+      try {
+        const balance = await rpcCall('getbalance', ['*', 101]);
+        if (balance >= minerAmount) {
+          const txid = await rpcCall('sendtoaddress', [minerWallet, minerAmount]);
+          console.log('💸 [SOLO] Payout sent! %s TAR to %s — TXID: %s', minerAmount, sanitizeLog(minerWallet), txid);
+        } else {
+          console.warn('[SOLO] Insufficient balance for solo payout. Balance: %s, Required: %s', balance, minerAmount);
+        }
+      } catch (payErr) {
+        console.error('[SOLO] Payout error:', payErr.message);
+      }
+    }, 101 * 3 * 60 * 1000); // Wait 101 blocks * 3 min/block
+
+  } catch (err) {
+    console.error('[SOLO] Block found handling error:', err.message);
   }
 }
 
@@ -764,6 +1014,49 @@ cron.schedule('0 * * * *', processPayouts);
         workers,
         blocksFound,
         poolHashrate
+      });
+    } catch (e) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // ====== Solo Stats API ======
+  app.get('/api/solo/stats', async (req, res) => {
+    try {
+      // 1. Build solo workers from live soloState
+      const workers = {};
+      for (const [name, miner] of soloState.miners.entries()) {
+        const wallet = name.split('.')[0];
+        if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0, difficulty: 0 };
+        workers[wallet].shares += miner.validShares || 0;
+        if (miner.lastSeen > workers[wallet].lastSeen) workers[wallet].lastSeen = miner.lastSeen;
+        workers[wallet].difficulty = miner.difficulty || 0;
+      }
+
+      // 2. Fetch recent solo blocks
+      let blocksFound = [];
+      if (redis) {
+        const blocksData = await redis.lRange('solo:blocks', 0, 9);
+        blocksFound = blocksData.map(b => JSON.parse(b));
+      }
+
+      // 3. Calculate Solo Hashrate
+      let soloHashrate = 0;
+      for (const [name, miner] of soloState.miners.entries()) {
+        if (Date.now() - miner.lastSeen < 600000) {
+          soloHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+        }
+      }
+
+      res.json({
+        status: soloState.miners.size > 0 ? 'Online' : 'Waiting',
+        stratum: 'stratum+tcp://stratum.tarcoin.org:3334',
+        algorithm: 'SHA256d',
+        fee: soloState.fee,
+        activeMiners: Object.keys(workers).length,
+        workers,
+        blocksFound,
+        soloHashrate,
       });
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
