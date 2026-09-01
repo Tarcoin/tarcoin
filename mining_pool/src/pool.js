@@ -474,13 +474,33 @@ const soloStratumServer = net.createServer((socket) => {
               socketDiff = overrideDiff;
               sendSoloDifficulty(overrideDiff);
             }
-            soloState.miners.set(workerName, {
+            // Store socket reference so refreshBlockTemplate can push new work
+            const soloMinerEntry = {
               shares: 0, validShares: 0, lastSeen: Date.now(),
               workerId, extraNonce1, difficulty: socketDiff,
-            });
+              socket, // store socket for template refresh pushes
+              coinbase1: null, coinbase2: null,
+              jobId: crypto.randomBytes(4).toString('hex'),
+            };
+            soloState.miners.set(workerName, soloMinerEntry);
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             console.log('[SOLO] Miner authorized: %s', sanitizeLog(workerName));
             startSoloVardiff();
+            // Build custom coinbase async and send work immediately
+            (async () => {
+              try {
+                if (poolState.blockTemplate?.rawTemplate) {
+                  const minerAddress = workerName.split('.')[0];
+                  const { coinbase1, coinbase2 } = await buildSoloCoinbase(minerAddress, poolState.blockTemplate.rawTemplate);
+                  soloMinerEntry.coinbase1 = coinbase1;
+                  soloMinerEntry.coinbase2 = coinbase2;
+                  if (!socket.destroyed) sendSoloWork(socket, soloMinerEntry);
+                  console.log('[SOLO] Custom coinbase built and work sent to %s', sanitizeLog(workerName));
+                }
+              } catch (e) {
+                console.warn('[SOLO] Failed to build coinbase for %s: %s', sanitizeLog(workerName), e.message);
+              }
+            })();
             break;
 
           case 'mining.submit':
@@ -513,7 +533,7 @@ soloStratumServer.listen(3334, () => console.log('Solo Stratum server ready on p
 async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
   let worker = soloState.miners.get(workerName) || soloState.miners.get(message.params[0]);
   if (!worker) {
-    worker = { shares: 0, validShares: 0, lastSeen: Date.now(), workerId: extraNonce1, extraNonce1, difficulty: VARDIFF.startDiff };
+    worker = { shares: 0, validShares: 0, lastSeen: Date.now(), workerId: extraNonce1, extraNonce1, difficulty: VARDIFF.startDiff, coinbase1: null, coinbase2: null };
     soloState.miners.set(message.params[0], worker);
   }
   workerName = message.params[0];
@@ -521,14 +541,22 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
   const [_w, jobId, extraNonce2, nTime, nonce] = message.params;
   const safeJobId = String(jobId).replace(/[\r\n]/g, '').substring(0, 32);
 
-  if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
+  // Use the miner's own jobId, not the pool's shared one
+  if (!poolState.blockTemplate || worker.jobId !== jobId) {
     socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + "\n");
+    return;
+  }
+
+  // Use the miner's CUSTOM coinbase (with their wallet address baked in)
+  if (!worker.coinbase1 || !worker.coinbase2) {
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Coinbase not ready, please wait', null] }) + "\n");
     return;
   }
 
   const t = poolState.blockTemplate;
   try {
-    const coinbaseHex = t.coinbase1 + extraNonce1 + extraNonce2 + t.coinbase2;
+    // Use miner's own custom coinbase (pays to their wallet directly)
+    const coinbaseHex = worker.coinbase1 + extraNonce1 + extraNonce2 + worker.coinbase2;
     const coinbaseBuf = Buffer.from(coinbaseHex, 'hex');
     const coinbaseTxid = sha256d(coinbaseBuf);
 
@@ -676,7 +704,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
 
 async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
   const safeWorker = sanitizeLog(workerName);
-  console.log('🎉 SOLO BLOCK FOUND by %s!', safeWorker);
+  console.log('🎉 SOLO BLOCK FOUND by %s! Coinbase pays miner directly.', safeWorker);
   soloState.blocksFound++;
 
   try {
@@ -687,7 +715,7 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
     const txCount = 1 + (t.txData ? t.txData.length : 0);
     let blockHex = headerBuffer.toString('hex');
     blockHex += encodeVarInt(txCount);
-    blockHex += coinbaseHex;
+    blockHex += coinbaseHex; // This coinbase already pays the miner's wallet directly!
     if (t.txData) {
       for (const tx of t.txData) {
         blockHex += tx;
@@ -697,6 +725,7 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
     console.log('[SOLO] Submitting block height %d to network...', height);
     const submissionResult = await rpcCall('submitblock', [blockHex]);
     console.log('[SOLO] submitblock result:', submissionResult || 'accepted');
+    console.log('[SOLO] 💰 49,500 TAR paid DIRECTLY to %s via coinbase — no extra tx needed!', safeWorker);
 
     // Store solo block record in Redis
     if (redis) {
@@ -708,35 +737,84 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
       await redis.lTrim('solo:blocks', 0, 99);
     }
 
-    // Pay the solo miner directly: full block reward minus 1% fee
-    // The coinbase already went to pool wallet via the block template.
-    // We wait for 101 confirmations then send the reward to the miner.
-    // Use a background async to not block share processing.
-    const minerWallet = workerName.split('.')[0];
-    const blockRewardTAR = 50000; // 50,000 TAR block reward
-    const feeAmount = parseFloat((blockRewardTAR * (soloState.fee / 100)).toFixed(8));
-    const minerAmount = parseFloat((blockRewardTAR - feeAmount - 0.1).toFixed(8)); // 0.1 for tx fee
-
-    console.log('[SOLO] Will pay %s TAR to %s after 101 confirmations...', minerAmount, sanitizeLog(minerWallet));
-
-    // Schedule payout after ~101 blocks (~5 hours at 3 min/block)
-    setTimeout(async () => {
-      try {
-        const balance = await rpcCall('getbalance', ['*', 101]);
-        if (balance >= minerAmount) {
-          const txid = await rpcCall('sendtoaddress', [minerWallet, minerAmount]);
-          console.log('💸 [SOLO] Payout sent! %s TAR to %s — TXID: %s', minerAmount, sanitizeLog(minerWallet), txid);
-        } else {
-          console.warn('[SOLO] Insufficient balance for solo payout. Balance: %s, Required: %s', balance, minerAmount);
-        }
-      } catch (payErr) {
-        console.error('[SOLO] Payout error:', payErr.message);
-      }
-    }, 101 * 3 * 60 * 1000); // Wait 101 blocks * 3 min/block
-
   } catch (err) {
     console.error('[SOLO] Block found handling error:', err.message);
   }
+}
+
+
+// ====== Build custom coinbase for a solo miner ======
+// Pays miner 99% and pool fee wallet 1% directly in the coinbase tx
+async function buildSoloCoinbase(minerAddress, template) {
+  // Get miner's scriptPubKey from node
+  const minerValidation = await rpcCall('validateaddress', [minerAddress]);
+  if (!minerValidation.isvalid || !minerValidation.scriptPubKey) {
+    throw new Error(`[SOLO] Invalid miner address: ${minerAddress}`);
+  }
+  const minerScriptPubKey = minerValidation.scriptPubKey;
+
+  // Get pool fee wallet scriptPubKey
+  const feeValidation = await rpcCall('validateaddress', [poolState.poolWallet]);
+  const feeScriptPubKey = feeValidation.scriptPubKey || ('76a914' + poolState.poolWallet + '88ac');
+
+  const blockReward = template.coinbasevalue || 5000000000000; // satoshis
+  const feeAmount = Math.floor(blockReward * (soloState.fee / 100));
+  const minerAmount = blockReward - feeAmount;
+
+  // Build height scriptSig (same as pool coinbase1)
+  const height = template.height || 0;
+  let heightBuf = Buffer.alloc(4);
+  heightBuf.writeUInt32LE(height, 0);
+  let end = 4;
+  while (end > 1 && heightBuf[end - 1] === 0) end--;
+  const trimmed = heightBuf.slice(0, end);
+  const pushOp = Buffer.alloc(1);
+  pushOp[0] = end;
+  const heightScript = Buffer.concat([pushOp, trimmed]).toString('hex');
+  const scriptSigLen = Buffer.alloc(1);
+  scriptSigLen[0] = (heightScript.length / 2) + 8;
+  const coinbase1 = '01000000' + '01' + '0000000000000000000000000000000000000000000000000000000000000000' + 'ffffffff' + scriptSigLen.toString('hex') + heightScript;
+
+  // Build coinbase2 outputs: miner (99%) + pool fee (1%) + optional witness
+  const minerAmountBuf = Buffer.alloc(8);
+  minerAmountBuf.writeBigUInt64LE(BigInt(minerAmount), 0);
+  const feeAmountBuf = Buffer.alloc(8);
+  feeAmountBuf.writeBigUInt64LE(BigInt(feeAmount), 0);
+
+  const minerOutput = minerAmountBuf.toString('hex') + encodeVarInt(minerScriptPubKey.length / 2) + minerScriptPubKey;
+  const feeOutput = feeAmountBuf.toString('hex') + encodeVarInt(feeScriptPubKey.length / 2) + feeScriptPubKey;
+
+  let witnessOutput = '';
+  if (template.default_witness_commitment) {
+    const witValBuf = Buffer.alloc(8, 0);
+    witnessOutput = witValBuf.toString('hex') + encodeVarInt(template.default_witness_commitment.length / 2) + template.default_witness_commitment;
+  }
+
+  const numOutputs = witnessOutput ? '03' : '02'; // miner + fee + optional witness
+  const coinbase2 = 'ffffffff' + numOutputs + minerOutput + feeOutput + witnessOutput + '00000000';
+
+  return { coinbase1, coinbase2 };
+}
+
+// ====== Send solo-specific work to one socket ======
+function sendSoloWork(socket, minerData) {
+  if (!poolState.blockTemplate) return;
+  const t = poolState.blockTemplate;
+  socket.write(JSON.stringify({
+    id: null,
+    method: 'mining.notify',
+    params: [
+      minerData.jobId,
+      t.stratumPrevHash,
+      minerData.coinbase1,
+      minerData.coinbase2,
+      t.merkleBranch,
+      t.version,
+      t.nBits,
+      t.nTime,
+      true,
+    ],
+  }) + "\n");
 }
 
 // ====== Block template refresh ======
@@ -810,11 +888,28 @@ async function refreshBlockTemplate() {
         nTime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
         height: template.height,
         target: template.target,
+        rawTemplate: template, // store raw template for solo coinbase rebuilds
       };
 
       activeSockets.forEach((client) => {
         if (!client.destroyed) sendWork(client);
       });
+
+      // Rebuild solo coinbases and notify each solo miner with their custom job
+      for (const [workerName, minerState] of soloState.miners.entries()) {
+        if (!minerState.socket || minerState.socket.destroyed) continue;
+        try {
+          const minerAddress = workerName.split('.')[0];
+          const { coinbase1, coinbase2 } = await buildSoloCoinbase(minerAddress, template);
+          minerState.coinbase1 = coinbase1;
+          minerState.coinbase2 = coinbase2;
+          minerState.jobId = crypto.randomBytes(4).toString('hex');
+          sendSoloWork(minerState.socket, minerState);
+        } catch (e) {
+          console.warn('[SOLO] Could not refresh coinbase for %s: %s', sanitizeLog(workerName), e.message);
+        }
+      }
+
       console.log(`Block template refreshed — height: ${template.height}, txs: ${(template.transactions || []).length}`);
     }
   } catch (err) {
