@@ -179,10 +179,31 @@ function hashMeetsTarget(hashBuf, targetBuf) {
   return true;
 }
 
+// ====== Vardiff Config ======
+const VARDIFF = {
+  startDiff:   10000,    // Default starting difficulty (same as before, vardiff adjusts from here)
+  minDiff:     64,       // Absolute minimum (protects server from tiny miners)
+  maxDiff:     3000000,  // Absolute maximum (protects server from whale ASICs)
+  targetTime:  10,       // Target seconds between shares
+  retargetEvery: 60000,  // Retarget interval in ms (60 seconds)
+  variance:    0.25,     // Allow 25% variance before adjusting
+};
+
+// ====== Parse d=XXXX or diff=XXXX from miner password field ======
+function parseDiffOverride(password) {
+  if (!password || typeof password !== 'string') return null;
+  // Accept: d=12500 or diff=12500 anywhere in the password string
+  const match = password.match(/(?:^|[,;])(?:diff|d)=(\d+)/i);
+  if (!match) return null;
+  const requested = parseInt(match[1], 10);
+  if (isNaN(requested)) return null;
+  // Clamp to safe range
+  return Math.min(VARDIFF.maxDiff, Math.max(VARDIFF.minDiff, requested));
+}
+
 // ====== Pool state ======
 const activeSockets = new Set();
 let poolState = {
-  difficulty: 10000, // Fixed pool difficulty for ASICs
   blockTemplate: null,
   miners: new Map(),
   totalHashrate: 0,
@@ -202,6 +223,45 @@ const stratumServer = net.createServer((socket) => {
   let buffer = '';
   const workerId = crypto.randomBytes(8).toString('hex');
   const extraNonce1 = crypto.randomBytes(4).toString('hex');
+
+  // Per-socket difficulty state
+  let socketDiff = VARDIFF.startDiff;
+  let diffOverridden = false; // true = user set d=XXXX, skip auto-vardiff
+  let shareTimestamps = [];   // rolling window for vardiff calculation
+  let vardiffTimer = null;
+
+  // Send a difficulty update to this specific socket
+  function sendDifficulty(diff) {
+    socketDiff = diff;
+    socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [diff] }) + "\n");
+    if (workerName && poolState.miners.has(workerName)) {
+      poolState.miners.get(workerName).difficulty = diff;
+    }
+  }
+
+  // Auto-Vardiff: adjusts per-socket diff every retargetEvery ms
+  function startVardiff() {
+    if (diffOverridden) return; // Password override = no auto-adjust
+    vardiffTimer = setInterval(() => {
+      if (shareTimestamps.length < 2) return; // Not enough data yet
+      const window = VARDIFF.retargetEvery / 1000; // seconds
+      const now = Date.now() / 1000;
+      const recentShares = shareTimestamps.filter(t => (now - t) <= window).length;
+      const actualTime = recentShares > 0 ? window / recentShares : VARDIFF.targetTime * 2;
+      const ratio = actualTime / VARDIFF.targetTime;
+
+      // Only retarget if outside the variance window
+      if (ratio < (1 - VARDIFF.variance) || ratio > (1 + VARDIFF.variance)) {
+        let newDiff = Math.round(socketDiff * (VARDIFF.targetTime / actualTime));
+        newDiff = Math.min(VARDIFF.maxDiff, Math.max(VARDIFF.minDiff, newDiff));
+        if (newDiff !== socketDiff) {
+          console.log(`[Vardiff] ${sanitizeLog(workerName)}: ${socketDiff} → ${newDiff} (${recentShares} shares in ${window}s)`);
+          sendDifficulty(newDiff);
+        }
+      }
+      shareTimestamps = []; // Reset window
+    }, VARDIFF.retargetEvery);
+  }
 
   console.log(`New miner connected: ${workerId}`);
 
@@ -243,22 +303,38 @@ const stratumServer = net.createServer((socket) => {
               ],
               error: null,
             }) + "\n");
-            socket.write(JSON.stringify({ id: null, method: 'mining.set_difficulty', params: [poolState.difficulty] }) + "\n");
+            sendDifficulty(socketDiff);
             sendWork(socket);
             break;
 
           case 'mining.authorize':
             workerName = message.params[0];
+            const password = message.params[1] || '';
+
+            // Check for d=XXXX or diff=XXXX password override
+            const overrideDiff = parseDiffOverride(password);
+            if (overrideDiff !== null) {
+              diffOverridden = true;
+              socketDiff = overrideDiff;
+              console.log(`[DiffOverride] ${sanitizeLog(workerName)} requested d=${overrideDiff}`);
+              sendDifficulty(overrideDiff);
+            }
+
             poolState.miners.set(workerName, {
               hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
               lastSeen: Date.now(), workerId, extraNonce1,
+              difficulty: socketDiff,
             });
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
-            console.log('Miner authorized: %s', sanitizeLog(workerName));
+            console.log('Miner authorized: %s (diff: %d%s)', sanitizeLog(workerName), socketDiff, diffOverridden ? ' [override]' : ' [vardiff]');
+            startVardiff();
             break;
 
           case 'mining.submit':
+            // Record share timestamp for vardiff
+            shareTimestamps.push(Date.now() / 1000);
+            if (shareTimestamps.length > 500) shareTimestamps.shift(); // cap array size
             await handleSubmit(socket, message, workerName, extraNonce1);
             break;
         }
@@ -270,6 +346,7 @@ const stratumServer = net.createServer((socket) => {
 
   socket.on('close', () => {
     activeSockets.delete(socket);
+    if (vardiffTimer) clearInterval(vardiffTimer);
     console.log('Miner disconnected: %s', sanitizeLog(workerName || workerId));
     if (workerName) {
       poolState.miners.delete(workerName);
@@ -655,9 +732,12 @@ cron.schedule('0 * * * *', processPayouts);
         try {
           const { worker, time } = JSON.parse(s);
           const wallet = worker.split('.')[0];
-          if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0 };
+          if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0, difficulty: 0 };
           workers[wallet].shares++;
           if (time > workers[wallet].lastSeen) workers[wallet].lastSeen = time;
+          // Attach live difficulty from miners map if available
+          const minerState = poolState.miners.get(worker) || poolState.miners.get(wallet);
+          if (minerState && minerState.difficulty) workers[wallet].difficulty = minerState.difficulty;
           totalShares++;
         } catch(e) {}
       });
@@ -666,12 +746,13 @@ cron.schedule('0 * * * *', processPayouts);
       const blocksData = await redis.lRange('pool:blocks', 0, 9);
       const blocksFound = blocksData.map(b => JSON.parse(b));
 
-      // 3. Fetch Network Hashrate (since pool finds ~100% of blocks, Network Hashrate = Pool Hashrate)
+      // 3. Calculate true Pool Hashrate based on active miners and their Vardiff
       let poolHashrate = 0;
-      try {
-        poolHashrate = await rpcCall('getnetworkhashps');
-      } catch (e) {
-        console.warn('Could not fetch getnetworkhashps:', e.message);
+      for (const [name, miner] of poolState.miners.entries()) {
+        if (Date.now() - miner.lastSeen < 600000) { // Active in last 10 mins
+          // Expected Hashrate = (Difficulty * 2^32) / TargetTime
+          poolHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+        }
       }
 
       res.json({
