@@ -462,7 +462,7 @@ const soloStratumServer = net.createServer((socket) => {
               error: null,
             }) + "\n");
             sendSoloDifficulty(socketDiff);
-            sendWork(socket);
+            // DO NOT call sendWork(socket) here. It will be sent via sendSoloWork during authorize.
             break;
 
           case 'mining.authorize':
