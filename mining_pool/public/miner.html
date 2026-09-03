@@ -54,40 +54,21 @@
             <p class="text-tarcoin-cyan font-mono text-sm md:text-base break-all px-4" id="walletAddress">Loading...</p>
         </div>
 
-        <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Worker Performance</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Status</div>
-                <div class="text-2xl font-orbitron font-bold text-green-500" id="minerStatus">ONLINE</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Hashrate</div>
-                <div class="text-2xl font-orbitron font-bold text-tarcoin-cyan" id="minerHashrate">0 GH/s</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Valid Shares</div>
-                <div class="text-2xl font-orbitron font-bold text-tarcoin-gold" id="minerShares">0</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Last Share</div>
-                <div class="text-2xl font-orbitron font-bold text-white" id="minerLastSeen">-</div>
-            </div>
-        </div>
-
-        <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Pool Info</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase" id="hashrateLabel">Pool Hashrate</div>
-                <div class="text-2xl font-orbitron font-bold text-white" id="poolHash">0 TH/s</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase" id="minersLabel">Active Miners</div>
-                <div class="text-2xl font-orbitron font-bold text-white" id="poolMiners">0</div>
-            </div>
-            <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Block Reward</div>
-                <div class="text-2xl font-orbitron font-bold text-tarcoin-gold">49,500 TAR</div>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-12 text-center text-sm font-space">
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Workers</div><div class="font-bold text-white">1</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Hashrate (1m)</div><div class="font-bold text-tarcoin-cyan" id="minerHashrate">0 GH/s</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Hashrate (1h)</div><div class="font-bold text-tarcoin-cyan" id="minerHashrate1h">0 GH/s</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Price</div><div class="font-bold text-white">N/A</div><div class="text-xs text-gray-600">0.00% 24h</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Block Reward</div><div class="font-bold text-tarcoin-gold">50,000 TAR</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1" id="hashrateLabel">Network Hashrate</div><div class="font-bold text-white" id="poolHash">N/A</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Your Best Share</div><div class="font-bold text-white">N/A</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Pool Best Share</div><div class="font-bold text-white">N/A</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Network Difficulty</div><div class="font-bold text-white">N/A</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Odds (1 in X)</div><div class="font-bold text-white">N/A</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Luck (last 10)</div><div class="font-bold text-white">—</div></div>
+            <div class="glass p-4"><div class="text-xs text-gray-500 mb-1">Valid Shares</div><div class="font-bold text-tarcoin-gold" id="minerShares">0</div></div>
+            <div class="glass p-4 col-span-2 md:col-span-1"><div class="text-xs text-gray-500 mb-1">Status</div><div class="font-bold text-green-500" id="minerStatus">ONLINE</div><div class="text-xs text-gray-400 mt-1" id="minerLastSeen">-</div></div>
+            <div class="glass p-4 col-span-2 md:col-span-1"><div class="text-xs text-gray-500 mb-1">Found by pool</div><div class="font-bold text-white" id="poolBlocks">0</div></div>
         </div>
 
     </main>
@@ -127,6 +108,7 @@
                     let hashrateRaw = (diff * 4294967296) / 60; // Hashes per second for that diff
                     let hashrateStr = hashrateRaw > 1e12 ? (hashrateRaw / 1e12).toFixed(2) + ' TH/s' : (hashrateRaw / 1e9).toFixed(2) + ' GH/s';
                     document.getElementById('minerHashrate').innerText = hashrateStr;
+                    document.getElementById('minerHashrate1h').innerText = hashrateStr; // Estimate same for 1h since we don't have historical data
 
                     const timeAgo = Math.floor((Date.now() - minerInfo.lastSeen) / 1000);
                     const timeStr = timeAgo < 0 ? 'just now' : (timeAgo < 60 ? timeAgo + 's ago' : Math.floor(timeAgo / 60) + 'm ago');
@@ -134,8 +116,9 @@
                     
                 } else {
                     document.getElementById('minerStatus').innerText = 'OFFLINE';
-                    document.getElementById('minerStatus').className = 'text-2xl font-orbitron font-bold text-gray-500';
+                    document.getElementById('minerStatus').className = 'font-bold text-gray-500';
                     document.getElementById('minerHashrate').innerText = '0 GH/s';
+                    document.getElementById('minerHashrate1h').innerText = '0 GH/s';
                     document.getElementById('minerShares').innerText = '0';
                     document.getElementById('minerLastSeen').innerText = 'Unknown';
                 }
@@ -147,12 +130,13 @@
                 let phStr = activeHash > 1e12 ? (activeHash / 1e12).toFixed(2) + ' TH/s' : (activeHash / 1e9).toFixed(2) + ' GH/s';
                 document.getElementById('poolHash').innerText = phStr;
                 
-                let activeMiners = isSolo ? soloData.activeMiners : poolData.activeMiners;
-                document.getElementById('poolMiners').innerText = activeMiners || 0;
+                let blocksList = isSolo ? soloData.blocksFound : poolData.blocksFound;
+                document.getElementById('poolBlocks').innerText = blocksList ? blocksList.length : 0;
                 
                 if (isSolo) {
-                    document.getElementById('hashrateLabel').innerText = 'SOLO HASHRATE';
-                    document.getElementById('minersLabel').innerText = 'SOLO MINERS';
+                    document.getElementById('hashrateLabel').innerText = 'Solo Hashrate';
+                } else {
+                    document.getElementById('hashrateLabel').innerText = 'Pool Hashrate';
                 }
                 
             } catch (e) {
