@@ -731,7 +731,7 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
     if (redis) {
       await redis.lPush('solo:blocks', JSON.stringify({
         worker: workerName,
-        height: height + 1,
+        height: height,
         time: Date.now(),
       }));
       await redis.lTrim('solo:blocks', 0, 99);
