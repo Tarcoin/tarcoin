@@ -693,7 +693,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
     if (redis) {
       await redis.lPush('pool:blocks', JSON.stringify({
         worker: workerName,
-        height: height + 1,
+        height: height,
         time: Date.now(),
       }));
     }
