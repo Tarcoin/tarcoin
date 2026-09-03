@@ -141,7 +141,7 @@
                 }
                 // Pool stats
                 let totalPoolHash = poolData.poolHashrate || 0;
-                let totalSoloHash = soloData.poolHashrate || 0;
+                let totalSoloHash = soloData.soloHashrate || 0;
                 let activeHash = isSolo ? totalSoloHash : totalPoolHash;
                 
                 let phStr = activeHash > 1e12 ? (activeHash / 1e12).toFixed(2) + ' TH/s' : (activeHash / 1e9).toFixed(2) + ' GH/s';
