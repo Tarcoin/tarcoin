@@ -30,16 +30,16 @@ export default function MiningStratumPage() {
               <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">Stratum Connection Details</h3>
               <div className="space-y-3 text-sm font-mono">
                 <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
-                  <span className="text-gray-400">URL (Primary)</span>
+                  <span className="text-gray-400">URL (Shared Pool)</span>
                   <span className="text-white">stratum+tcp://stratum.tarcoin.org:3333</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
-                  <span className="text-gray-400">URL (Backup)</span>
-                  <span className="text-white">stratum+tcp://stratum2.tarcoin.org:3333</span>
+                  <span className="text-gray-400">URL (Solo Pool)</span>
+                  <span className="text-white">stratum+tcp://stratum.tarcoin.org:3334</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
-                  <span className="text-gray-400">Port</span>
-                  <span className="text-white">3333 (SSL: 3334)</span>
+                  <span className="text-gray-400">Backup Server</span>
+                  <span className="text-white">stratum2.tarcoin.org (Ports: 3333, 3334)</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-tarcoin-gold/10">
                   <span className="text-gray-400">Protocol</span>
@@ -51,7 +51,7 @@ export default function MiningStratumPage() {
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-gray-400">Worker Format</span>
-                  <span className="text-white">[TAR_Address]</span>
+                  <span className="text-white">[TAR_Address].WorkerName</span>
                 </div>
               </div>
             </motion.div>
