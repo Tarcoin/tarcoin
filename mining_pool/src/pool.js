@@ -498,7 +498,7 @@ const soloStratumServer = net.createServer((socket) => {
                   console.log('[SOLO] Custom coinbase built and work sent to %s', sanitizeLog(workerName));
                 }
               } catch (e) {
-                console.warn('[SOLO] Failed to build coinbase for %s: %s', sanitizeLog(workerName), e.message);
+                console.warn('[SOLO] Failed to build coinbase for %s: %s', sanitizeLog(workerName), sanitizeLog(e.message || String(e)));
               }
             })();
             break;
@@ -510,7 +510,7 @@ const soloStratumServer = net.createServer((socket) => {
             break;
         }
       } catch (err) {
-        console.error('[SOLO] Stratum message error:', err.message);
+        console.error('[SOLO] Stratum message error:', sanitizeLog(err.message || String(err)));
       }
     }
   });
