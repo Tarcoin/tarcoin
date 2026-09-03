@@ -39,7 +39,7 @@
     <nav class="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tarcoin-gold to-yellow-600 flex items-center justify-center font-orbitron font-bold text-black text-sm">T</div>
+                <img src="https://tarcoin.org/tarcoin-logo.png" alt="Tarcoin" class="w-8 h-8 rounded-full shadow-lg">
                 <span class="font-orbitron font-bold text-xl tracking-wider text-white">TARCOIN <span class="text-tarcoin-cyan text-sm">MINER</span></span>
             </div>
             <div>
@@ -54,6 +54,7 @@
             <p class="text-tarcoin-cyan font-mono text-sm md:text-base break-all px-4" id="walletAddress">Loading...</p>
         </div>
 
+        <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Worker Performance</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <div class="glass p-6 text-center">
                 <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Status</div>
@@ -70,6 +71,22 @@
             <div class="glass p-6 text-center">
                 <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Last Share</div>
                 <div class="text-2xl font-orbitron font-bold text-white" id="minerLastSeen">-</div>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Network Info</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="glass p-6 text-center">
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Network Difficulty</div>
+                <div class="text-2xl font-orbitron font-bold text-white" id="netDiff">0</div>
+            </div>
+            <div class="glass p-6 text-center">
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Network Hashrate</div>
+                <div class="text-2xl font-orbitron font-bold text-white" id="netHash">0 TH/s</div>
+            </div>
+            <div class="glass p-6 text-center">
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Block Reward</div>
+                <div class="text-2xl font-orbitron font-bold text-tarcoin-gold">50,000 TAR</div>
             </div>
         </div>
 
@@ -122,6 +139,15 @@
                     document.getElementById('minerShares').innerText = '0';
                     document.getElementById('minerLastSeen').innerText = 'Unknown';
                 }
+                
+                // Network stats
+                let networkDiff = poolData.difficulty || soloData.difficulty || 1;
+                document.getElementById('netDiff').innerText = (networkDiff / 1000000).toFixed(2) + ' M';
+                
+                let netHashRaw = (networkDiff * 4294967296) / 60;
+                let netHashStr = netHashRaw > 1e12 ? (netHashRaw / 1e12).toFixed(2) + ' TH/s' : (netHashRaw / 1e9).toFixed(2) + ' GH/s';
+                document.getElementById('netHash').innerText = netHashStr;
+                
             } catch (e) {
                 console.error(e);
             }
