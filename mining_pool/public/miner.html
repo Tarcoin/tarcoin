@@ -77,11 +77,11 @@
         <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Pool Info</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Pool Hashrate</div>
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase" id="hashrateLabel">Pool Hashrate</div>
                 <div class="text-2xl font-orbitron font-bold text-white" id="poolHash">0 TH/s</div>
             </div>
             <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Active Miners</div>
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase" id="minersLabel">Active Miners</div>
                 <div class="text-2xl font-orbitron font-bold text-white" id="poolMiners">0</div>
             </div>
             <div class="glass p-6 text-center">
@@ -149,6 +149,11 @@
                 
                 let activeMiners = isSolo ? soloData.activeMiners : poolData.activeMiners;
                 document.getElementById('poolMiners').innerText = activeMiners || 0;
+                
+                if (isSolo) {
+                    document.getElementById('hashrateLabel').innerText = 'SOLO HASHRATE';
+                    document.getElementById('minersLabel').innerText = 'SOLO MINERS';
+                }
                 
             } catch (e) {
                 console.error(e);
