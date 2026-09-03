@@ -74,19 +74,19 @@
             </div>
         </div>
 
-        <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Network Info</h2>
+        <h2 class="text-xl font-orbitron font-bold text-white mb-4 border-b border-white/10 pb-2">Pool Info</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Network Difficulty</div>
-                <div class="text-2xl font-orbitron font-bold text-white" id="netDiff">0</div>
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Pool Hashrate</div>
+                <div class="text-2xl font-orbitron font-bold text-white" id="poolHash">0 TH/s</div>
             </div>
             <div class="glass p-6 text-center">
-                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Network Hashrate</div>
-                <div class="text-2xl font-orbitron font-bold text-white" id="netHash">0 TH/s</div>
+                <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Active Miners</div>
+                <div class="text-2xl font-orbitron font-bold text-white" id="poolMiners">0</div>
             </div>
             <div class="glass p-6 text-center">
                 <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Block Reward</div>
-                <div class="text-2xl font-orbitron font-bold text-tarcoin-gold">50,000 TAR</div>
+                <div class="text-2xl font-orbitron font-bold text-tarcoin-gold">49,500 TAR</div>
             </div>
         </div>
 
@@ -139,14 +139,16 @@
                     document.getElementById('minerShares').innerText = '0';
                     document.getElementById('minerLastSeen').innerText = 'Unknown';
                 }
+                // Pool stats
+                let totalPoolHash = poolData.poolHashrate || 0;
+                let totalSoloHash = soloData.poolHashrate || 0;
+                let activeHash = isSolo ? totalSoloHash : totalPoolHash;
                 
-                // Network stats
-                let networkDiff = poolData.difficulty || soloData.difficulty || 1;
-                document.getElementById('netDiff').innerText = (networkDiff / 1000000).toFixed(2) + ' M';
+                let phStr = activeHash > 1e12 ? (activeHash / 1e12).toFixed(2) + ' TH/s' : (activeHash / 1e9).toFixed(2) + ' GH/s';
+                document.getElementById('poolHash').innerText = phStr;
                 
-                let netHashRaw = (networkDiff * 4294967296) / 60;
-                let netHashStr = netHashRaw > 1e12 ? (netHashRaw / 1e12).toFixed(2) + ' TH/s' : (netHashRaw / 1e9).toFixed(2) + ' GH/s';
-                document.getElementById('netHash').innerText = netHashStr;
+                let activeMiners = isSolo ? soloData.activeMiners : poolData.activeMiners;
+                document.getElementById('poolMiners').innerText = activeMiners || 0;
                 
             } catch (e) {
                 console.error(e);
