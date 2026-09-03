@@ -58,6 +58,9 @@ export default function MiningPage() {
                 </svg>
                 Open Mining Pool
               </a>
+              <Link href="/mining/setup" className="btn-ghost text-base px-8 py-3.5 text-tarcoin-gold border-tarcoin-gold/30 hover:border-tarcoin-gold">
+                Miner Setup Guide
+              </Link>
               <Link href="/" className="btn-ghost text-base px-8 py-3.5">
                 Back to Home
               </Link>
