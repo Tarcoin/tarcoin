@@ -43,7 +43,7 @@
                 <span class="font-orbitron font-bold text-xl tracking-wider text-white">TARCOIN <span class="text-tarcoin-cyan text-sm">MINER</span></span>
             </div>
             <div>
-                <a href="/dashboard.html" class="text-sm font-orbitron text-gray-400 hover:text-white transition-colors border border-white/20 px-4 py-2 rounded">? Back to Pool</a>
+                <a href="/" class="text-sm font-orbitron text-gray-400 hover:text-white transition-colors border border-white/20 px-4 py-2 rounded">← Back to Pool</a>
             </div>
         </div>
     </nav>
@@ -88,12 +88,16 @@
         async function fetchMinerStats() {
             if (!targetAddress) return;
             try {
-                const res = await fetch('/api/stats');
-                const data = await res.json();
+                const [poolRes, soloRes] = await Promise.all([
+                    fetch('/api/pool/stats'),
+                    fetch('/api/solo/stats')
+                ]);
+                const poolData = await poolRes.json();
+                const soloData = await soloRes.json();
                 
                 // Check both pools
-                let minerInfo = data.pool.workers[targetAddress] || data.solo.workers[targetAddress];
-                let isSolo = !!data.solo.workers[targetAddress];
+                let minerInfo = poolData.workers[targetAddress] || soloData.workers[targetAddress];
+                let isSolo = !!soloData.workers[targetAddress];
                 
                 if (minerInfo) {
                     document.getElementById('minerStatus').innerText = 'ONLINE';
@@ -102,7 +106,7 @@
                     
                     // Simple Hashrate calc (Difficulty * 2^32 / Time)
                     // We'll estimate based on Vardiff if available, else standard
-                    let diff = minerInfo.difficulty || data.pool.difficulty || 1;
+                    let diff = minerInfo.difficulty || poolData.difficulty || 1;
                     let hashrateRaw = (diff * 4294967296) / 60; // Hashes per second for that diff
                     let hashrateStr = hashrateRaw > 1e12 ? (hashrateRaw / 1e12).toFixed(2) + ' TH/s' : (hashrateRaw / 1e9).toFixed(2) + ' GH/s';
                     document.getElementById('minerHashrate').innerText = hashrateStr;
