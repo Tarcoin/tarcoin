@@ -754,10 +754,11 @@ async function buildSoloCoinbase(minerAddress, template) {
   const minerScriptPubKey = minerValidation.scriptPubKey;
 
   // Get pool fee wallet scriptPubKey
-  const feeValidation = await rpcCall('validateaddress', [poolState.poolWallet]);
-  const feeScriptPubKey = feeValidation.scriptPubKey || ('76a914' + poolState.poolWallet + '88ac');
+  const feeWallet = process.env.FEE_WALLET || poolState.poolWallet;
+  const feeValidation = await rpcCall('validateaddress', [feeWallet]);
+  const feeScriptPubKey = feeValidation.scriptPubKey || ('76a914' + feeWallet + '88ac');
 
-  const blockReward = template.coinbasevalue || 5000000000000; // satoshis
+  const blockReward = template.coinbasevalue || 5000000000000; // smallest units (10^-8 Tar)
   const feeAmount = Math.floor(blockReward * (soloState.fee / 100));
   const minerAmount = blockReward - feeAmount;
 
