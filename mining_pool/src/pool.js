@@ -1163,6 +1163,9 @@ cron.schedule('0 * * * *', processPayouts);
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/dashboard.html'));
   });
+  app.get('/miner.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/miner.html'));
+  });
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tarcoin-mining-pool', timestamp: Date.now() });
