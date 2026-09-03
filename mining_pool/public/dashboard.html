@@ -209,7 +209,7 @@
                 const timeStr = timeAgo < 0 ? 'just now' : (timeAgo < 60 ? timeAgo + 's ago' : Math.floor(timeAgo / 60) + 'm ago');
                 let walletTrunc = wallet.length > 20 ? wallet.substring(0, 12) + '...' + wallet.substring(wallet.length - 8) : wallet;
                 tr.innerHTML = `
-                    <td class="p-4 font-mono text-tarcoin-cyan"><a href="/miner.html?address=${wallet}" class="hover:underline hover:text-white transition-colors cursor-pointer">${walletTrunc}</a></td>
+                    <td class="p-4 font-mono text-tarcoin-cyan">${walletTrunc}</td>
                     <td class="p-4 font-bold text-white">${info.shares}</td>
                     <td class="p-4 text-right text-gray-400">${timeStr} <span class="inline-block w-2 h-2 rounded-full bg-green-500 ml-2"></span></td>
                 `;
