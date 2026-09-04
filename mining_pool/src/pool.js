@@ -935,8 +935,8 @@ async function processPayouts() {
       return;
     }
 
-    if (balance < 50) {
-      console.log(`Balance too low for payouts (${balance} TAR). Waiting for blocks to mature...`);
+    if (balance < 49000) {
+      console.log(`Balance too low for payouts (${balance} TAR). Waiting for 50,000 TAR blocks to mature...`);
       return;
     }
 
@@ -1163,7 +1163,6 @@ cron.schedule('0 * * * *', processPayouts);
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/dashboard.html'));
   });
-
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'tarcoin-mining-pool', timestamp: Date.now() });
