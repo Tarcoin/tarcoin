@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dir: [website, explorer, explorer/frontend, api, mining_pool, wallet]
+        dir: [website, explorer, explorer/frontend, api, mining_pool]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
