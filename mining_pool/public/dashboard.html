@@ -46,7 +46,17 @@
         .tab-active-solo { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.6); color: #00FF88; }
         .tab-inactive { background: transparent; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
         #soloSection { display: none; }
+        #minerSection { display: none; }
+        .stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px 20px; }
+        .worker-row:hover { background: rgba(255,255,255,0.04); }
+        .hash-bar { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; height: 8px; min-width: 100px; width: 100%; }
+        .hash-fill { background: linear-gradient(90deg, #00FF88, #00cc66); border-radius: 4px; height: 8px; transition: width 0.5s ease; min-width: 3px; }
+        /* Make all sub-labels in MY STATS section readable */
+        #minerSection .text-gray-500 { color: #cbd5e1 !important; }
+        #minerSection .text-gray-600 { color: #94a3b8 !important; }
+        #minerSection .text-gray-400 { color: #e2e8f0 !important; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="min-h-screen relative overflow-x-hidden">
     <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-tarcoin-gold/5 rounded-full blur-[100px] -z-10"></div>
@@ -75,7 +85,119 @@
                 class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive">
                 🎯 SOLO
             </button>
+            <button id="tabMiner" onclick="switchTab('miner')"
+                class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive">
+                👤 MY STATS
+            </button>
         </div>
+
+        <!-- ====== MINER LOOKUP SECTION ====== -->
+        <div id="minerSection" style="display:none;">
+            <p class="text-center text-gray-400 font-space text-lg max-w-2xl mx-auto mb-8">
+                Enter your wallet address to view your personal mining stats
+            </p>
+            <div class="flex gap-3 max-w-2xl mx-auto mb-10">
+                <input id="walletInput" type="text" placeholder="Enter your TAR wallet address..."
+                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-tarcoin-gold/60"
+                    onkeydown="if(event.key==='Enter') lookupWallet()" />
+                <button onclick="lookupWallet()"
+                    class="px-6 py-3 rounded-xl font-orbitron text-sm font-bold tracking-widest bg-tarcoin-gold/10 border border-tarcoin-gold/40 text-tarcoin-gold hover:bg-tarcoin-gold/20 transition-all">
+                    LOOKUP
+                </button>
+            </div>
+
+            <!-- Miner Stats Dashboard (shown after lookup) -->
+            <div id="minerDashboard" style="display:none;" class="max-w-5xl mx-auto">
+
+                <!-- Top Stats Bar -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                    <div class="stat-card col-span-2 md:col-span-1">
+                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Your Hashrate</div>
+                        <div class="text-xl font-orbitron font-bold text-tarcoin-gold" id="ms-pool-hash">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Submissions</div>
+                        <div class="text-xl font-orbitron font-bold text-white" id="ms-shares">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Pool Share %</div>
+                        <div class="text-xl font-orbitron font-bold text-tarcoin-cyan" id="ms-pct">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Est. Payout</div>
+                        <div class="text-xl font-orbitron font-bold text-tarcoin-green" id="ms-payout">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Blocks Found</div>
+                        <div class="text-xl font-orbitron font-bold text-white" id="ms-blocks">-</div>
+                    </div>
+                </div>
+
+                <!-- Wallet Address + Live Chart -->
+                <div class="glass p-5 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <div class="text-[10px] text-gray-500 font-mono uppercase mb-1">YOUR WALLET</div>
+                            <div class="font-mono text-tarcoin-cyan text-xs truncate max-w-xs md:max-w-xl" id="ms-wallet-addr">-</div>
+                        </div>
+                        <div id="ms-solo-section" class="text-right" style="display:none;">
+                            <div class="text-[10px] text-gray-500 font-mono uppercase mb-1">Solo Hashrate</div>
+                            <div class="font-orbitron font-bold text-tarcoin-green text-sm" id="ms-solo-hash">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Big Hashrate Display -->
+                    <div class="mb-4">
+                        <div class="text-4xl md:text-5xl font-orbitron font-black text-white mb-1" id="ms-big-hash">0.00 H/s</div>
+                        <div class="text-xs text-gray-500 font-mono">Your hashrate this session · updates every 10s</div>
+                    </div>
+
+                    <!-- Live Chart -->
+                    <div style="height: 140px; position: relative;">
+                        <canvas id="hashrateChart"></canvas>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-gray-600 font-mono mt-1">
+                        <span>Hashrate this session</span>
+                        <span id="ms-last-update">No data yet · updates every 10s</span>
+                    </div>
+                </div>
+
+                <!-- Workers Table -->
+                <div class="mb-6">
+                    <h3 class="font-orbitron text-white font-bold text-sm mb-3 uppercase tracking-wider">Active Workers</h3>
+                    <div class="glass overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/5 border-b border-white/10 text-[10px] font-orbitron tracking-wider text-gray-400 uppercase">
+                                    <th class="p-3">Address</th>
+                                    <th class="p-3">Pool</th>
+                                    <th class="p-3">Shares</th>
+                                    <th class="p-3">Hashrate</th>
+                                    <th class="p-3" style="width:140px">Hash Bar</th>
+                                    <th class="p-3 text-right">Last Share</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ms-workers-tbody">
+                                <tr><td colspan="6" class="p-8 text-center text-gray-500">No active workers</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Blocks Found -->
+                <div id="ms-blocks-section" style="display:none;">
+                    <h3 class="font-orbitron text-white font-bold text-sm mb-3 uppercase tracking-wider">🏆 Your Blocks Found</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="ms-blocks-grid"></div>
+                </div>
+
+            </div>
+
+            <div id="minerNotFound" style="display:none;" class="glass p-8 text-center max-w-2xl mx-auto">
+                <p class="text-gray-400 font-mono text-lg mb-2">⚠️ Wallet Not Found</p>
+                <p class="text-gray-500 text-sm">This address has no active shares on either pool right now.<br>Make sure your miner is connected and submitting shares.</p>
+            </div>
+        </div>
+
 
         <!-- ====== POOL SECTION ====== -->
         <div id="poolSection">
@@ -172,18 +294,246 @@
 
         function switchTab(tab) {
             currentTab = tab;
+            document.getElementById('poolSection').style.display = 'none';
+            document.getElementById('soloSection').style.display = 'none';
+            document.getElementById('minerSection').style.display = 'none';
+            document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
+            document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
+            document.getElementById('tabMiner').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
+
             if (tab === 'pool') {
                 document.getElementById('poolSection').style.display = 'block';
-                document.getElementById('soloSection').style.display = 'none';
                 document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool';
-                document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
-            } else {
-                document.getElementById('poolSection').style.display = 'none';
+            } else if (tab === 'solo') {
                 document.getElementById('soloSection').style.display = 'block';
-                document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
                 document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-solo';
+            } else {
+                document.getElementById('minerSection').style.display = 'block';
+                document.getElementById('tabMiner').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool';
             }
         }
+
+        // ====== MINER STATS CHART ENGINE ======
+        let hashrateChart = null;
+        let hashrateHistory = { labels: [], data: [] };
+        let minerRefreshTimer = null;
+        let currentMinerWallet = '';
+
+        const formatH = (h) => {
+            if (!h || h === 0) return '0.00 H/s';
+            const th = h / 1e12; if (th >= 1) return th.toFixed(2) + ' TH/s';
+            const gh = h / 1e9; if (gh >= 1) return gh.toFixed(2) + ' GH/s';
+            const mh = h / 1e6; if (mh >= 1) return mh.toFixed(2) + ' MH/s';
+            return (h / 1e3).toFixed(2) + ' KH/s';
+        };
+        const timeAgo = (ts) => {
+            if (!ts) return 'Never';
+            const s = Math.floor((Date.now() - ts) / 1000);
+            if (s < 60) return s + 's ago';
+            if (s < 3600) return Math.floor(s/60) + 'm ago';
+            return Math.floor(s/3600) + 'h ago';
+        };
+
+        function initChart(preloadedHistory) {
+            if (hashrateChart) { hashrateChart.destroy(); hashrateChart = null; }
+            hashrateHistory = { labels: [], data: [] };
+
+            // Pre-fill from Redis history if available
+            if (preloadedHistory && preloadedHistory.length > 0) {
+                preloadedHistory.forEach(pt => {
+                    const t = new Date(pt.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                    hashrateHistory.labels.push(t);
+                    hashrateHistory.data.push(pt.hashrate / 1e9);
+                });
+            }
+
+            const ctx = document.getElementById('hashrateChart').getContext('2d');
+            hashrateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: hashrateHistory.labels,
+                    datasets: [{
+                        label: 'Hashrate',
+                        data: hashrateHistory.data,
+                        borderColor: '#00FF88',
+                        backgroundColor: 'rgba(0,255,136,0.08)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#00FF88',
+                        pointBorderColor: '#00FF88',
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 300 },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#00FF88',
+                            bodyColor: '#e2e8f0',
+                            padding: 10,
+                            callbacks: {
+                                title: (items) => items[0]?.label || '',
+                                label: (c) => '  ' + formatH(c.raw * 1e9)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false, beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        function updateMinerUI(poolRes, soloRes) {
+            const totalHash = (poolRes.hashrate || 0) + (soloRes.hashrate || 0);
+            const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+            // Update chart data (store in GH/s for readability)
+            hashrateHistory.labels.push(now);
+            hashrateHistory.data.push(totalHash / 1e9);
+            if (hashrateHistory.labels.length > 120) {
+                hashrateHistory.labels.shift();
+                hashrateHistory.data.shift();
+            }
+            if (hashrateChart) {
+                hashrateChart.update();
+                const peak = Math.max(...hashrateHistory.data);
+                const n = hashrateHistory.data.length;
+                document.getElementById('ms-last-update').textContent =
+                    'Peak ' + formatH(peak * 1e9) + ' · ' + n + ' sample' + (n !== 1 ? 's' : '') + ' · hover a point for its value';
+            }
+
+
+            // Top stat cards
+            document.getElementById('ms-pool-hash').textContent = formatH(poolRes.hashrate);
+            document.getElementById('ms-shares').textContent = poolRes.shares || 0;
+            document.getElementById('ms-pct').textContent = (poolRes.sharePercent || '0.00') + '%';
+            document.getElementById('ms-payout').textContent = (poolRes.estimatedPayout || '0.00') + ' TAR';
+            const totalBlocks = (poolRes.blocksFound?.length || 0) + (soloRes.blocksFound?.length || 0);
+            document.getElementById('ms-blocks').textContent = totalBlocks;
+
+            // Wallet + big hashrate
+            document.getElementById('ms-wallet-addr').textContent = currentMinerWallet;
+            document.getElementById('ms-big-hash').textContent = formatH(totalHash);
+            // Only show Solo Hashrate box when actually mining on solo pool
+            const soloHash = soloRes.hashrate || 0;
+            const soloSection = document.getElementById('ms-solo-section');
+            if (soloHash > 0) {
+                soloSection.style.display = 'block';
+                document.getElementById('ms-solo-hash').textContent = formatH(soloHash);
+            } else {
+                soloSection.style.display = 'none';
+            }
+            document.getElementById('ms-last-update').textContent = 'Updated: ' + now;
+
+            // Workers table
+            const allWorkers = [
+                ...(poolRes.workers || []).map(w => ({...w, pool: 'Shared'})),
+                ...(soloRes.workers || []).map(w => ({...w, pool: 'Solo'}))
+            ];
+            const tbody = document.getElementById('ms-workers-tbody');
+            // Use total pool hashrate as 100% reference so bar is proportional to whole pool
+            const totalPoolHash = (poolRes.hashrate || 0) + (soloRes.hashrate || 0) || 1;
+            if (allWorkers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">No active workers right now</td></tr>';
+            } else {
+                tbody.innerHTML = allWorkers.map(w => {
+                    const label = w.name.includes('.') ? w.name.split('.').slice(1).join('.') || w.name : w.name;
+                    // Cap bar at 98% so it never looks like a solid full line even at 100%
+                    const barPct = Math.min(98, Math.max(3, ((w.hashrate || 0) / totalPoolHash * 100))).toFixed(1);
+                    return `<tr class="worker-row border-b border-white/5 transition-colors">
+                        <td class="p-3 font-mono text-tarcoin-cyan text-xs">${label}</td>
+                        <td class="p-3 text-xs text-gray-400">${w.pool}</td>
+                        <td class="p-3 font-bold text-white text-xs">${w.validShares}</td>
+                        <td class="p-3 font-bold text-tarcoin-green text-xs">${formatH(w.hashrate)}</td>
+                        <td class="p-3" style="min-width:120px;"><div class="hash-bar"><div class="hash-fill" style="width:${barPct}%"></div></div></td>
+                        <td class="p-3 text-right text-gray-400 text-xs">${timeAgo(w.lastSeen)} <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 ml-1"></span></td>
+                    </tr>`;
+                }).join('');
+            }
+
+
+            // Blocks found
+            const allBlocks = [
+                ...(poolRes.blocksFound || []).map(b => ({...b, pool: 'Shared'})),
+                ...(soloRes.blocksFound || []).map(b => ({...b, pool: 'Solo'}))
+            ].sort((a, b) => b.time - a.time);
+            const blocksSection = document.getElementById('ms-blocks-section');
+            if (allBlocks.length > 0) {
+                blocksSection.style.display = 'block';
+                document.getElementById('ms-blocks-grid').innerHTML = allBlocks.map(b => {
+                    const mins = Math.floor((Date.now() - b.time) / 60000);
+                    return `<div class="glass p-4 border-l-4 border-l-tarcoin-gold">
+                        <div class="text-xs font-orbitron text-tarcoin-gold mb-1">BLOCK #${b.height} — ${b.pool}</div>
+                        <div class="text-white font-bold font-mono text-sm">${b.reward || 49500} TAR</div>
+                        <div class="text-gray-400 text-xs mt-1">${mins}m ago</div>
+                    </div>`;
+                }).join('');
+            } else {
+                blocksSection.style.display = 'none';
+            }
+        }
+
+        async function fetchMinerStats() {
+            if (!currentMinerWallet) return;
+            try {
+                const [poolRes, soloRes] = await Promise.all([
+                    fetch(`/api/pool/miner/${encodeURIComponent(currentMinerWallet)}`).then(r => r.json()),
+                    fetch(`/api/solo/miner/${encodeURIComponent(currentMinerWallet)}`).then(r => r.json()),
+                ]);
+                updateMinerUI(poolRes, soloRes);
+            } catch(e) { console.error('Miner stats fetch error', e); }
+        }
+
+        async function lookupWallet() {
+            const wallet = document.getElementById('walletInput').value.trim();
+            if (!wallet) return;
+
+            // Stop previous timer
+            if (minerRefreshTimer) clearInterval(minerRefreshTimer);
+
+            currentMinerWallet = wallet;
+
+            // Show loading state
+            document.getElementById('minerDashboard').style.display = 'none';
+            document.getElementById('minerNotFound').style.display = 'none';
+
+            try {
+                const [poolRes, soloRes] = await Promise.all([
+                    fetch(`/api/pool/miner/${encodeURIComponent(wallet)}`).then(r => r.json()),
+                    fetch(`/api/solo/miner/${encodeURIComponent(wallet)}`).then(r => r.json()),
+                ]);
+
+                if (!poolRes.found && !soloRes.found) {
+                    document.getElementById('minerNotFound').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('minerDashboard').style.display = 'block';
+
+                // Seed chart with stored history from Redis (merge pool + solo, sort oldest first)
+                const combinedHistory = [
+                    ...(poolRes.hashrateHistory || []),
+                    ...(soloRes.hashrateHistory || []),
+                ].sort((a, b) => a.time - b.time);
+                initChart(combinedHistory);
+                updateMinerUI(poolRes, soloRes);
+
+                // Auto-refresh every 10 seconds
+                minerRefreshTimer = setInterval(fetchMinerStats, 10000);
+
+            } catch(err) {
+                document.getElementById('minerNotFound').style.display = 'block';
+            }
+        }
+
 
         function formatHashrate(h) {
             if (!h || h === 0) return '0.00 TH/s';

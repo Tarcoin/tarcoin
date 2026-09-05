@@ -585,7 +585,18 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
       await handleSoloBlockFound(header, coinbaseHex, workerName);
     }
 
+    // Save hashrate snapshot for per-wallet history chart (solo)
+    if (redis) {
+      const wallet = workerName.split('.')[0];
+      const hashSnapshot = Math.round((worker.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime);
+      const histKey = `miner:hashrate_history:${wallet}`;
+      await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
+      await redis.lTrim(histKey, 0, 119);
+      await redis.expire(histKey, 86400);
+    }
+
     console.log('[SOLO] Share accepted from %s', sanitizeLog(workerName));
+
   } catch (err) {
     console.error('[SOLO] Share verification error:', err.message);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
@@ -650,7 +661,16 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     if (redis) {
       await redis.lPush('pool:shares', JSON.stringify({ worker: workerName, time: Date.now() }));
       await redis.lTrim('pool:shares', 0, 9999);
+
+      // Save hashrate snapshot for per-wallet history chart
+      const wallet = workerName.split('.')[0];
+      const hashSnapshot = Math.round((worker.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime);
+      const histKey = `miner:hashrate_history:${wallet}`;
+      await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
+      await redis.lTrim(histKey, 0, 119); // keep last 120 points (~20 min at 10s intervals)
+      await redis.expire(histKey, 86400); // auto-expire after 24h
     }
+
 
     // Check if meets network block difficulty (powLimit or t.nBits)
     const networkTarget = nBitsToTarget(t.nBits);
@@ -1154,6 +1174,159 @@ cron.schedule('0 * * * *', processPayouts);
         blocksFound,
         soloHashrate,
       });
+    } catch (e) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // ====== Per-Wallet Stats API (Shared Pool) ======
+  app.get('/api/pool/miner/:wallet', async (req, res) => {
+    try {
+      const wallet = req.params.wallet.toLowerCase();
+
+      // 1. Fetch shares for this wallet
+      const sharesData = redis ? await redis.lRange('pool:shares', 0, -1) : [];
+      let walletShares = 0;
+      let lastSeen = 0;
+      let totalShares = 0;
+
+      sharesData.forEach((s) => {
+        try {
+          const { worker, time } = JSON.parse(s);
+          const w = worker.split('.')[0].toLowerCase();
+          totalShares++;
+          if (w === wallet) {
+            walletShares++;
+            if (time > lastSeen) lastSeen = time;
+          }
+        } catch(e) {}
+      });
+
+      // 2. Live hashrate from miners map
+      let hashrate = 0;
+      let difficulty = 0;
+      let workers = [];
+      for (const [name, miner] of poolState.miners.entries()) {
+        const w = name.split('.')[0].toLowerCase();
+        if (w === wallet) {
+          const workerHashrate = (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          hashrate += workerHashrate;
+          difficulty = miner.difficulty;
+          workers.push({
+            name,
+            hashrate: workerHashrate,
+            difficulty: miner.difficulty,
+            lastSeen: miner.lastSeen,
+            validShares: miner.validShares || 0,
+          });
+        }
+      }
+
+      // 3. Estimated share of next block payout
+      const sharePercent = totalShares > 0 ? ((walletShares / totalShares) * 100).toFixed(2) : '0.00';
+      const BLOCK_REWARD = 49500; // 99% of 50,000 TAR after 1% fee
+      const estimatedPayout = totalShares > 0 ? ((walletShares / totalShares) * BLOCK_REWARD).toFixed(2) : '0.00';
+
+      // 4. Blocks found by this wallet
+      let blocksFound = [];
+      if (redis) {
+        const blocksData = await redis.lRange('pool:blocks', 0, 49);
+        blocksFound = blocksData.map(b => JSON.parse(b)).filter(b => {
+          const w = (b.worker || '').split('.')[0].toLowerCase();
+          return w === wallet;
+        });
+      }
+
+      // 5. Hashrate history for chart
+      let hashrateHistory = [];
+      if (redis) {
+        const histKey = `miner:hashrate_history:${wallet}`;
+        const histData = await redis.lRange(histKey, 0, 119);
+        // lPush stores newest first, so reverse to get oldest→newest for chart
+        hashrateHistory = histData.reverse().map(h => JSON.parse(h));
+      }
+
+      res.json({
+        wallet: req.params.wallet,
+        found: walletShares > 0 || workers.length > 0,
+        shares: walletShares,
+        totalPoolShares: totalShares,
+        sharePercent,
+        estimatedPayout,
+        hashrate,
+        difficulty,
+        lastSeen,
+        workers,
+        blocksFound,
+        hashrateHistory,
+      });
+
+    } catch (e) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // ====== Per-Wallet Stats API (Solo Pool) ======
+  app.get('/api/solo/miner/:wallet', async (req, res) => {
+    try {
+      const wallet = req.params.wallet.toLowerCase();
+
+      // 1. Live data from soloState
+      let shares = 0;
+      let hashrate = 0;
+      let difficulty = 0;
+      let lastSeen = 0;
+      let workers = [];
+
+      for (const [name, miner] of soloState.miners.entries()) {
+        const w = name.split('.')[0].toLowerCase();
+        if (w === wallet) {
+          const workerHashrate = (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          hashrate += workerHashrate;
+          shares += miner.validShares || 0;
+          difficulty = miner.difficulty;
+          if (miner.lastSeen > lastSeen) lastSeen = miner.lastSeen;
+          workers.push({
+            name,
+            hashrate: workerHashrate,
+            difficulty: miner.difficulty,
+            lastSeen: miner.lastSeen,
+            validShares: miner.validShares || 0,
+          });
+        }
+      }
+
+      // 2. Solo blocks found by this wallet
+      let blocksFound = [];
+      if (redis) {
+        const blocksData = await redis.lRange('solo:blocks', 0, 49);
+        blocksFound = blocksData.map(b => JSON.parse(b)).filter(b => {
+          const w = (b.worker || '').split('.')[0].toLowerCase();
+          return w === wallet;
+        });
+      }
+
+      // 3. Hashrate history for chart
+      let hashrateHistory = [];
+      if (redis) {
+        const histKey = `miner:hashrate_history:${wallet}`;
+        const histData = await redis.lRange(histKey, 0, 119);
+        hashrateHistory = histData.reverse().map(h => JSON.parse(h));
+      }
+
+      res.json({
+        wallet: req.params.wallet,
+        found: shares > 0 || workers.length > 0,
+        shares,
+        hashrate,
+        difficulty,
+        lastSeen,
+        workers,
+        blocksFound,
+        hashrateHistory,
+        blockReward: 49500,
+      });
+
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
     }
