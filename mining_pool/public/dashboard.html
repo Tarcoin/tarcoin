@@ -411,11 +411,19 @@
             }
 
 
-            // Top stat cards
-            document.getElementById('ms-pool-hash').textContent = formatH(poolRes.hashrate);
-            document.getElementById('ms-shares').textContent = poolRes.shares || 0;
-            document.getElementById('ms-pct').textContent = (poolRes.sharePercent || '0.00') + '%';
-            document.getElementById('ms-payout').textContent = (poolRes.estimatedPayout || '0.00') + ' TAR';
+            // Top stat cards — use combined pool + solo so solo miners see correct values
+            const isSoloOnly = (poolRes.hashrate || 0) === 0 && (soloRes.hashrate || 0) > 0;
+            const combinedShares = (poolRes.shares || 0) + (soloRes.shares || 0);
+            document.getElementById('ms-pool-hash').textContent = formatH(totalHash);
+            document.getElementById('ms-shares').textContent = combinedShares;
+            if (isSoloOnly) {
+                // Solo miner: pool share % and payout don't apply the same way
+                document.getElementById('ms-pct').textContent = '100%';
+                document.getElementById('ms-payout').textContent = '49,500 TAR/block';
+            } else {
+                document.getElementById('ms-pct').textContent = (poolRes.sharePercent || '0.00') + '%';
+                document.getElementById('ms-payout').textContent = (poolRes.estimatedPayout || '0.00') + ' TAR';
+            }
             const totalBlocks = (poolRes.blocksFound?.length || 0) + (soloRes.blocksFound?.length || 0);
             document.getElementById('ms-blocks').textContent = totalBlocks;
 
