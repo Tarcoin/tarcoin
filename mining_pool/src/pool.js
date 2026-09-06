@@ -1046,13 +1046,52 @@ async function processPayouts() {
     try {
       const faucetBalance = await rpcCall('getbalance', ['*', 1], 'faucet');
       if (faucetBalance >= 1000) {
-        for (const [worker, reward] of Object.entries(payouts)) {
+        
+        // --- ADD SOLO MINER REWARDS TO BOUNTY CHECK ---
+        const soloBlocks = await redis.lRange('solo:blocks', 0, -1);
+        const soloRewards = {};
+        soloBlocks.forEach(b => {
+          try {
+            const data = JSON.parse(b);
+            const wallet = data.wallet || data.worker.split('.')[0];
+            soloRewards[wallet] = (soloRewards[wallet] || 0) + 49500; // 49,500 TAR per block
+          } catch (e) {}
+        });
+
+        // Combine shared pool payouts and solo rewards for the bounty check
+        const allRewards = { ...payouts };
+        for (const [wallet, reward] of Object.entries(soloRewards)) {
+          allRewards[wallet] = (allRewards[wallet] || 0) + reward;
+        }
+        // ----------------------------------------------
+
+        for (const [worker, reward] of Object.entries(allRewards)) {
           if (worker === feeWallet) continue; // Skip fee wallet
 
           const lifetimeKey = `miner:lifetime:${worker}`;
-          const lifetime = await redis.incrByFloat(lifetimeKey, reward);
+          
+          // For solo miners, since they don't get paid here, we just want to ensure 
+          // their lifetime total is AT LEAST their total solo blocks reward + pool reward.
+          // Because the script runs hourly, if we just blindly incrByFloat solo blocks, 
+          // it would add 49,500 *EVERY HOUR*. Instead, we set their lifetime to the Max of 
+          // (current lifetime) OR (newly calculated allRewards if it's purely historical for solo)
+          // Wait, actually, payouts are per-hour, soloRewards is all-time.
+          // Better logic: `miner:lifetime:wallet` stores the all-time pool rewards.
+          // For the bounty check, total_mined = lifetime_pool + all_time_solo.
+          
+          // Add this hour's pool reward to their permanent lifetime pool stats:
+          let lifetimePool = 0;
+          if (payouts[worker]) {
+             lifetimePool = await redis.incrByFloat(lifetimeKey, payouts[worker]);
+          } else {
+             lifetimePool = parseFloat(await redis.get(lifetimeKey) || 0);
+          }
+          
+          // Total mined = all-time pool + all-time solo
+          const allTimeSolo = soloRewards[worker] || 0;
+          const totalMined = lifetimePool + allTimeSolo;
 
-          if (lifetime >= 20000) {
+          if (totalMined >= 20000) {
             const bonusClaimedKey = `miner:bonus:${worker}`;
             const alreadyClaimed = await redis.get(bonusClaimedKey);
 
