@@ -83,7 +83,6 @@ export default function RootLayout({
         className={`${orbitron.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-space bg-tarcoin-black text-white antialiased`}
       >
         <div className="relative min-h-screen flex flex-col">
-          <div className="scanlines" />
           <div className="cyber-bg flex flex-col flex-grow">
             <Navbar />
             <main className="flex-grow">
