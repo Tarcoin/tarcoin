@@ -29,7 +29,7 @@ export default function WalletPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl sm:text-6xl md:text-7xl font-orbitron font-black mb-6"
+              className="text-4xl md:text-5xl font-orbitron font-black mb-4"
             >
               <span className="text-white">TARCOIN</span>
               <br />
