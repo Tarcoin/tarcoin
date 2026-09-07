@@ -12,20 +12,7 @@ export default function HeroSection() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-tarcoin-gold/5 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-tarcoin-cyan/5 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
       </div>
-
-      {/* Hex Grid Overlay */}
-      <div className="absolute inset-0 opacity-[0.02]">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="hex-grid" width="56" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
-              <path d="M28 0L56 16.67V50.01L28 66.68L0 50.01V16.67Z" fill="none" stroke="#D4A843" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#hex-grid)" />
-        </svg>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
