@@ -17,9 +17,8 @@ export default function FaqPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="text-center mb-16">
               <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.3em] uppercase inline-block mb-3">FAQ</span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-orbitron font-bold mb-4">
-                <span className="text-white">Frequently Asked</span><br />
-                <span className="text-tarcoin-gold text-glow">Questions</span>
+              <h1 className="text-4xl md:text-5xl font-orbitron font-black mb-4">
+                <span className="text-white">Frequently Asked</span> <span className="text-tarcoin-gold ">Questions</span>
               </h1>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}

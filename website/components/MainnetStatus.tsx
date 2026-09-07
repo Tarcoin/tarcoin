@@ -49,7 +49,7 @@ export default function MainnetStatus() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Mainnet{" "}
-            <span className="text-tarcoin-gold text-glow">Status</span>
+            <span className="text-tarcoin-gold ">Status</span>
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg">
             TARCOIN mainnet node is live. Genesis block verified and loaded. Infrastructure

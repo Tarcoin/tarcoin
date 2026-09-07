@@ -23,7 +23,7 @@ export default function MinerSetupGuide() {
               transition={{ duration: 0.8 }}
               className="text-4xl sm:text-5xl font-orbitron font-black mb-6 text-white"
             >
-              How to Mine <span className="text-tarcoin-gold text-glow">Tarcoin</span>
+              How to Mine <span className="text-tarcoin-gold ">Tarcoin</span>
             </motion.h1>
             
             <motion.p

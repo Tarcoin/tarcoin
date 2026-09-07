@@ -18,8 +18,7 @@ export default function MiningGuidePage() {
               className="text-center mb-16">
               <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.3em] uppercase inline-block mb-3">Guide</span>
               <h1 className="text-4xl md:text-5xl font-orbitron font-black mb-4">
-                <span className="text-white">Mining</span><br />
-                <span className="text-tarcoin-gold text-glow">Getting Started</span>
+                <span className="text-white">Mining</span> <span className="text-tarcoin-gold ">Getting Started</span>
               </h1>
               <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-base">
                 Start mining TARCOIN with your SHA256d ASIC miners. Complete setup guide for pool mining.

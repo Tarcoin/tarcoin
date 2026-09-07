@@ -82,9 +82,8 @@ export default function NetworkPage() {
               <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase">Network Status</span>
             </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl sm:text-6xl md:text-7xl font-orbitron font-black mb-6">
-              <span className="text-white">Network</span><br />
-              <span className="text-tarcoin-gold text-glow">Status</span>
+              className="text-4xl md:text-5xl font-orbitron font-black mb-4">
+              <span className="text-white">Network</span> <span className="text-tarcoin-gold ">Status</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
               className="text-lg text-gray-400 max-w-3xl mx-auto mb-2 font-space">

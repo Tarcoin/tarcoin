@@ -64,9 +64,8 @@ export default function VerifyPage() {
             </motion.div>
 
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-orbitron font-black mb-4">
-              <span className="text-white">Verify</span><br />
-              <span className="text-tarcoin-gold text-glow">Signature</span>
+              className="text-4xl md:text-5xl font-orbitron font-black mb-4">
+              <span className="text-white">Verify</span> <span className="text-tarcoin-gold ">Signature</span>
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.35 }}

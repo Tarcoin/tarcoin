@@ -18,8 +18,7 @@ export default function MiningStratumPage() {
               className="text-center mb-16">
               <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.3em] uppercase inline-block mb-3">Setup</span>
               <h1 className="text-4xl md:text-5xl font-orbitron font-black mb-4">
-                <span className="text-white">Stratum</span><br />
-                <span className="text-tarcoin-gold text-glow">Configuration</span>
+                <span className="text-white">Stratum</span> <span className="text-tarcoin-gold ">Configuration</span>
               </h1>
               <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-base">
                 Stratum protocol connection details and configuration for TARCOIN mining.

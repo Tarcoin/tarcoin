@@ -65,9 +65,9 @@ export default function FeaturesSection() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Built for{" "}
-            <span className="text-tarcoin-gold text-glow">Security</span>
+            <span className="text-tarcoin-gold ">Security</span>
             {" & "}
-            <span className="text-tarcoin-gold text-glow">Decentralization</span>
+            <span className="text-tarcoin-gold ">Decentralization</span>
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg">
             Every aspect of TARCOIN is engineered for industrial-grade security, predictable economics, 

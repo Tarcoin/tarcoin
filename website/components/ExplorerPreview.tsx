@@ -42,7 +42,7 @@ export default function ExplorerPreview() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Blockchain{" "}
-            <span className="text-tarcoin-gold text-glow">Explorer</span>
+            <span className="text-tarcoin-gold ">Explorer</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
             Fully transparent, real-time blockchain explorer. Search blocks, transactions, and addresses.

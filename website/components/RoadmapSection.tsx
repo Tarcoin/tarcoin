@@ -85,7 +85,7 @@ export default function RoadmapSection() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Development{" "}
-            <span className="text-tarcoin-gold text-glow">Timeline</span>
+            <span className="text-tarcoin-gold ">Timeline</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
             Transparent development roadmap with community-driven milestones focused on long-term network sustainability.

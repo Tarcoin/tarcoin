@@ -31,9 +31,7 @@ export default function ExplorerPage() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-4xl md:text-5xl font-orbitron font-black mb-4"
             >
-              <span className="text-white">Blockchain</span>
-              <br />
-              <span className="text-tarcoin-gold text-glow">Explorer</span>
+              <span className="text-white">Blockchain</span> <span className="text-tarcoin-gold ">Explorer</span>
             </motion.h1>
 
             <motion.p

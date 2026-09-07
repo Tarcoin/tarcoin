@@ -34,7 +34,7 @@ export default function HeroSection() {
           className="text-4xl md:text-5xl font-orbitron font-black mb-4"
         >
           <span className="text-white">TAR</span>
-          <span className="text-tarcoin-gold text-glow">COIN</span>
+          <span className="text-tarcoin-gold ">COIN</span>
         </motion.h1>
 
         {/* Subtitle - cinematic positioning */}

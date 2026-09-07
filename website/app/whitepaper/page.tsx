@@ -32,18 +32,6 @@ function WhitepaperHero() {
         <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-tarcoin-cyan/5 rounded-full blur-3xl animate-float" style={{ animationDelay: "3s" }} />
       </div>
 
-      {/* Hex grid overlay */}
-      <div className="absolute inset-0 opacity-[0.015] pointer-events-none">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="wh-hex" width="56" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
-              <path d="M28 0L56 16.67V50.01L28 66.68L0 50.01V16.67Z" fill="none" stroke="#D4A843" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#wh-hex)" />
-        </svg>
-      </div>
-
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Version badge */}
         <motion.div
@@ -65,9 +53,7 @@ function WhitepaperHero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-4xl md:text-5xl font-orbitron font-black mb-4 leading-tight"
         >
-          <span className="text-white">TARCOIN</span>
-          <br />
-          <span className="text-tarcoin-gold text-glow">Whitepaper</span>
+          <span className="text-white">TARCOIN</span> <span className="text-tarcoin-gold ">Whitepaper</span>
         </motion.h1>
 
         {/* Subtitle */}
@@ -442,17 +428,6 @@ const securityFeatures = [
 function SecuritySection() {
   return (
     <section id="security" className="py-24 relative">
-      {/* Hex background */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="sec-hex" width="40" height="69.28" patternUnits="userSpaceOnUse">
-              <path d="M20 0L40 11.55V34.64L20 46.19L0 34.64V11.55Z" fill="none" stroke="#D4A843" strokeWidth="0.4" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#sec-hex)" />
-        </svg>
-      </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -913,7 +888,7 @@ function FinalCTA() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-orbitron font-bold text-white mb-6">
             TARCOIN is Not an Experiment.
             <br />
-            <span className="text-tarcoin-gold text-glow">
+            <span className="text-tarcoin-gold ">
               Proven Architecture, Reborn for a New Era.
             </span>
           </h2>

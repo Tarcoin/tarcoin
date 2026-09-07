@@ -18,8 +18,7 @@ export default function MiningProfitPage() {
               className="text-center mb-16">
               <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.3em] uppercase inline-block mb-3">Analysis</span>
               <h1 className="text-4xl md:text-5xl font-orbitron font-black mb-4">
-                <span className="text-white">Mining</span><br />
-                <span className="text-tarcoin-gold text-glow">Profitability</span>
+                <span className="text-white">Mining</span> <span className="text-tarcoin-gold ">Profitability</span>
               </h1>
               <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-base">
                 TARCOIN mining profitability overview and ROI estimates for SHA256d ASIC miners.

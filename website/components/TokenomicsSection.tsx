@@ -53,7 +53,7 @@ export default function TokenomicsSection() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Transparent{" "}
-            <span className="text-tarcoin-gold text-glow">Supply Model</span>
+            <span className="text-tarcoin-gold ">Supply Model</span>
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg">
             TARCOIN is a next-generation decentralized blockchain network designed for long-term global

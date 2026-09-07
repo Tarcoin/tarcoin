@@ -52,7 +52,7 @@ export default function DownloadSection() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Download{" "}
-            <span className="text-tarcoin-gold text-glow">TARCOIN</span>
+            <span className="text-tarcoin-gold ">TARCOIN</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
             Native wallets for all major platforms. Deterministic builds for maximum security.

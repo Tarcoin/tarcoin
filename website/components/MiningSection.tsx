@@ -49,7 +49,7 @@ export default function MiningSection() {
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Proof-of-Work{" "}
-            <span className="text-tarcoin-gold text-glow">Mining</span>
+            <span className="text-tarcoin-gold ">Mining</span>
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg">
             TARCOIN uses a SHA256 Proof-of-Work consensus model with a maximum supply of 50 Billion TAR. 40 Billion TAR will be distributed through mining over approximately 15–20 years, while 10 Billion TAR is reserved for ecosystem growth, infrastructure, and future development. Mining starts with a block reward of 50,000 TAR per block, with reward halvings occurring every 400,000 blocks. This ensures a long-term, sustainable emission schedule and fair, global distribution.
