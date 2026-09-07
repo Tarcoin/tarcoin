@@ -17,7 +17,7 @@ export default function MiningStratumPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="text-center mb-16">
               <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.3em] uppercase inline-block mb-3">Setup</span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-orbitron font-bold mb-4">
+              <h1 className="text-4xl md:text-5xl font-orbitron font-black mb-4">
                 <span className="text-white">Stratum</span><br />
                 <span className="text-tarcoin-gold text-glow">Configuration</span>
               </h1>
