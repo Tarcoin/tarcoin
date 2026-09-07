@@ -11,7 +11,7 @@
             theme: {
                 extend: {
                     colors: {
-                        'tarcoin-gold': '#FFD700',
+                        'tarcoin-gold': '#d4a843',
                         'tarcoin-cyan': '#00FFFF',
                         'tarcoin-black': '#0a0a0a',
                         'tarcoin-green': '#00FF88',
@@ -42,7 +42,7 @@
         .text-glow-green { text-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
         .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .tab-active-pool { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.6); color: #FFD700; }
+        .tab-active-pool { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.6); color: #d4a843; }
         .tab-active-solo { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.6); color: #00FF88; }
         .tab-inactive { background: transparent; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
         #soloSection { display: none; }
@@ -590,7 +590,7 @@
                 if (workerTrunc.length > 20) workerTrunc = workerTrunc.substring(0, 12) + '...';
                 const timeAgo = Math.floor((Date.now() - b.time) / 1000 / 60);
                 div.innerHTML = `
-                    <div class="text-xs font-orbitron mb-1" style="color:${accentColor === 'tarcoin-gold' ? '#FFD700' : '#00FF88'}">BLOCK #${b.height}</div>
+                    <div class="text-xs font-orbitron mb-1" style="color:${accentColor === 'tarcoin-gold' ? '#d4a843' : '#00FF88'}">BLOCK #${b.height}</div>
                     <div class="text-lg text-white font-bold mb-2 font-mono text-sm">Found ${timeAgo} minutes ago</div>
                     <div class="text-xs text-gray-400">Mined by: <span class="text-tarcoin-cyan">${workerTrunc}</span></div>
                 `;
