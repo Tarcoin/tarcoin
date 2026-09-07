@@ -61,7 +61,6 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        'cyber-grid': 'linear-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 168, 67, 0.03) 1px, transparent 1px)',
         'cyber-gradient': 'linear-gradient(135deg, #0A0A0A 0%, #1A1A2E 50%, #0A0A0A 100%)',
         'gold-gradient': 'linear-gradient(135deg, #D4A843 0%, #F0D080 50%, #B8860B 100%)',
       },
