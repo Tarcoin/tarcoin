@@ -6,7 +6,7 @@
 
 :root {
   --gold: #D4A843;
-  --gold-light: #F0D080;
+  --gold-light: #F0C060;
   --gold-dark: #B8860B;
   --black: #062c38; /* 0A0A0A */
   --black-2: #121212;
@@ -31,12 +31,8 @@ body {
   overflow-x: hidden;
 }
 
-/* Cyberpunk Grid Background */
+/* Background */
 .cyber-bg {
-  background-image:
-    linear-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(212, 168, 67, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
   position: relative;
 }
 
