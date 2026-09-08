@@ -74,18 +74,28 @@ export default function BlockPage() {
     <div style={{ minHeight: '100vh', background: 'var(--black)', color: 'var(--text)' }}>
       {/* Navbar */}
       <nav style={{
-        display: 'flex', alignItems: 'center', gap: '1rem',
-        padding: '0 2rem', height: '60px',
         background: 'rgba(0,0,0,0.85)', borderBottom: '1px solid var(--border)',
         backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100,
       }}>
-        <Link href="/" style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--gold)', textDecoration: 'none', textShadow: '0 0 14px var(--gold)' }}>
-          <img src="https://tarcoin.org/logo.png" alt="TARCOIN" style={{ width: '24px', height: '24px', display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '8px' }} /> TARCOIN
-        </Link>
-        <span style={{ color: 'var(--border)', fontSize: '1.2rem' }}>›</span>
-        <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.75rem', color: 'var(--text-dim)', letterSpacing: '0.1em' }}>BLOCK</span>
-        <span style={{ color: 'var(--border)', fontSize: '1.2rem' }}>›</span>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.75rem', color: 'var(--gold)' }}>{truncate(String(hash), 12, 12)}</span>
+        <div className="container" style={{
+          display: 'flex', alignItems: 'center', gap: '1rem',
+          height: '80px', margin: '0 auto', padding: '0 2rem'
+        }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>TARCOIN Explorer</span>
+              <span style={{ fontSize: '12.5px', color: 'var(--text-secondary, #888)', display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--good, #2fb344)', boxShadow: '0 0 0 3px rgba(47,179,68,.16)' }}></span>
+                Mainnet
+              </span>
+            </div>
+          </Link>
+          <span style={{ color: 'var(--border)', fontSize: '1.2rem', marginLeft: '1rem' }}>{'>'}</span>
+          <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.75rem', color: 'var(--text-dim)', letterSpacing: '0.1em' }}>BLOCK</span>
+          <span style={{ color: 'var(--border)', fontSize: '1.2rem' }}>{'>'}</span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.75rem', color: 'var(--gold)' }}>{truncate(String(hash), 12, 12)}</span>
+        </div>
       </nav>
 
       <div className="container" style={{ padding: '2rem' }}>

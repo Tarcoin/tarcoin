@@ -132,11 +132,6 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
   return (
     <nav
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1.5rem',
-        padding: '0 2rem',
-        height: '64px',
         background: 'rgba(0,0,0,0.85)',
         borderBottom: '1px solid var(--border)',
         backdropFilter: 'blur(12px)',
@@ -145,31 +140,43 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
         zIndex: 100,
       }}
     >
+      <div className="container" style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1.5rem',
+        height: '80px',
+        margin: '0 auto',
+        padding: '0 2rem',
+      }}>
       {/* Logo */}
-      <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <span
-          style={{
-            fontFamily: 'Orbitron, sans-serif',
-            fontWeight: 900,
-            fontSize: '1.25rem',
-            color: 'var(--gold)',
-            letterSpacing: '0.08em',
-            textShadow: '0 0 18px var(--gold)',
-          }}
-        >
-          <img src="https://tarcoin.org/logo.png" alt="TARCOIN" style={{ width: '24px', height: '24px', display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '8px' }} /> TARCOIN
-        </span>
-        <span
-          style={{
-            fontFamily: 'Orbitron, sans-serif',
-            fontSize: '0.65rem',
-            color: 'var(--text-dim)',
-            letterSpacing: '0.15em',
-            marginTop: '2px',
-          }}
-        >
-          EXPLORER
-        </span>
+      <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span
+            style={{
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#ffffff',
+              letterSpacing: '-0.01em',
+              margin: 0,
+              lineHeight: 1,
+            }}
+          >
+            TARCOIN Explorer
+          </span>
+          <span
+            style={{
+              fontSize: '12.5px',
+              color: 'var(--text-secondary, #888)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px'
+            }}
+          >
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--good, #2fb344)', boxShadow: '0 0 0 3px rgba(47,179,68,.16)' }}></span>
+            Mainnet
+          </span>
+        </div>
       </Link>
 
       {/* Search (desktop inline) */}
@@ -205,6 +212,7 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
       <Link href="/mempool" className="link" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.75rem', letterSpacing: '0.08em' }}>
         MEMPOOL
       </Link>
+      </div>
     </nav>
   );
 }
