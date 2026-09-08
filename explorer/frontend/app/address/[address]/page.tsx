@@ -78,7 +78,7 @@ export default function AddressPage() {
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '16px' }}>
             <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.01em', margin: 0, lineHeight: 1 }}>TARCOIN Explorer</span>
+              <span className="explorer-logo-text">TARCOIN Explorer</span>
               <span style={{ fontSize: '12.5px', color: 'var(--text-secondary, #888)', display: 'flex', alignItems: 'center', gap: '7px' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--good, #2fb344)', boxShadow: '0 0 0 3px rgba(47,179,68,.16)' }}></span>
                 Mainnet

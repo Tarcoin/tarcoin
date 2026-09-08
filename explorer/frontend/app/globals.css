@@ -276,3 +276,18 @@ body {
   border-color: rgba(212, 168, 67, 0.3);
   color: var(--text);
 }
+
+.explorer-logo-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+.explorer-logo-text:hover {
+  color: var(--gold);
+}
+

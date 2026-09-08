@@ -152,18 +152,7 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
       <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <span
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: '-0.01em',
-              margin: 0,
-              lineHeight: 1,
-            }}
-          >
-            TARCOIN Explorer
-          </span>
+          <span className="explorer-logo-text">TARCOIN Explorer</span>
           <span
             style={{
               fontSize: '12.5px',
