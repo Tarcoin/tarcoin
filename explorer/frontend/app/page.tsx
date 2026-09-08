@@ -140,13 +140,15 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
         zIndex: 100,
       }}
     >
-      <div className="container" style={{
+      <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '1.5rem',
         height: '80px',
         margin: '0 auto',
         padding: '0 2rem',
+        width: '100%',
+        maxWidth: '1200px',
       }}>
       {/* Logo */}
       <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
