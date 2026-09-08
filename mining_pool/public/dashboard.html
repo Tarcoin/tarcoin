@@ -70,6 +70,7 @@ button:hover{border-color:var(--accent);color:var(--accent);background:var(--sur
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 button.primary:hover{background:#4f9bee;color:#fff}
 button.sm{padding:4px 9px;font-size:11.5px;border-radius:7px}
+button.sm.on{background:var(--surface-3);color:var(--text-primary);font-weight:640;border:1px solid var(--text-muted)}
 
 .segs{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
 .segs button{background:none;border:none;padding:6px 13px;border-radius:7px;font-size:12.5px;color:var(--text-secondary)}
@@ -582,7 +583,11 @@ async function getJSON(url, ms){
 }
 async function fetchPool(m){
   try {
-    const d = await getJSON(POOL_BASE + ENDPOINTS[m].path);
+    const jobs = [getJSON(POOL_BASE + ENDPOINTS[m].path)];
+    if(wallet) jobs.push(getJSON(POOL_BASE + "/api/" + m + "/miner/" + encodeURIComponent(wallet)).catch(()=>null));
+    const res = await Promise.all(jobs);
+    const d = res[0];
+    if(res[1]) d.apiMiner = res[1];
     data[m] = d; failed[m] = false; record(m, d);
   } catch(e){ failed[m] = true; }
 }
@@ -886,7 +891,15 @@ function walletCard(m, d){
       '<div class="val" style="font-size:17px;font-weight:640">Idle — no active shares</div>' +
       '<div class="sub">Found <b>' + blocks.count + "</b> of the recent blocks here.</div></div>";
 
-  const live = measure(m, wallet), idle = isIdle(w), prog = live ? null : progress(m, wallet);
+  let live = measure(m, wallet);
+  const idle = isIdle(w);
+  const apiH = data[m] && data[m].apiMiner && data[m].apiMiner.hashrate != null ? data[m].apiMiner.hashrate : null;
+  if(apiH != null && !idle) {
+    if(!live) live = { rate: apiH, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0 };
+    else live.rate = apiH;
+    live.isApi = true;
+  }
+  const prog = live ? null : progress(m, wallet);
   const rate = idle || !live ? 0 : live.rate;
   let totalShares = 0; for(const k in d.workers) totalShares += d.workers[k].shares || 0;
   const pct = totalShares ? w.shares/totalShares*100 : 0;
@@ -923,25 +936,33 @@ function walletCard(m, d){
     ? '<button class="sm' + (compare ? " on primary" : "") + '" id="cmp" title="Overlay your other watched addresses">compare</button>'
     : "";
 
+  let myPts = seriesFor(m, wallet, RANGES[range]);
+  if(myPts.length < 2 && data[m] && data[m].apiMiner && data[m].apiMiner.hashrateHistory) {
+    myPts = data[m].apiMiner.hashrateHistory.map(h => ({t: h.time, v: h.hashrate}));
+  }
+
   return '<div class="hero" style="margin-bottom:13px">' +
     '<div class="card tile">' +
       '<div class="label">' + label + " pool · your hashrate " +
         (idle ? '<span class="badge warn">idle</span>'
               : !live ? '<span class="badge">measuring</span>'
+              : live.isApi ? '<span class="badge good">api direct</span>'
               : live.calibrated ? '<span class="badge good">calibrated</span>'
               : implausible(live.rate) ? '<span class="badge bad">pool data suspect</span>'
               : live.unstable ? '<span class="badge warn">range</span>'
               : '<span class="badge me">measured</span>') + "</div>" +
       '<div class="val">' + (idle ? "0 H/s"
         : !live ? '<span class="muted" style="-webkit-text-fill-color:var(--text-muted)">measuring…</span>'
-        : live.unstable ? fmtHash(live.lo) + " <small>– " + fmtHash(live.hi) + "</small>"
-        : fmtHash(live.rate) + (live.calibrated ? "" : " <small>±" + Math.round(live.err*100) + "%</small>")) + "</div>" +
+        : live.unstable && !live.isApi ? fmtHash(live.lo) + " <small>↔ " + fmtHash(live.hi) + "</small>"
+        : fmtHash(live.rate) + (live.calibrated || live.isApi ? "" : " <small>±" + Math.round(live.err*100) + "%</small>")) + "</div>" +
       '<div class="sub">' + (idle
         ? "no share submitted in over 10 minutes — miner looks offline"
         : !live
           ? "counted " + prog.shares + " share" + (prog.shares === 1 ? "" : "s") + " so far (needs " +
             MIN_SHARES + " over " + MIN_SECONDS + "s)"
-          : live.calibrated
+          : live.isApi
+            ? "exact hashrate reported directly by the pool's backend API"
+            : live.calibrated
             ? fmtNum(live.shares) + " shares over " + fmtDur(live.dt) + " at your calibrated share difficulty " +
               fmtNum(live.effDiff) + " (pool reports " + fmtNum(w.difficulty) + ")"
             : implausible(live.rate)
@@ -999,7 +1020,7 @@ function walletCard(m, d){
         '<div class="row" style="gap:4px">' + rangeBtns + cmpBtn +
           '<button class="sm" id="csv" title="Download the samples this page collected">CSV</button></div></div>' +
       chart(
-        [{ name: shortAddr(wallet), pts: seriesFor(m, wallet, RANGES[range]) }].concat(
+        [{ name: shortAddr(wallet), pts: myPts }].concat(
           compare ? others.map(a => ({ name: shortAddr(a), pts: seriesFor(m, a, RANGES[range]) })) : []),
         { label: "Your hashrate over " + range,
           empty: "Collecting samples \u2014 the line appears once a minute of shares has landed." }) +
