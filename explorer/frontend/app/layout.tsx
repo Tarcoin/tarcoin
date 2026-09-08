@@ -5,7 +5,11 @@ export const metadata: Metadata = {
   title: { default: "TARCOIN Explorer", template: "%s | TARCOIN Explorer" },
   description: "Real-time blockchain explorer for TARCOIN (TAR) — browse blocks, transactions, addresses and network statistics.",
   keywords: ["TARCOIN", "TAR", "blockchain explorer", "bitcoin", "SHA256d"],
-  icons: { icon: "/favicon.png" },
+  icons: { 
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png"
+  },
   openGraph: {
     title: "TARCOIN Blockchain Explorer",
     description: "Explore the TARCOIN mainnet — live blocks, transactions, addresses and stats.",
