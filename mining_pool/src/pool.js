@@ -591,7 +591,7 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
       const hashSnapshot = Math.round((worker.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime);
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
-      await redis.lTrim(histKey, 0, 119);
+      await redis.lTrim(histKey, 0, 8639); // keep last 8640 points (24 hours at 10s intervals)
       await redis.expire(histKey, 86400);
     }
 
@@ -667,7 +667,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       const hashSnapshot = Math.round((worker.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime);
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
-      await redis.lTrim(histKey, 0, 119); // keep last 120 points (~20 min at 10s intervals)
+      await redis.lTrim(histKey, 0, 8639); // keep last 8640 points (24 hours at 10s intervals)
       await redis.expire(histKey, 86400); // auto-expire after 24h
     }
 
@@ -1280,7 +1280,7 @@ cron.schedule('0 * * * *', processPayouts);
       let hashrateHistory = [];
       if (redis) {
         const histKey = `miner:hashrate_history:${wallet}`;
-        const histData = await redis.lRange(histKey, 0, 119);
+        const histData = await redis.lRange(histKey, 0, 8639);
         // lPush stores newest first, so reverse to get oldest→newest for chart
         hashrateHistory = histData.reverse().map(h => JSON.parse(h));
       }
@@ -1349,7 +1349,7 @@ cron.schedule('0 * * * *', processPayouts);
       let hashrateHistory = [];
       if (redis) {
         const histKey = `miner:hashrate_history:${wallet}`;
-        const histData = await redis.lRange(histKey, 0, 119);
+        const histData = await redis.lRange(histKey, 0, 8639);
         hashrateHistory = histData.reverse().map(h => JSON.parse(h));
       }
 
