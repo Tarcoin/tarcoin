@@ -300,7 +300,7 @@ export default function MempoolPage() {
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-              <span className="explorer-logo-text">TARCOIN</span>
+              <span className="explorer-logo-text" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '20px', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>TARCOIN</span>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--gold)', marginTop: '-2px' }}>
                 $TAR
               </span>
