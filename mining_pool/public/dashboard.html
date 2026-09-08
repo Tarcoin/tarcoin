@@ -1,639 +1,1291 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TARCOIN Mining Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'tarcoin-gold': '#d4a843',
-                        'tarcoin-cyan': '#00FFFF',
-                        'tarcoin-black': '#0a0a0a',
-                        'tarcoin-green': '#00FF88',
-                    },
-                    fontFamily: {
-                        orbitron: ['Orbitron', 'sans-serif'],
-                        inter: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; }
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 215, 0, 0.1);
-            border-radius: 12px;
-        }
-        .glass-solo {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 136, 0.15);
-            border-radius: 12px;
-        }
-        .text-glow { text-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
-        .text-glow-green { text-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
-        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .tab-active-pool { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.6); color: #d4a843; }
-        .tab-active-solo { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.6); color: #00FF88; }
-        .tab-inactive { background: transparent; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
-        #soloSection { display: none; }
-        #minerSection { display: none; }
-        .stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px 20px; }
-        .worker-row:hover { background: rgba(255,255,255,0.04); }
-        .hash-bar { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; height: 8px; min-width: 100px; width: 100%; }
-        .hash-fill { background: linear-gradient(90deg, #00FF88, #00cc66); border-radius: 4px; height: 8px; transition: width 0.5s ease; min-width: 3px; }
-        /* Make all sub-labels in MY STATS section readable */
-        #minerSection .text-gray-500 { color: #cbd5e1 !important; }
-        #minerSection .text-gray-600 { color: #94a3b8 !important; }
-        #minerSection .text-gray-400 { color: #e2e8f0 !important; }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarcoin Pool Stats</title>
+<link rel="icon" type="image/png" href="https://tarcoin.org/favicon.png">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0c0c0b; --surface-1:#151514; --surface-2:#1d1d1c; --surface-3:#272725;
+  --border:#2a2a28; --border-strong:#3d3d3a;
+  --text-primary:#f5f5f2; --text-secondary:#b6b5ad; --text-muted:#807f77;
+  --accent:#f1b000; --accent-soft:rgba(241,176,0,.15); --accent-line:rgba(241,176,0,.40);
+  --good:#2fb344; --warning:#e0a11b; --critical:#e05252;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{scrollbar-color:var(--surface-3) var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text-primary);
+  font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 400px at 50% -180px, rgba(241,176,0,.10), transparent 70%)}
+.mono,.addr,td.num,.tnum{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px 72px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(12,12,11,.82);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);margin-bottom:24px}
+.top-in{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;flex-wrap:wrap;gap:12px;
+  align-items:center;justify-content:space-between}
+h1{font-size:17px;margin:0;letter-spacing:-.01em;font-weight:650;display:flex;align-items:center;gap:9px}
+.logo{width:28px;height:28px;object-fit:contain;display:inline-block;}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-secondary)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex:none}
+.dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(47,179,68,.16)}
+.dot.off{background:var(--critical);box-shadow:0 0 0 3px rgba(224,82,82,.16)}
+.dot.on{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(47,179,68,.16)}50%{box-shadow:0 0 0 6px rgba(47,179,68,.05)}}
+
+h2{font-size:11.5px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.09em;color:var(--text-muted);font-weight:650}
+section{margin-bottom:30px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.sec-head h2{margin:0}
+
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:17px;
+  box-shadow:var(--shadow)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}
+.tile{transition:border-color .16s ease,transform .16s ease}
+.tile:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.tile .label{font-size:11.5px;color:var(--text-muted);margin-bottom:7px;letter-spacing:.02em}
+.tile .val{font-size:23px;font-weight:640;letter-spacing:-.025em;line-height:1.15;word-break:break-word}
+.tile .sub{font-size:11.5px;color:var(--text-muted);margin-top:6px;line-height:1.45}
+
+.hero{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.15fr);gap:14px}
+@media (max-width:860px){.hero{grid-template-columns:1fr}}
+.hero .val{font-size:40px;background:linear-gradient(180deg,var(--text-primary),#9fb8d4);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .val small{-webkit-text-fill-color:var(--text-muted);font-size:14px;font-weight:500}
+
+input[type=text]{flex:1;min-width:220px;background:var(--surface-2);border:1px solid var(--border-strong);
+  color:var(--text-primary);border-radius:9px;padding:9px 12px;font-size:13px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;transition:border-color .15s ease}
+input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+button{background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);
+  border-radius:9px;padding:9px 14px;font-size:13px;cursor:pointer;font-family:inherit;
+  transition:border-color .15s ease,color .15s ease,background .15s ease}
+button:hover{border-color:var(--accent);color:var(--accent);background:var(--surface-3)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.primary:hover{background:#4f9bee;color:#fff}
+button.sm{padding:4px 9px;font-size:11.5px;border-radius:7px}
+
+.segs{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.segs button{background:none;border:none;padding:6px 13px;border-radius:7px;font-size:12.5px;color:var(--text-secondary)}
+.segs button[aria-selected=true],.segs button.on{background:var(--surface-3);color:var(--text-primary);font-weight:640}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-1);
+  box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:700px}
+th{text-align:left;font-weight:640;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text-muted);padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap;
+  background:var(--surface-1);cursor:pointer;user-select:none}
+th:hover{color:var(--text-secondary)}
+th .arr{opacity:.45;font-size:9px}
+td{padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text-secondary)}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right}
+tbody tr{transition:background .12s ease}
+tbody tr:hover td{background:var(--surface-2)}
+tr.mine td{background:var(--accent-soft);color:var(--text-primary)}
+tr.mine:hover td{background:rgba(241,176,0,.2)}
+tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+
+.badge{display:inline-block;font-size:10.5px;padding:1.5px 8px;border-radius:999px;border:1px solid var(--border-strong);
+  color:var(--text-muted);white-space:nowrap}
+.badge.me{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
+.badge.warn{border-color:rgba(224,161,27,.5);color:var(--warning);background:rgba(224,161,27,.1)}
+.badge.good{border-color:rgba(47,179,68,.5);color:var(--good);background:rgba(47,179,68,.1)}
+.badge.bad{border-color:rgba(224,82,82,.5);color:var(--critical);background:rgba(224,82,82,.1)}
+.bar{height:6px;border-radius:3px;background:var(--surface-3);overflow:hidden;min-width:74px}
+.bar span{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),#ffec8b);
+  transition:width .4s ease}
+.addr{font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;
+  padding:3.5px 9px;color:var(--text-secondary)}
+.chip b{color:var(--text-primary);font-weight:640}
+.chip.hi{border-color:var(--accent-line);background:var(--accent-soft);color:var(--text-primary)}
+.chip.act{cursor:pointer}
+.chip.act:hover{border-color:var(--accent);color:var(--text-primary)}
+.muted{color:var(--text-muted)}
+svg.spark{display:block;width:100%;height:132px;overflow:visible}
+.foot{font-size:11.5px;color:var(--text-muted);margin-top:9px;line-height:1.55}
+.empty{color:var(--text-muted);font-size:13px;padding:8px 2px}
+.note{font-size:11.5px;color:var(--text-muted);border:1px dashed var(--border-strong);border-radius:9px;
+  padding:10px 12px;margin-top:11px;line-height:1.5}
+.note b{color:var(--text-secondary)}
+
+/* toasts */
+#toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:9px;max-width:330px}
+#help{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);
+  display:grid;place-items:center;padding:20px}
+#help[hidden]{display:none}
+.help-box{background:var(--surface-1);border:1px solid var(--border-strong);border-radius:var(--radius);
+  padding:20px;max-width:560px;width:100%;box-shadow:var(--shadow)}
+.kbd-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:12.5px;color:var(--text-secondary);
+  align-items:center}
+kbd{display:inline-block;background:var(--surface-3);border:1px solid var(--border-strong);border-bottom-width:2px;
+  border-radius:5px;padding:1px 7px;font:11.5px ui-monospace,Menlo,Consolas,monospace;color:var(--text-primary)}
+.toast{background:var(--surface-2);border:1px solid var(--border-strong);border-left:3px solid var(--accent);
+  border-radius:10px;padding:11px 13px;box-shadow:var(--shadow);font-size:12.5px;
+  animation:slidein .25s ease}
+.toast.good{border-left-color:var(--good)} .toast.warn{border-left-color:var(--warning)}
+.toast b{display:block;margin-bottom:2px;font-size:13px;color:var(--text-primary)}
+@keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
 </head>
-<body class="min-h-screen relative overflow-x-hidden">
-    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-tarcoin-gold/5 rounded-full blur-[100px] -z-10"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-tarcoin-cyan/5 rounded-full blur-[100px] -z-10"></div>
+<body>
 
-    <div class="max-w-6xl mx-auto px-4 py-12" id="app">
-        <!-- Header -->
-        <div class="text-center mb-10">
-            <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-tarcoin-gold/20 bg-tarcoin-gold/5 mb-8">
-                <span class="w-2 h-2 rounded-full bg-tarcoin-gold pulse-dot"></span>
-                <span class="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase" id="statusText">Connecting...</span>
-            </div>
-            <h1 class="text-4xl md:text-5xl font-orbitron font-black mb-4">
-                <span class="text-white">TARCOIN</span><br />
-                <span class="text-tarcoin-gold text-glow">Mining Dashboard</span>
-            </h1>
-        </div>
-
-        <!-- Tab Switcher -->
-        <div class="flex justify-center gap-4 mb-10">
-            <button id="tabPool" onclick="switchTab('pool')"
-                class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool">
-                ⛏ POOL
-            </button>
-            <button id="tabSolo" onclick="switchTab('solo')"
-                class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive">
-                🎯 SOLO
-            </button>
-            <button id="tabMiner" onclick="switchTab('miner')"
-                class="px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive">
-                👤 MY STATS
-            </button>
-        </div>
-
-        <!-- ====== MINER LOOKUP SECTION ====== -->
-        <div id="minerSection" style="display:none;">
-            <p class="text-center text-gray-400 font-space text-lg max-w-2xl mx-auto mb-8">
-                Enter your wallet address to view your personal mining stats
-            </p>
-            <div class="flex gap-3 max-w-2xl mx-auto mb-10">
-                <input id="walletInput" type="text" placeholder="Enter your TAR wallet address..."
-                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-tarcoin-gold/60"
-                    onkeydown="if(event.key==='Enter') lookupWallet()" />
-                <button onclick="lookupWallet()"
-                    class="px-6 py-3 rounded-xl font-orbitron text-sm font-bold tracking-widest bg-tarcoin-gold/10 border border-tarcoin-gold/40 text-tarcoin-gold hover:bg-tarcoin-gold/20 transition-all">
-                    LOOKUP
-                </button>
-            </div>
-
-            <!-- Miner Stats Dashboard (shown after lookup) -->
-            <div id="minerDashboard" style="display:none;" class="max-w-5xl mx-auto">
-
-                <!-- Top Stats Bar -->
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                    <div class="stat-card col-span-2 md:col-span-1">
-                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Your Hashrate</div>
-                        <div class="text-xl font-orbitron font-bold text-tarcoin-gold" id="ms-pool-hash">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Submissions</div>
-                        <div class="text-xl font-orbitron font-bold text-white" id="ms-shares">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Pool Share %</div>
-                        <div class="text-xl font-orbitron font-bold text-tarcoin-cyan" id="ms-pct">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Est. Payout</div>
-                        <div class="text-xl font-orbitron font-bold text-tarcoin-green" id="ms-payout">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="text-[10px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Blocks Found</div>
-                        <div class="text-xl font-orbitron font-bold text-white" id="ms-blocks">-</div>
-                    </div>
-                </div>
-
-                <!-- Wallet Address + Live Chart -->
-                <div class="glass p-5 mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <div class="text-[10px] text-gray-500 font-mono uppercase mb-1">YOUR WALLET</div>
-                            <div class="font-mono text-tarcoin-cyan text-xs truncate max-w-xs md:max-w-xl" id="ms-wallet-addr">-</div>
-                        </div>
-                        <div id="ms-solo-section" class="text-right" style="display:none;">
-                            <div class="text-[10px] text-gray-500 font-mono uppercase mb-1">Solo Hashrate</div>
-                            <div class="font-orbitron font-bold text-tarcoin-green text-sm" id="ms-solo-hash">-</div>
-                        </div>
-                    </div>
-
-                    <!-- Big Hashrate Display -->
-                    <div class="mb-4">
-                        <div class="text-3xl md:text-4xl font-orbitron font-black text-white mb-1" id="ms-big-hash">0.00 H/s</div>
-                        <div class="text-xs text-gray-500 font-mono">Your hashrate this session · updates every 10s</div>
-                    </div>
-
-                    <!-- Live Chart -->
-                    <div style="height: 140px; position: relative;">
-                        <canvas id="hashrateChart"></canvas>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-gray-600 font-mono mt-1">
-                        <span>Hashrate this session</span>
-                        <span id="ms-last-update">No data yet · updates every 10s</span>
-                    </div>
-                </div>
-
-                <!-- Workers Table -->
-                <div class="mb-6">
-                    <h3 class="font-orbitron text-white font-bold text-sm mb-3 uppercase tracking-wider">Active Workers</h3>
-                    <div class="glass overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-white/5 border-b border-white/10 text-[10px] font-orbitron tracking-wider text-gray-400 uppercase">
-                                    <th class="p-3">Address</th>
-                                    <th class="p-3">Pool</th>
-                                    <th class="p-3">Shares</th>
-                                    <th class="p-3">Hashrate</th>
-                                    <th class="p-3" style="width:140px">Hash Bar</th>
-                                    <th class="p-3 text-right">Last Share</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ms-workers-tbody">
-                                <tr><td colspan="6" class="p-8 text-center text-gray-500">No active workers</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Blocks Found -->
-                <div id="ms-blocks-section" style="display:none;">
-                    <h3 class="font-orbitron text-white font-bold text-sm mb-3 uppercase tracking-wider">🏆 Your Blocks Found</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="ms-blocks-grid"></div>
-                </div>
-
-            </div>
-
-            <div id="minerNotFound" style="display:none;" class="glass p-8 text-center max-w-2xl mx-auto">
-                <p class="text-gray-400 font-mono text-lg mb-2">⚠️ Wallet Not Found</p>
-                <p class="text-gray-500 text-sm">This address has no active shares on either pool right now.<br>Make sure your miner is connected and submitting shares.</p>
-            </div>
-        </div>
-
-
-        <!-- ====== POOL SECTION ====== -->
-        <div id="poolSection">
-            <p class="text-center text-gray-400 font-space text-lg max-w-2xl mx-auto mb-10">
-                Connect to <code class="text-tarcoin-cyan bg-tarcoin-cyan/10 px-2 py-1 rounded">stratum+tcp://stratum.tarcoin.org:3333</code>
-                &nbsp;·&nbsp; Fee: 1% &nbsp;·&nbsp; Algorithm: SHA256d
-            </p>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="glass p-6 text-center">
-                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Active Miners</div>
-                    <div class="text-xl font-orbitron font-bold text-white" id="statMiners">-</div>
-                </div>
-                <div class="glass p-6 text-center">
-                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Pool Hashrate</div>
-                    <div class="text-xl font-orbitron font-bold text-tarcoin-cyan" id="statHashrate">- TH/s</div>
-                </div>
-                <div class="glass p-6 text-center">
-                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Current Cycle Shares</div>
-                    <div class="text-xl font-orbitron font-bold text-tarcoin-gold" id="statShares">-</div>
-                </div>
-            </div>
-
-            <h2 class="text-xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Active Workers</h2>
-            <div class="glass overflow-hidden mb-12">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-white/5 border-b border-white/10 text-xs font-orbitron tracking-wider text-gray-400 uppercase">
-                            <th class="p-4">Wallet Address</th>
-                            <th class="p-4">Valid Shares</th>
-                            <th class="p-4 text-right">Last Share Found</th>
-                        </tr>
-                    </thead>
-                    <tbody id="workerTable" class="text-sm font-space">
-                        <tr><td colspan="3" class="p-8 text-center text-gray-500">Loading miners...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <h2 class="text-xl font-orbitron font-bold text-white mb-6 border-b border-white/10 pb-4">Recent Blocks Found by Pool</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="blocksGrid">
-                <div class="text-gray-500 p-4">Loading blocks...</div>
-            </div>
-        </div>
-
-        <!-- ====== SOLO SECTION ====== -->
-        <div id="soloSection">
-            <p class="text-center text-gray-400 font-space text-lg max-w-2xl mx-auto mb-10">
-                Connect to <code class="text-tarcoin-green bg-tarcoin-green/10 px-2 py-1 rounded">stratum+tcp://stratum.tarcoin.org:3334</code>
-                &nbsp;·&nbsp; Fee: 1% &nbsp;·&nbsp; Reward: 49,500 TAR per block
-            </p>
-            <p class="text-center text-gray-500 text-sm mb-10">Solo miners keep 99% of the full 50,000 TAR block reward. No share splitting.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="glass-solo p-6 text-center">
-                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Solo Miners</div>
-                    <div class="text-xl font-orbitron font-bold text-white" id="soloStatMiners">-</div>
-                </div>
-                <div class="glass-solo p-6 text-center">
-                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Solo Hashrate</div>
-                    <div class="text-xl font-orbitron font-bold text-tarcoin-green" id="soloStatHashrate">- TH/s</div>
-                </div>
-                <div class="glass-solo p-6 text-center">
-                    <div class="text-xs font-orbitron text-gray-400 tracking-widest mb-2 uppercase">Block Reward</div>
-                    <div class="text-xl font-orbitron font-bold text-tarcoin-green text-glow-green">49,500 TAR</div>
-                </div>
-            </div>
-
-            <h2 class="text-xl font-orbitron font-bold text-white mb-6 border-b border-tarcoin-green/20 pb-4">Solo Miners</h2>
-            <div class="glass-solo overflow-hidden mb-12">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-white/5 border-b border-white/10 text-xs font-orbitron tracking-wider text-gray-400 uppercase">
-                            <th class="p-4">Wallet Address</th>
-                            <th class="p-4">Shares Submitted</th>
-                            <th class="p-4 text-right">Last Share</th>
-                        </tr>
-                    </thead>
-                    <tbody id="soloWorkerTable" class="text-sm font-space">
-                        <tr><td colspan="3" class="p-8 text-center text-gray-500">No solo miners connected yet. Be the first!</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <h2 class="text-xl font-orbitron font-bold text-white mb-6 border-b border-tarcoin-green/20 pb-4">Recent Solo Blocks Found</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="soloBlocksGrid">
-                <div class="text-gray-500 p-4">No solo blocks found yet.</div>
-            </div>
-        </div>
+<div class="top"><div class="top-in">
+  <div style="display:flex; align-items:center; gap:16px;">
+    <img src="https://tarcoin.org/logo.png" style="width:48px; height:48px; object-fit:contain;" alt="TAR">
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <h1 style="font-size:22px; margin:0; letter-spacing:-.01em; font-weight:700;">Tarcoin Pool</h1>
+      <div class="status"><span class="dot" id="dot"></span><span id="statusText">connecting…</span></div>
     </div>
+  </div>
+  <div class="row">
+    <div class="segs" role="tablist" id="tabs">
+      <button role="tab" data-mode="solo" aria-selected="true">Solo</button>
+      <button role="tab" data-mode="pool" aria-selected="false">Shared</button>
+    </div>
+    <span class="muted" id="updated" style="font-size:12px">—</span>
+    <button id="refresh" class="sm">Refresh</button>
+    <button id="alerts" class="sm" title="Desktop notification when your miner stops or finds a block">Alerts off</button>
+    <button id="helpBtn" class="sm" title="Keyboard shortcuts and how to read the numbers">?</button>
+  </div>
+</div></div>
 
-    <script>
-        let currentTab = 'pool';
+<div class="wrap">
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('poolSection').style.display = 'none';
-            document.getElementById('soloSection').style.display = 'none';
-            document.getElementById('minerSection').style.display = 'none';
-            document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
-            document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
-            document.getElementById('tabMiner').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-inactive';
+<section>
+  <h2>Connection Info</h2>
+  <div class="hero" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <div class="label">Shared Pool</div>
+      <div style="font-family:ui-monospace,monospace; font-size:14.5px; font-weight:640; margin: 8px 0; color:var(--text-primary); user-select:all; word-break:break-all;">stratum+tcp://stratum.tarcoin.org:3333</div>
+      <div class="sub">Fee: 1% &nbsp;&bull;&nbsp; Algorithm: SHA256d</div>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--good);">
+      <div class="label">Solo Pool</div>
+      <div style="font-family:ui-monospace,monospace; font-size:14.5px; font-weight:640; margin: 8px 0; color:var(--text-primary); user-select:all; word-break:break-all;">stratum+tcp://stratum.tarcoin.org:3334</div>
+      <div class="sub">Fee: 1% &nbsp;&bull;&nbsp; Reward: 49,500 TAR</div>
+    </div>
+  </div>
+</section>
 
-            if (tab === 'pool') {
-                document.getElementById('poolSection').style.display = 'block';
-                document.getElementById('tabPool').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool';
-            } else if (tab === 'solo') {
-                document.getElementById('soloSection').style.display = 'block';
-                document.getElementById('tabSolo').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-solo';
-            } else {
-                document.getElementById('minerSection').style.display = 'block';
-                document.getElementById('tabMiner').className = 'px-8 py-3 rounded-full border font-orbitron text-sm tracking-widest transition-all tab-active-pool';
-            }
-        }
+<section>
+  <h2>Network</h2>
+  <div class="tiles" id="netTiles"></div>
+</section>
 
-        // ====== MINER STATS CHART ENGINE ======
-        let hashrateChart = null;
-        let hashrateHistory = { labels: [], data: [] };
-        let minerRefreshTimer = null;
-        let currentMinerWallet = '';
+<section>
+  <h2 id="poolHeading">Pool</h2>
+  <div class="tiles" id="poolTiles"></div>
+</section>
 
-        const formatH = (h) => {
-            if (!h || h === 0) return '0.00 H/s';
-            const th = h / 1e12; if (th >= 1) return th.toFixed(2) + ' TH/s';
-            const gh = h / 1e9; if (gh >= 1) return gh.toFixed(2) + ' GH/s';
-            const mh = h / 1e6; if (mh >= 1) return mh.toFixed(2) + ' MH/s';
-            return (h / 1e3).toFixed(2) + ' KH/s';
-        };
-        const timeAgo = (ts) => {
-            if (!ts) return 'Never';
-            const s = Math.floor((Date.now() - ts) / 1000);
-            if (s < 60) return s + 's ago';
-            if (s < 3600) return Math.floor(s/60) + 'm ago';
-            return Math.floor(s/3600) + 'h ago';
-        };
+<section>
+  <h2>Your wallet</h2>
+  <div class="card" style="margin-bottom:13px">
+    <div class="row">
+      <input type="text" id="wallet" placeholder="tar1q… paste your payout address" spellcheck="false" autocomplete="off">
+      <button id="save" class="primary">Track</button>
+      <button id="clear">Clear</button>
+      <span id="valid"></span>
+    </div>
+    <div class="chips" id="watchlist"></div>
+    <div class="note" id="proxyNote" hidden></div>
+  </div>
+  <div id="mine"></div>
+</section>
 
-        function initChart(preloadedHistory) {
-            if (hashrateChart) { hashrateChart.destroy(); hashrateChart = null; }
-            hashrateHistory = { labels: [], data: [] };
+<section>
+  <div class="sec-head">
+    <h2 id="minersHeading">Miners</h2>
+    <span class="muted" style="font-size:11.5px">click a column to sort</span>
+  </div>
+  <div class="tablewrap"><table id="minersTable">
+    <thead><tr>
+      <th data-sort="addr">Address</th>
+      <th class="num" data-sort="shares">Shares</th>
+      <th class="num" data-sort="diff">Difficulty</th>
+      <th class="num" data-sort="rate">Hashrate</th>
+      <th data-sort="pct">Pool share</th>
+      <th class="num" data-sort="blocks">Blocks</th>
+      <th class="num" data-sort="seen">Last share</th>
+    </tr></thead><tbody id="minersBody"></tbody>
+  </table></div>
+</section>
 
-            // Pre-fill from Redis history if available
-            if (preloadedHistory && preloadedHistory.length > 0) {
-                preloadedHistory.forEach(pt => {
-                    const t = new Date(pt.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-                    hashrateHistory.labels.push(t);
-                    hashrateHistory.data.push(pt.hashrate / 1e9);
-                });
-            }
+<section>
+  <div class="sec-head"><h2>Chain history</h2>
+    <span class="muted" style="font-size:11.5px" id="chainNote"></span></div>
+  <div class="hero">
+    <div class="card"><div class="label">Difficulty by block</div><div id="diffChart"></div></div>
+    <div class="card"><div class="label">Time between blocks</div><div id="gapChart"></div></div>
+  </div>
+</section>
 
-            const ctx = document.getElementById('hashrateChart').getContext('2d');
-            hashrateChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: hashrateHistory.labels,
-                    datasets: [{
-                        label: 'Hashrate',
-                        data: hashrateHistory.data,
-                        borderColor: '#00FF88',
-                        backgroundColor: 'rgba(0,255,136,0.08)',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#00FF88',
-                        pointBorderColor: '#00FF88',
-                        tension: 0.3,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    animation: { duration: 300 },
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            titleColor: '#00FF88',
-                            bodyColor: '#e2e8f0',
-                            padding: 10,
-                            callbacks: {
-                                title: (items) => items[0]?.label || '',
-                                label: (c) => '  ' + formatH(c.raw * 1e9)
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false, beginAtZero: false }
-                    }
-                }
-            });
-        }
+<section>
+  <h2 id="blocksHeading">Recent blocks</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th class="num">Height</th><th>Miner</th><th>Worker</th><th class="num">Found</th><th class="num">Confirmations</th></tr></thead>
+    <tbody id="blocksBody"></tbody>
+  </table></div>
+</section>
 
-        function updateMinerUI(poolRes, soloRes) {
-            const totalHash = (poolRes.hashrate || 0) + (soloRes.hashrate || 0);
-            const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+<p class="foot" id="sources"></p>
+</div>
 
-            // Update chart data (store in GH/s for readability)
-            hashrateHistory.labels.push(now);
-            hashrateHistory.data.push(totalHash / 1e9);
-            if (hashrateHistory.labels.length > 120) {
-                hashrateHistory.labels.shift();
-                hashrateHistory.data.shift();
-            }
-            if (hashrateChart) {
-                hashrateChart.update();
-                const peak = Math.max(...hashrateHistory.data);
-                const n = hashrateHistory.data.length;
-                document.getElementById('ms-last-update').textContent =
-                    'Peak ' + formatH(peak * 1e9) + ' · ' + n + ' sample' + (n !== 1 ? 's' : '') + ' · hover a point for its value';
-            }
+<div id="toasts"></div>
 
+<div id="help" hidden>
+  <div class="help-box">
+    <div class="sec-head"><h2 style="margin:0">Keyboard &amp; how to read this</h2>
+      <button class="sm" id="helpClose">close</button></div>
+    <div class="kbd-grid">
+      <span><kbd>/</kbd></span><span>focus the wallet box</span>
+      <span><kbd>1</kbd> <kbd>2</kbd></span><span>solo / shared pool</span>
+      <span><kbd>r</kbd></span><span>refresh now</span>
+      <span><kbd>c</kbd></span><span>jump to calibration</span>
+      <span><kbd>e</kbd></span><span>export samples as CSV</span>
+      <span><kbd>a</kbd></span><span>toggle alerts</span>
+      <span><kbd>?</kbd></span><span>this panel</span>
+    </div>
+    <div class="foot" style="margin-top:14px">
+      <b>Hashrate</b> is measured from your share deltas, priced at the lowest difficulty the pool
+      reported during the window. The pool publishes one difficulty per payout address while summing
+      every rig on it, so an uncalibrated figure is indicative and a wide difficulty spread is shown
+      as a range. Calibrate against your own miner for an exact number.<br><br>
+      <b>Luck</b> compares blocks found against blocks your measured hashrate should have produced at
+      the network difficulty. It is meaningless over minutes and only settles over days.<br><br>
+      <b>±</b> is Poisson error on share arrival (1/√N) and covers sampling noise only.
+    </div>
+  </div>
+</div>
 
-            // Top stat cards — use combined pool + solo so solo miners see correct values
-            const isSoloOnly = (poolRes.hashrate || 0) === 0 && (soloRes.hashrate || 0) > 0;
-            const combinedShares = (poolRes.shares || 0) + (soloRes.shares || 0);
-            document.getElementById('ms-pool-hash').textContent = formatH(totalHash);
-            document.getElementById('ms-shares').textContent = combinedShares;
-            if (isSoloOnly) {
-                // Solo miner: pool share % and payout don't apply the same way
-                document.getElementById('ms-pct').textContent = '100%';
-                document.getElementById('ms-payout').textContent = '49,500 TAR/block';
-            } else {
-                document.getElementById('ms-pct').textContent = (poolRes.sharePercent || '0.00') + '%';
-                document.getElementById('ms-payout').textContent = (poolRes.estimatedPayout || '0.00') + ' TAR';
-            }
-            const totalBlocks = (poolRes.blocksFound?.length || 0) + (soloRes.blocksFound?.length || 0);
-            document.getElementById('ms-blocks').textContent = totalBlocks;
+<script>
+"use strict";
 
-            // Wallet + big hashrate
-            document.getElementById('ms-wallet-addr').textContent = currentMinerWallet;
-            document.getElementById('ms-big-hash').textContent = formatH(totalHash);
-            // Only show Solo Hashrate box when actually mining on solo pool
-            const soloHash = soloRes.hashrate || 0;
-            const soloSection = document.getElementById('ms-solo-section');
-            if (soloHash > 0) {
-                soloSection.style.display = 'block';
-                document.getElementById('ms-solo-hash').textContent = formatH(soloHash);
-            } else {
-                soloSection.style.display = 'none';
-            }
-            document.getElementById('ms-last-update').textContent = 'Updated: ' + now;
+// ---------------------------------------------------------------------------
+// Hosts differ in what they allow, which decides what a given run can reach:
+//   pool.tarcoin.org       "access-control-allow-origin: *"  -> always
+//   api.tarcoin.org        allowlists file:// (Origin: null) -> file yes, localhost no
+//   explorer.tarcoin.org   rejects both                      -> proxy only
+// serve.js proxies server-side (no Origin sent), which unlocks balances.
+// ---------------------------------------------------------------------------
+const PROXIED = location.protocol === "http:" || location.protocol === "https:";
+const POOL_BASE     = PROXIED ? "/x/pool"     : "https://pool.tarcoin.org";
+const API_BASE      = PROXIED ? "/x/api"      : "https://api.tarcoin.org";
+const EXPLORER_BASE = PROXIED ? "/x/explorer" : null;
 
-            // Workers table
-            const allWorkers = [
-                ...(poolRes.workers || []).map(w => ({...w, pool: 'Shared'})),
-                ...(soloRes.workers || []).map(w => ({...w, pool: 'Solo'}))
-            ];
-            const tbody = document.getElementById('ms-workers-tbody');
-            // Use total pool hashrate as 100% reference so bar is proportional to whole pool
-            const totalPoolHash = (poolRes.hashrate || 0) + (soloRes.hashrate || 0) || 1;
-            if (allWorkers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">No active workers right now</td></tr>';
-            } else {
-                tbody.innerHTML = allWorkers.map(w => {
-                    const label = w.name.includes('.') ? w.name.split('.').slice(1).join('.') || w.name : w.name;
-                    // Cap bar at 98% so it never looks like a solid full line even at 100%
-                    const barPct = Math.min(98, Math.max(3, ((w.hashrate || 0) / totalPoolHash * 100))).toFixed(1);
-                    return `<tr class="worker-row border-b border-white/5 transition-colors">
-                        <td class="p-3 font-mono text-tarcoin-cyan text-xs">${label}</td>
-                        <td class="p-3 text-xs text-gray-400">${w.pool}</td>
-                        <td class="p-3 font-bold text-white text-xs">${w.validShares}</td>
-                        <td class="p-3 font-bold text-tarcoin-green text-xs">${formatH(w.hashrate)}</td>
-                        <td class="p-3" style="min-width:120px;"><div class="hash-bar"><div class="hash-fill" style="width:${barPct}%"></div></div></td>
-                        <td class="p-3 text-right text-gray-400 text-xs">${timeAgo(w.lastSeen)} <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 ml-1"></span></td>
-                    </tr>`;
-                }).join('');
-            }
+const ENDPOINTS = {
+  solo: { path: "/api/solo/stats", label: "Solo",   hashKey: "soloHashrate" },
+  pool: { path: "/api/pool/stats", label: "Shared", hashKey: "poolHashrate" }
+};
+const POOL_MS = 5000;
+const BACKGROUND_EVERY = 4;
+const NET_MS = 60000;
+const BLOCK_SPAN = 20;
+const COINBASE_MATURITY = 100;
+const MIN_SHARES = 3, MIN_SECONDS = 25;
+const IDLE_MS = 10*60*1000;
+// Raw 5s samples are kept for the recent window; beyond that the page reads
+// one-minute rollups, so a chart can span a day without holding 17k samples.
+const RANGES = { "15m": 900000, "1h": 3600000, "6h": 21600000, "24h": 86400000 };
+const RAW_MS = 1800000;        // raw samples cover the last 30 minutes
+const ROLL_MS = 60000;         // one rollup per minute
+const ROLL_KEEP = 1500;        // ~25h of rollups per tracked address
+const MEASURE_MS = 300000;     // the headline rate always reads the last 5 minutes
 
+const LS = { wallet:"tarcoin.wallet", hist:"tarcoin.history.v2", mode:"tarcoin.mode",
+             calib:"tarcoin.calibration", watch:"tarcoin.watchlist", seen:"tarcoin.seenblocks",
+             range:"tarcoin.range", alerts:"tarcoin.alerts", roll:"tarcoin.rollups.v1",
+             compare:"tarcoin.compare", luck:"tarcoin.luck.v1", blocks:"tarcoin.blockcache.v1" };
 
-            // Blocks found
-            const allBlocks = [
-                ...(poolRes.blocksFound || []).map(b => ({...b, pool: 'Shared'})),
-                ...(soloRes.blocksFound || []).map(b => ({...b, pool: 'Solo'}))
-            ].sort((a, b) => b.time - a.time);
-            const blocksSection = document.getElementById('ms-blocks-section');
-            if (allBlocks.length > 0) {
-                blocksSection.style.display = 'block';
-                document.getElementById('ms-blocks-grid').innerHTML = allBlocks.map(b => {
-                    const mins = Math.floor((Date.now() - b.time) / 60000);
-                    return `<div class="glass p-4 border-l-4 border-l-tarcoin-gold">
-                        <div class="text-xs font-orbitron text-tarcoin-gold mb-1">BLOCK #${b.height} — ${b.pool}</div>
-                        <div class="text-white font-bold font-mono text-sm">${b.reward || 49500} TAR</div>
-                        <div class="text-gray-400 text-xs mt-1">${mins}m ago</div>
-                    </div>`;
-                }).join('');
-            } else {
-                blocksSection.style.display = 'none';
-            }
-        }
+let history = loadJSON(LS.hist, {});
+let rollups = loadJSON(LS.roll, {});     // "mode|address" -> [{t, shares, dmin, dmax}]
+let compare = localStorage.getItem(LS.compare) === "1";
+let luck = loadJSON(LS.luck, {});         // "mode|address" -> {since, expected, secs, blocks:{}}
+let dropState = {};                       // "mode|address" -> consecutive low readings
+let blockCache = loadJSON(LS.blocks, {}); // height -> {time, difficulty}; block headers never change
+const CHAIN_SPAN = 40;                    // how many recent blocks the chain charts cover
+const CHAIN_PER_POLL = 6;                 // headers fetched per network poll, to stay polite
+let calib   = loadJSON(LS.calib, {});
+let watch   = loadJSON(LS.watch, []);
+let seen    = loadJSON(LS.seen, []);
+let wallet  = (localStorage.getItem(LS.wallet) || "").trim();
+let mode    = localStorage.getItem(LS.mode) || "solo";
+let range   = localStorage.getItem(LS.range) || "15m";
+if(!RANGES[range]) range = "15m";
+let alertsOn = localStorage.getItem(LS.alerts) === "1";
+const data  = { solo:null, pool:null, net:null, chain:null, balance:null, hash10:null, older:null, netstats:null };
+const failed = { solo:false, pool:false };
+let validity = null, cycle = 0, netTimer = 0, poolTimer = 0;
+let sort = { key:"shares", dir:-1 };
+const TH_LABELS = { addr:"Address", shares:"Shares", diff:"Difficulty", rate:"Hashrate",
+                    pct:"Pool share", blocks:"Blocks", seen:"Last share" };
+const session = { start: Date.now(), startShares: null, startAddr: null };
+let wasIdle = null;
 
-        async function fetchMinerStats() {
-            if (!currentMinerWallet) return;
-            try {
-                const [poolRes, soloRes] = await Promise.all([
-                    fetch(`/api/pool/miner/${encodeURIComponent(currentMinerWallet)}`).then(r => r.json()),
-                    fetch(`/api/solo/miner/${encodeURIComponent(currentMinerWallet)}`).then(r => r.json()),
-                ]);
-                updateMinerUI(poolRes, soloRes);
-            } catch(e) { console.error('Miner stats fetch error', e); }
-        }
+const $ = id => document.getElementById(id);
+function loadJSON(k, d){ try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e){ return d; } }
+function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 
-        async function lookupWallet() {
-            const wallet = document.getElementById('walletInput').value.trim();
-            if (!wallet) return;
+// ---- formatting -----------------------------------------------------------
+function fmtHash(h){
+  if(!isFinite(h) || h <= 0) return "0 H/s";
+  const u = ["H/s","KH/s","MH/s","GH/s","TH/s","PH/s","EH/s"];
+  let i = 0; while(h >= 1000 && i < u.length - 1){ h /= 1000; i++; }
+  return h.toFixed(h < 10 ? 2 : h < 100 ? 1 : 0) + " " + u[i];
+}
+function fmtNum(n, dp){ return (n||0).toLocaleString("en-US", { maximumFractionDigits: dp == null ? 0 : dp }); }
+function fmtTar(n){
+  if(!isFinite(n)) return "—";
+  if(n >= 1e9) return (n/1e9).toFixed(2) + "B";
+  if(n >= 1e6) return (n/1e6).toFixed(2) + "M";
+  if(n >= 1000) return fmtNum(n);
+  return fmtNum(n, 2);
+}
+function fmtDur(s){
+  if(!isFinite(s) || s <= 0) return "—";
+  if(s < 90) return Math.round(s) + "s";
+  if(s < 5400) return Math.round(s/60) + " min";
+  if(s < 172800) return (s/3600).toFixed(1) + " hours";
+  if(s < 63072000) return (s/86400).toFixed(1) + " days";
+  return (s/31536000).toFixed(1) + " years";
+}
+function agoText(ms){
+  const s = Math.max(0, Math.round((Date.now() - ms)/1000));
+  if(s < 60) return s + "s ago";
+  if(s < 3600) return Math.floor(s/60) + "m ago";
+  if(s < 86400) return Math.floor(s/3600) + "h " + Math.floor((s%3600)/60) + "m ago";
+  return Math.floor(s/86400) + "d ago";
+}
+function agoCell(ms){ return '<span data-ts="' + ms + '">' + agoText(ms) + "</span>"; }
+function shortAddr(a){ return a.length > 22 ? a.slice(0,11) + "…" + a.slice(-6) : a; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+const key = (m, a) => m + "|" + a;
 
-            // Stop previous timer
-            if (minerRefreshTimer) clearInterval(minerRefreshTimer);
+// ---- measurement ----------------------------------------------------------
+// A share is difficulty x 2^32 hashes. Two things make the pool's numbers hard
+// to price: vardiff moves between polls, and the pool publishes ONE difficulty
+// per payout address while summing every rig on it. Tested against a miner known
+// to run 2.17 TH/s, pricing shares at the difficulty reported at the time ran
+// 49-90% high; pricing the window's shares at the LOWEST difficulty seen landed
+// within 6-15%, and across every miner it brought the summed total from 1.78x
+// the network's hashrate to 1.16x. The low end leads; the high end is the upper
+// bound of an honest range. Every interval counts toward shares and elapsed
+// time -- an earlier version discarded intervals where vardiff moved, which
+// starved the measurement entirely for miners whose difficulty moves on nearly
+// every poll, leaving the table stuck on "measuring...". 
+function rateOver(h, from, to, windowMs){
+  const b = h[to];
+  let start = from;
+  for(let i = from; i <= to; i++){ if(b.t - h[i].t <= windowMs){ start = i; break; } }
+  let hashes = 0, shares = 0, dt = 0, dmin = Infinity, dmax = 0;
+  for(let i = start + 1; i <= to; i++){
+    const ds = h[i].shares - h[i-1].shares;
+    if(ds < 0) continue;                          // share counter reset
+    dt += (h[i].t - h[i-1].t)/1000;
+    shares += ds;
+    hashes += ds * h[i].diff * 4294967296;
+    if(ds > 0){
+      // a share here was submitted at one of the interval's two difficulties
+      dmin = Math.min(dmin, h[i].diff, h[i-1].diff);
+      dmax = Math.max(dmax, h[i].diff, h[i-1].diff);
+    }
+  }
+  dmin = isFinite(dmin) ? dmin : 0;
+  return { hashes:hashes, shares:shares, dt:dt, dmin:dmin, dmax:dmax,
+           atReported: dt > 0 ? hashes/dt : 0,
+           atMin: dt > 0 ? shares * dmin * 4294967296 / dt : 0,
+           atMax: dt > 0 ? shares * dmax * 4294967296 / dt : 0,
+           perMin: dt > 0 ? shares/dt*60 : 0 };
+}
+function measure(m, addr, windowMs){
+  const h = history[key(m, addr)];
+  if(!h || h.length < 2) return null;
+  // deliberately not the chart range: a 24h chart must not turn the headline
+  // into a 24h average of a rig that changed hours ago
+  const r = rateOver(h, 0, h.length - 1, windowMs || MEASURE_MS);
+  if(r.dt < MIN_SECONDS || r.shares < MIN_SHARES) return null;
+  const spread = r.dmin ? r.dmax / r.dmin : 1;
+  const out = { rate:r.atMin, lo:r.atMin, hi:r.atMax, reported:r.atReported,
+                shares:r.shares, dt:r.dt, err:1/Math.sqrt(r.shares),
+                perMin:r.perMin, dmin:r.dmin, dmax:r.dmax,
+                unstable: spread > 1.5, calibrated:false };
+  const cd = calib[addr];
+  if(cd){
+    out.rate = r.shares * cd * 4294967296 / r.dt;
+    out.lo = out.hi = out.rate;
+    out.calibrated = true; out.effDiff = cd; out.unstable = false;
+  }
+  return out;
+}
+function progress(m, addr){
+  const h = history[key(m, addr)];
+  if(!h || h.length < 2) return { shares:0, dt:0 };
+  const r = rateOver(h, 0, h.length - 1, MEASURE_MS);
+  return { shares:r.shares, dt:r.dt };
+}
+function isIdle(w){ return Date.now() - w.lastSeen > IDLE_MS; }
 
-            currentMinerWallet = wallet;
+// Expected blocks accrue continuously: at hashrate R against difficulty D, a
+// block is worth D * 2^32 hashes, so R / (D * 2^32) blocks are expected per
+// second. Integrating that against the measured rate gives what the wallet
+// "should" have found, and comparing it to what it actually found is luck.
+function accrueLuck(){
+  const D = (data.net && data.net.difficulty) || (data.chain && data.chain.difficulty);
+  if(!D) return;
+  const now = Date.now();
+  ["solo","pool"].forEach(m => {
+    const d = data[m];
+    if(!d || !wallet) return;
+    const w = (d.workers||{})[wallet];
+    const k = key(m, wallet);
+    const L = luck[k] || (luck[k] = { since: now, expected: 0, secs: 0, blocks: {}, last: now });
+    // blocks the pool credits to this address, remembered with their heights
+    (d.blocksFound||[]).forEach(b => {
+      if(String(b.worker).split(".")[0] === wallet && b.time >= L.since) L.blocks[b.height] = b.time;
+    });
+    const live = w && !isIdle(w) ? measure(m, wallet) : null;
+    const dt = Math.min((now - (L.last || now))/1000, 120);   // ignore gaps from a closed tab
+    L.last = now;
+    if(live && dt > 0){
+      L.expected += live.rate / (D * 4294967296) * dt;
+      L.secs += dt;
+    }
+  });
+  saveJSON(LS.luck, luck);
+}
+function luckFor(m, addr){
+  const L = luck[key(m, addr)];
+  if(!L || L.secs < 120) return null;
+  const found = Object.keys(L.blocks).length;
+  return { found: found, expected: L.expected, secs: L.secs,
+           pct: L.expected > 0 ? found / L.expected * 100 : null, since: L.since };
+}
 
-            // Show loading state
-            document.getElementById('minerDashboard').style.display = 'none';
-            document.getElementById('minerNotFound').style.display = 'none';
+// A rig dropping off a multi-rig address shows up as a sustained fall against
+// the recent baseline, well before the 10-minute idle rule would catch it.
+function baselineRate(m, addr){
+  const pts = seriesFor(m, addr, 1800000, 30);
+  if(pts.length < 6) return null;
+  const v = pts.map(p => p.v).sort((a, b) => a - b);
+  return v[Math.floor(v.length/2)];
+}
+function checkDrop(m, addr){
+  const k = key(m, addr);
+  const base = baselineRate(m, addr), live = measure(m, addr);
+  if(!base || !live){ dropState[k] = 0; return; }
+  const low = live.rate < base * 0.6;
+  dropState[k] = low ? (dropState[k] || 0) + 1 : 0;
+  if(dropState[k] === 3)   // three consecutive polls, about 15s apart
+    toast("Hashrate dropped", shortAddr(addr) + " is at " + fmtHash(live.rate) +
+      ", down from a " + fmtHash(base) + " baseline. A rig may have stopped.", "warn");
+}
 
-            try {
-                const [poolRes, soloRes] = await Promise.all([
-                    fetch(`/api/pool/miner/${encodeURIComponent(wallet)}`).then(r => r.json()),
-                    fetch(`/api/solo/miner/${encodeURIComponent(wallet)}`).then(r => r.json()),
-                ]);
+// Rollups are only kept for addresses you actually watch, so the store stays
+// small no matter how many miners pass through the pool.
+function tracked(){
+  const set = {};
+  if(wallet) set[wallet] = 1;
+  watch.forEach(a => set[a] = 1);
+  return set;
+}
+function rollUp(m, addr, w, now){
+  const k = key(m, addr);
+  const r = rollups[k] || (rollups[k] = []);
+  const last = r[r.length - 1];
+  if(last && now - last.t < ROLL_MS){
+    // still inside the current minute: widen the difficulty range it saw
+    last.dmin = Math.min(last.dmin, w.difficulty);
+    last.dmax = Math.max(last.dmax, w.difficulty);
+    last.shares = w.shares;
+    last.t = now;
+    return;
+  }
+  if(last && w.shares < last.shares) r.length = 0;      // counter reset
+  r.push({ t: now, shares: w.shares, dmin: w.difficulty, dmax: w.difficulty });
+  if(r.length > ROLL_KEEP) r.splice(0, r.length - ROLL_KEEP);
+}
 
-                if (!poolRes.found && !soloRes.found) {
-                    document.getElementById('minerNotFound').style.display = 'block';
-                    return;
-                }
+// A rate series over any horizon: raw samples inside the raw window, rollups
+// beyond it. Both are priced the same way -- total shares over the window at
+// the lowest difficulty seen in it.
+function seriesFor(m, addr, rangeMs, buckets){
+  const cd = calib[addr];
+  const from = Date.now() - rangeMs;
+  let useRaw = rangeMs <= RAW_MS;
+  let src = useRaw ? (history[key(m, addr)] || []) : (rollups[key(m, addr)] || []);
+  let rows = src.filter(x => x.t >= from);
+  // a long range picked early in a session has no rollups yet: show the raw
+  // samples that do exist rather than an empty chart
+  if(!useRaw && rows.length < 2){
+    useRaw = true;
+    rows = (history[key(m, addr)] || []).filter(x => x.t >= from);
+  }
+  if(rows.length < 2) return [];
+  const win = Math.max(60000, rangeMs / (buckets || 60));   // trailing window per point
+  const pts = [];
+  for(let i = 1; i < rows.length; i++){
+    let j = i;
+    while(j > 0 && rows[i].t - rows[j-1].t < win) j--;
+    if(j === i) continue;
+    const dt = (rows[i].t - rows[j].t)/1000;
+    const ds = rows[i].shares - rows[j].shares;
+    if(dt <= 0 || ds < 0) continue;
+    let dmin = Infinity;
+    for(let q = j + 1; q <= i; q++)
+      dmin = Math.min(dmin, useRaw ? Math.min(rows[q].diff, rows[q-1].diff) : rows[q].dmin);
+    if(!isFinite(dmin) || dmin <= 0) continue;
+    pts.push({ t: rows[i].t, v: ds * (cd || dmin) * 4294967296 / dt });
+  }
+  return pts.slice(-180);
+}
 
-                document.getElementById('minerDashboard').style.display = 'block';
+// one miner outrunning the entire chain means the pool's difficulty figure for
+// that address is wrong, not that the rig is enormous
+function implausible(rate){
+  const net = data.net && data.net.networkHashrate;
+  return !!(net && rate > net * 1.1);
+}
 
-                // Seed chart with stored history from Redis (merge pool + solo, sort oldest first)
-                const combinedHistory = [
-                    ...(poolRes.hashrateHistory || []),
-                    ...(soloRes.hashrateHistory || []),
-                ].sort((a, b) => a.time - b.time);
-                initChart(combinedHistory);
-                updateMinerUI(poolRes, soloRes);
+const blocksCache = new WeakMap();
+function blocksByMiner(d){
+  let map = blocksCache.get(d);
+  if(map) return map;
+  map = {};
+  for(const b of (d.blocksFound||[])){
+    const parts = String(b.worker).split(".");
+    const addr = parts.shift(), name = parts.join(".") || "(unnamed)";
+    const e = map[addr] || (map[addr] = { count:0, workers:{}, list:[] });
+    e.count++; e.workers[name] = (e.workers[name]||0) + 1; e.list.push(b);
+  }
+  blocksCache.set(d, map);
+  return map;
+}
 
-                // Auto-refresh every 10 seconds
-                minerRefreshTimer = setInterval(fetchMinerStats, 10000);
+// ---- fetching -------------------------------------------------------------
+async function getJSON(url, ms){
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms || 12000);
+  try {
+    const r = await fetch(url, { cache:"no-store", signal: ctl.signal });
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+async function fetchPool(m){
+  try {
+    const d = await getJSON(POOL_BASE + ENDPOINTS[m].path);
+    data[m] = d; failed[m] = false; record(m, d);
+  } catch(e){ failed[m] = true; }
+}
+async function pollPool(all){
+  const other = mode === "solo" ? "pool" : "solo";
+  const want = (all || cycle % BACKGROUND_EVERY === 0 || !data[other]) ? [mode, other] : [mode];
+  cycle++;
+  await Promise.all(want.map(fetchPool));
+  $("updated").textContent = (failed[mode] ? "stale, retrying · " : "updated ") + new Date().toLocaleTimeString();
+  accrueLuck();
+  if(wallet) checkDrop(mode, wallet);
+  checkAlerts();
+  render();
+}
+async function pollNetwork(){
+  const jobs = [
+    getJSON(API_BASE + "/api/v1/mining/info").then(d => data.net = d).catch(() => {}),
+    getJSON(API_BASE + "/api/v1/blockchain/info").then(d => data.chain = d).catch(() => {}),
+    getJSON(API_BASE + "/api/v1/mining/hashrate?blocks=10").then(d => data.hash10 = d).catch(() => {})
+  ];
+  if(EXPLORER_BASE && wallet)
+    jobs.push(getJSON(EXPLORER_BASE + "/api/address/" + encodeURIComponent(wallet))
+      .then(d => data.balance = d).catch(() => data.balance = null));
+  if(EXPLORER_BASE)
+    jobs.push(getJSON(EXPLORER_BASE + "/api/network/stats").then(d => data.netstats = d).catch(() => {}));
+  await Promise.all(jobs);
+  const tip = (data.chain && data.chain.blocks) || (data.net && data.net.blocks);
+  if(tip != null) await fillBlockCache(tip);
+  if(tip != null){
+    const want = tip - BLOCK_SPAN;
+    if(want > 0 && (!data.older || data.older.height !== want)){
+      try { data.older = await getJSON(API_BASE + "/api/v1/blockchain/block/height/" + want); }
+      catch(e){ data.older = null; }
+    }
+  }
+  render();
+}
+// Block headers are immutable, so they are fetched once and kept. Only a few
+// are pulled per poll, which fills the window in under a minute and then costs
+// one request per new block.
+async function fillBlockCache(tip){
+  const missing = [];
+  for(let h = tip; h > tip - CHAIN_SPAN && h > 0; h--)
+    if(!blockCache[h]) missing.push(h);
+  let got = 0;
+  for(const h of missing.slice(0, CHAIN_PER_POLL)){
+    try {
+      const b = await getJSON(API_BASE + "/api/v1/blockchain/block/height/" + h, 9000);
+      if(b && b.time) blockCache[h] = { time: b.time, difficulty: b.difficulty };
+      got++;
+    } catch(e){ break; }
+  }
+  for(const h in blockCache) if(Number(h) < tip - CHAIN_SPAN * 3) delete blockCache[h];
+  if(got) saveJSON(LS.blocks, blockCache);
+}
 
-            } catch(err) {
-                document.getElementById('minerNotFound').style.display = 'block';
-            }
-        }
+function chainSeries(){
+  const heights = Object.keys(blockCache).map(Number).sort((a, b) => a - b);
+  const diff = [], gap = [];
+  heights.forEach(h => {
+    const b = blockCache[h];
+    if(b.difficulty) diff.push({ t: h, v: b.difficulty });
+    const prev = blockCache[h-1];
+    if(prev && b.time > prev.time) gap.push({ t: h, v: (b.time - prev.time)/60 });
+  });
+  return { diff: diff, gap: gap, count: heights.length };
+}
+function renderChain(){
+  const c = chainSeries();
+  const tip = (data.chain && data.chain.blocks) || (data.net && data.net.blocks);
+  $("chainNote").textContent = c.count
+    ? c.count + " of " + CHAIN_SPAN + " headers cached" + (tip ? " up to #" + fmtNum(tip) : "")
+    : "fetching block headers…";
+  const xf = h => "#" + h;
+  $("diffChart").innerHTML = chart([{ name:"difficulty", pts:c.diff }],
+    { fmt: v => fmtNum(v, 0), xFmt: xf, height: 118, label: "Difficulty by block height",
+      empty: "Fetching block headers…" });
+  $("gapChart").innerHTML = chart([{ name:"gap", pts:c.gap }],
+    { fmt: v => v < 1 ? Math.round(v*60) + "s" : v.toFixed(1) + " min", xFmt: xf, height: 118,
+      label: "Minutes between consecutive blocks", empty: "Fetching block headers…" });
+}
 
+async function validate(addr){
+  validity = null;
+  if(!addr){ render(); return; }
+  try {
+    const d = await getJSON(API_BASE + "/api/v1/wallet/validate/" + encodeURIComponent(addr), 8000);
+    validity = { valid: !!d.valid, addr: addr };
+  } catch(e){ validity = null; }
+  render();
+}
+function record(m, d){
+  const now = Date.now(), keep = new Set(), keepRoll = tracked();
+  for(const a in (d.workers||{})){
+    const w = d.workers[a], k = key(m, a);
+    keep.add(k);
+    const h = history[k] || (history[k] = []);
+    const prev = h[h.length - 1];
+    if(prev && w.shares < prev.shares) h.length = 0;      // counter reset
+    if(!prev || now - prev.t >= POOL_MS * 0.8) h.push({ t:now, shares:w.shares, diff:w.difficulty });
+    while(h.length > 2 && now - h[0].t > RAW_MS) h.shift();
+    if(h.length > 900) h.splice(0, h.length - 900);
+    if(keepRoll[a]) rollUp(m, a, w, now);
+  }
+  for(const k in history)
+    if(k.indexOf(m + "|") === 0 && !keep.has(k) && k !== key(m, wallet)) delete history[k];
+  for(const k in rollups)
+    if(!keepRoll[k.split("|")[1]]) delete rollups[k];
+  saveJSON(LS.hist, history);
+  saveJSON(LS.roll, rollups);
+}
 
-        function formatHashrate(h) {
-            if (!h || h === 0) return '0.00 TH/s';
-            const th = h / 1e12;
-            if (th >= 1) return th.toFixed(2) + ' TH/s';
-            const gh = h / 1e9;
-            if (gh >= 1) return gh.toFixed(2) + ' GH/s';
-            return (h / 1e6).toFixed(2) + ' MH/s';
-        }
+// ---- alerts ---------------------------------------------------------------
+function toast(title, body, kind){
+  const el = document.createElement("div");
+  el.className = "toast " + (kind || "");
+  el.innerHTML = "<b>" + esc(title) + "</b>" + esc(body);
+  $("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 9000);
+  if(alertsOn && typeof Notification !== "undefined" && Notification.permission === "granted"){
+    try { new Notification(title, { body: body }); } catch(e){}
+  }
+}
+function checkAlerts(){
+  if(!wallet) return;
+  const d = data[mode], w = d && (d.workers||{})[wallet];
+  if(w){
+    const idle = isIdle(w);
+    if(wasIdle === false && idle) toast("Miner stopped", "No share from your address in over 10 minutes.", "warn");
+    if(wasIdle === true && !idle) toast("Miner back online", "Shares are arriving again.", "good");
+    wasIdle = idle;
+  }
+  ["solo","pool"].forEach(m => {
+    const dd = data[m];
+    if(!dd) return;
+    (dd.blocksFound||[]).forEach(b => {
+      if(String(b.worker).split(".")[0] !== wallet) return;
+      if(seen.indexOf(b.height) !== -1) return;
+      seen.push(b.height);
+      if(seen.length > 200) seen.shift();
+      saveJSON(LS.seen, seen);
+      if(Date.now() - b.time < 3600000)
+        toast("Block found!", "You mined block #" + b.height + " — " +
+          fmtNum((data.net && data.net.blockReward) || 0) + " TAR.", "good");
+    });
+  });
+}
 
-        function renderWorkers(workers, tbodyId) {
-            const tbody = document.getElementById(tbodyId);
-            tbody.innerHTML = '';
-            const sorted = Object.entries(workers).sort((a, b) => b[1].shares - a[1].shares);
-            if (sorted.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-500">No active workers.</td></tr>';
-                return;
-            }
-            sorted.forEach(([wallet, info]) => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-white/5 hover:bg-white/5 transition-colors';
-                const timeAgo = Math.floor((Date.now() - info.lastSeen) / 1000);
-                const timeStr = timeAgo < 0 ? 'just now' : (timeAgo < 60 ? timeAgo + 's ago' : Math.floor(timeAgo / 60) + 'm ago');
-                let walletTrunc = wallet.length > 20 ? wallet.substring(0, 12) + '...' + wallet.substring(wallet.length - 8) : wallet;
-                tr.innerHTML = `
-                    <td class="p-4 font-mono text-tarcoin-cyan">${walletTrunc}</td>
-                    <td class="p-4 font-bold text-white">${info.shares}</td>
-                    <td class="p-4 text-right text-gray-400">${timeStr} <span class="inline-block w-2 h-2 rounded-full bg-green-500 ml-2"></span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+// ---- chart ----------------------------------------------------------------
+// A small multi-series line chart. One series draws a filled area with an
+// average line; several draw plain lines with a legend, since colour alone must
+// never carry identity.
+const SERIES_COLORS = ["var(--accent)", "#d95926", "#199e70"];
+function chart(series, opts){
+  opts = opts || {};
+  const live = series.filter(sr => sr.pts.length >= 2);
+  if(!live.length)
+    return '<div class="empty">' + (opts.empty || "Collecting samples \u2014 the line appears shortly.") + "</div>";
+  const W = 640, H = opts.height || 132, PL = 4, PR = 4, PT = 10, PB = 16;
+  let tmin = Infinity, tmax = -Infinity, vmax = 0;
+  live.forEach(sr => sr.pts.forEach(p => {
+    if(p.t < tmin) tmin = p.t;
+    if(p.t > tmax) tmax = p.t;
+    if(p.v > vmax) vmax = p.v;
+  }));
+  if(tmax <= tmin) tmax = tmin + 1;
+  vmax = (vmax || 1) * 1.15;
+  const x = t => PL + (t - tmin) / (tmax - tmin) * (W - PL - PR);
+  const y = v => H - PB - (v / vmax) * (H - PT - PB);
+  const fmt = opts.fmt || fmtHash;
 
-        function renderBlocks(blocks, gridId, accentColor) {
-            const grid = document.getElementById(gridId);
-            grid.innerHTML = '';
-            if (blocks.length === 0) {
-                grid.innerHTML = '<div class="text-gray-500 p-4">No blocks found yet.</div>';
-                return;
-            }
-            blocks.forEach(b => {
-                const div = document.createElement('div');
-                div.className = `glass p-5 border-l-4 border-l-${accentColor}`;
-                let workerTrunc = b.worker || 'Unknown';
-                if (workerTrunc.includes('.')) workerTrunc = workerTrunc.split('.')[0];
-                if (workerTrunc.length > 20) workerTrunc = workerTrunc.substring(0, 12) + '...';
-                const timeAgo = Math.floor((Date.now() - b.time) / 1000 / 60);
-                div.innerHTML = `
-                    <div class="text-xs font-orbitron mb-1" style="color:${accentColor === 'tarcoin-gold' ? '#d4a843' : '#00FF88'}">BLOCK #${b.height}</div>
-                    <div class="text-lg text-white font-bold mb-2 font-mono text-sm">Found ${timeAgo} minutes ago</div>
-                    <div class="text-xs text-gray-400">Mined by: <span class="text-tarcoin-cyan">${workerTrunc}</span></div>
-                `;
-                grid.appendChild(div);
-            });
-        }
+  let body = "", legend = "";
+  live.forEach((sr, si) => {
+    const col = sr.color || SERIES_COLORS[si % SERIES_COLORS.length];
+    let d = "";
+    sr.pts.forEach((p, i) => { d += (i ? "L" : "M") + x(p.t).toFixed(1) + " " + y(p.v).toFixed(1) + " "; });
+    if(live.length === 1){
+      const area = d + "L" + x(sr.pts[sr.pts.length-1].t).toFixed(1) + " " + (H-PB) +
+                   " L" + x(sr.pts[0].t).toFixed(1) + " " + (H-PB) + " Z";
+      body += '<path d="' + area + '" fill="url(#fill)"/>';
+    }
+    body += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" ' +
+            'stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+    const step = Math.max(1, Math.floor(sr.pts.length / 36));
+    for(let i = 0; i < sr.pts.length; i += step)
+      body += '<circle cx="' + x(sr.pts[i].t).toFixed(1) + '" cy="' + y(sr.pts[i].v).toFixed(1) +
+        '" r="3.2" fill="' + col + '" stroke="var(--surface-1)" stroke-width="2"><title>' +
+        (live.length > 1 ? esc(sr.name) + " \u2014 " : "") + fmt(sr.pts[i].v) + " \u2014 " +
+        (opts.xFmt ? opts.xFmt(sr.pts[i].t) : new Date(sr.pts[i].t).toLocaleTimeString()) + "</title></circle>";
+    if(live.length > 1)
+      legend += '<span class="chip"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;' +
+        'background:' + col + ';margin-right:5px"></span>' + esc(sr.name) + " " + fmt(sr.pts[sr.pts.length-1].v) + "</span>";
+  });
 
-        async function fetchPoolStats() {
-            try {
-                const res = await fetch('/api/pool/stats');
-                const data = await res.json();
-                document.getElementById('statusText').innerText = 'POOL ' + data.status.toUpperCase();
-                document.getElementById('statMiners').innerText = data.activeMiners;
-                document.getElementById('statShares').innerText = data.totalShares;
-                document.getElementById('statHashrate').innerText = formatHashrate(data.poolHashrate);
-                renderWorkers(data.workers || {}, 'workerTable');
-                renderBlocks(data.blocksFound || [], 'blocksGrid', 'tarcoin-gold');
-            } catch (err) {
-                console.error(err);
-                document.getElementById('statusText').innerText = 'OFFLINE';
-            }
-        }
+  let avgLine = "", footer = "";
+  if(live.length === 1){
+    const pts = live[0].pts;
+    const avg = pts.reduce((a, p) => a + p.v, 0) / pts.length;
+    const peak = Math.max.apply(null, pts.map(p => p.v));
+    avgLine = '<line x1="0" x2="' + W + '" y1="' + y(avg).toFixed(1) + '" y2="' + y(avg).toFixed(1) +
+      '" stroke="var(--border-strong)" stroke-dasharray="3 4" stroke-width="1"/>';
+    footer = "peak " + fmt(peak) + " \u00b7 average " + fmt(avg) + " (dashed) \u00b7 " + pts.length + " points";
+  } else {
+    footer = live.length + " series \u00b7 hover a point for its value";
+  }
+  if(opts.xFmt){
+    footer += " \u00b7 " + opts.xFmt(tmin) + " \u2192 " + opts.xFmt(tmax);
+  } else {
+    const span = (tmax - tmin) / 60000;
+    footer += " \u00b7 " + (span >= 90 ? (span/60).toFixed(1) + "h" : Math.round(span) + " min") + " shown";
+  }
 
-        async function fetchSoloStats() {
-            try {
-                const res = await fetch('/api/solo/stats');
-                const data = await res.json();
-                document.getElementById('soloStatMiners').innerText = data.activeMiners;
-                document.getElementById('soloStatHashrate').innerText = formatHashrate(data.soloHashrate);
-                renderWorkers(data.workers || {}, 'soloWorkerTable');
-                renderBlocks(data.blocksFound || [], 'soloBlocksGrid', 'tarcoin-green');
-            } catch (err) {
-                console.error(err);
-            }
-        }
+  return '<svg class="spark" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" ' +
+      'aria-label="' + esc(opts.label || "chart") + '">' +
+      '<defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--accent)" stop-opacity=".28"/>' +
+        '<stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>' +
+      avgLine + body + "</svg>" +
+    (legend ? '<div class="chips">' + legend + "</div>" : "") +
+    '<div class="foot">' + footer + "</div>";
+}
 
-        function fetchAll() {
-            fetchPoolStats();
-            fetchSoloStats();
-        }
+function tile(label, val, sub){
+  return '<div class="card tile"><div class="label">' + label + '</div><div class="val">' + val + "</div>" +
+    (sub ? '<div class="sub">' + sub + "</div>" : "") + "</div>";
+}
 
-        fetchAll();
-        setInterval(fetchAll, 10000);
-    </script>
+// ---- network --------------------------------------------------------------
+function avgBlockSeconds(){
+  const c = data.chain, o = data.older;
+  if(!c || !o || !c.time || !o.time || c.blocks <= o.height) return null;
+  return (c.time - o.time) / (c.blocks - o.height);
+}
+function poolRecentBlocks(){
+  const tip = (data.chain && data.chain.blocks) || (data.net && data.net.blocks);
+  if(tip == null) return null;
+  const floor = tip - BLOCK_SPAN + 1, heights = new Set(), mine = new Set();
+  ["solo","pool"].forEach(m => {
+    const d = data[m];
+    if(!d) return;
+    (d.blocksFound||[]).forEach(b => {
+      if(b.height >= floor){
+        heights.add(b.height);
+        if(String(b.worker).split(".")[0] === wallet) mine.add(b.height);
+      }
+    });
+  });
+  return { pool: heights.size, mine: mine.size, span: BLOCK_SPAN };
+}
+function solo(rate){
+  const diff = (data.net && data.net.difficulty) || (data.chain && data.chain.difficulty);
+  const reward = (data.net && data.net.blockReward) || 0;
+  if(!diff || !rate || rate <= 0) return null;
+  const seconds = diff * 4294967296 / rate;
+  return { seconds:seconds, perDay: reward*86400/seconds, reward:reward,
+           netShare: data.net && data.net.networkHashrate ? rate/data.net.networkHashrate*100 : null };
+}
+function renderNetwork(){
+  const n = data.net, c = data.chain, el = $("netTiles");
+  if(!n && !c){ el.innerHTML = '<div class="card empty">Network data unavailable — api.tarcoin.org unreachable.</div>'; return; }
+  const height = (n && n.blocks) || (c && c.blocks);
+  const diff = (n && n.difficulty) || (c && c.difficulty);
+  const short = data.hash10 && data.hash10.hashrate, long = n && n.networkHashrate;
+  let trend = "averaged over 120 blocks";
+  if(short && long){
+    const pct = (short - long)/long*100;
+    trend = fmtHash(short) + " over last 10 blocks (" + (pct >= 0 ? "+" : "") + pct.toFixed(0) + "%)";
+  }
+  const avg = avgBlockSeconds(), recent = poolRecentBlocks(), ns = data.netstats;
+  el.innerHTML =
+    tile("Network hashrate", fmtHash(long), trend) +
+    tile("Difficulty", fmtNum(diff, 0), (n && n.algorithm) || "") +
+    tile("Block height", height != null ? "#" + fmtNum(height) : "—", c && c.time ? "tip " + agoCell(c.time*1000) : "") +
+    tile("Avg block time", avg ? fmtDur(avg) : "—",
+         avg ? "last " + BLOCK_SPAN + " blocks · " + fmtNum(86400/avg, 0) + "/day" : "") +
+    tile("Pool's recent blocks", recent ? recent.pool + ' <small class="muted">of last ' + recent.span + "</small>" : "—",
+         recent ? (recent.mine ? recent.mine + " of them yours" : "solo + shared combined") : "") +
+    tile("Block reward", n ? fmtNum(n.blockReward) + ' <small class="muted">TAR</small>' : "—",
+         n ? "era " + n.currentEra + " · halving in " + fmtNum(n.blocksUntilHalving) : "") +
+    (ns ? tile("Mempool", fmtNum(ns.mempool && ns.mempool.size),
+         ns.connections != null ? ns.connections + " peers" : "") : "");
+}
+
+// ---- wallet ---------------------------------------------------------------
+function balanceCard(){
+  const b = data.balance;
+  if(!b || b.address !== wallet) return "";
+  return '<div class="tiles" style="margin-bottom:13px">' +
+    tile("Wallet balance", fmtTar(b.balance) + ' <small class="muted">TAR</small>',
+         b.unconfirmedBalance ? fmtTar(b.unconfirmedBalance) + " unconfirmed" : "confirmed on chain") +
+    tile("Total received", fmtTar(b.totalReceived) + ' <small class="muted">TAR</small>', "lifetime") +
+    tile("Total sent", fmtTar(b.totalSent) + ' <small class="muted">TAR</small>', "lifetime outgoing") +
+    tile("Transactions", fmtNum(b.txCount), "on this address") + "</div>";
+}
+function walletCard(m, d){
+  const w = (d.workers||{})[wallet], blocks = blocksByMiner(d)[wallet];
+  if(!w && !blocks) return "";
+  const label = ENDPOINTS[m].label;
+  if(!w)
+    return '<div class="card" style="margin-bottom:13px"><div class="label">' + label + ' pool</div>' +
+      '<div class="val" style="font-size:17px;font-weight:640">Idle — no active shares</div>' +
+      '<div class="sub">Found <b>' + blocks.count + "</b> of the recent blocks here.</div></div>";
+
+  const live = measure(m, wallet), idle = isIdle(w), prog = live ? null : progress(m, wallet);
+  const rate = idle || !live ? 0 : live.rate;
+  let totalShares = 0; for(const k in d.workers) totalShares += d.workers[k].shares || 0;
+  const pct = totalShares ? w.shares/totalShares*100 : 0;
+  const odds = (m === "solo" && live && !idle) ? solo(rate) : null;
+  const lk = luckFor(m, wallet);
+  const base = baselineRate(m, wallet);
+  const tip = (data.net && data.net.blocks) || (data.chain && data.chain.blocks);
+
+  let names = "";
+  if(blocks) names = Object.keys(blocks.workers).sort((a,c) => blocks.workers[c] - blocks.workers[a])
+    .map(n => '<span class="chip"><b>' + esc(n) + "</b> · " + blocks.workers[n] +
+      " block" + (blocks.workers[n] > 1 ? "s" : "") + "</span>").join("");
+  let mineBlocks = "";
+  if(blocks) mineBlocks = blocks.list.slice(0,10).map(x => {
+    const conf = tip != null ? tip - x.height + 1 : null;
+    const mature = conf != null && conf >= COINBASE_MATURITY;
+    return '<span class="chip">#<b>' + x.height + "</b> · " + agoCell(x.time) +
+      (conf != null ? ' · <span class="' + (mature ? "" : "muted") + '">' +
+        (mature ? "matured" : conf + "/" + COINBASE_MATURITY) + "</span>" : "") + "</span>";
+  }).join("");
+
+  // session totals, from the first sample this page took of this address
+  let sessionChip = "";
+  if(session.startAddr === wallet && session.startShares != null && w.shares >= session.startShares){
+    const mins = (Date.now() - session.start)/60000;
+    sessionChip = '<span class="chip">This session <b>' + fmtNum(w.shares - session.startShares) +
+      "</b> shares in " + fmtDur(mins*60) + "</span>";
+  }
+
+  const rangeBtns = Object.keys(RANGES).map(r =>
+    '<button class="sm rng' + (r === range ? " on" : "") + '" data-range="' + r + '">' + r + "</button>").join("");
+  const others = watch.filter(a => a !== wallet).slice(0, 2);
+  const cmpBtn = others.length
+    ? '<button class="sm' + (compare ? " on primary" : "") + '" id="cmp" title="Overlay your other watched addresses">compare</button>'
+    : "";
+
+  return '<div class="hero" style="margin-bottom:13px">' +
+    '<div class="card tile">' +
+      '<div class="label">' + label + " pool · your hashrate " +
+        (idle ? '<span class="badge warn">idle</span>'
+              : !live ? '<span class="badge">measuring</span>'
+              : live.calibrated ? '<span class="badge good">calibrated</span>'
+              : implausible(live.rate) ? '<span class="badge bad">pool data suspect</span>'
+              : live.unstable ? '<span class="badge warn">range</span>'
+              : '<span class="badge me">measured</span>') + "</div>" +
+      '<div class="val">' + (idle ? "0 H/s"
+        : !live ? '<span class="muted" style="-webkit-text-fill-color:var(--text-muted)">measuring…</span>'
+        : live.unstable ? fmtHash(live.lo) + " <small>– " + fmtHash(live.hi) + "</small>"
+        : fmtHash(live.rate) + (live.calibrated ? "" : " <small>±" + Math.round(live.err*100) + "%</small>")) + "</div>" +
+      '<div class="sub">' + (idle
+        ? "no share submitted in over 10 minutes — miner looks offline"
+        : !live
+          ? "counted " + prog.shares + " share" + (prog.shares === 1 ? "" : "s") + " so far (needs " +
+            MIN_SHARES + " over " + MIN_SECONDS + "s)"
+          : live.calibrated
+            ? fmtNum(live.shares) + " shares over " + fmtDur(live.dt) + " at your calibrated share difficulty " +
+              fmtNum(live.effDiff) + " (pool reports " + fmtNum(w.difficulty) + ")"
+            : implausible(live.rate)
+              ? "this works out above the entire network's " + fmtHash(data.net.networkHashrate) +
+                ", which no single miner can do — the pool's difficulty figure for this address is wrong. " +
+                "Calibrate below against your miner."
+            : fmtNum(live.shares) + " shares over " + fmtDur(live.dt) + " priced at the lowest difficulty seen (" +
+              fmtNum(live.dmin) + (live.unstable ? "; at the highest, " + fmtNum(live.dmax) + ", it would read " +
+              fmtHash(live.hi) : "") + "). ± is share-arrival noise only — calibrate below if this disagrees " +
+              "with your miner") + "</div>" +
+      '<div class="chips">' +
+        '<span class="chip">Shares <b>' + fmtNum(w.shares) + "</b></span>" +
+        (live ? '<span class="chip hi">Share rate <b>' + live.perMin.toFixed(1) + "</b>/min</span>" : "") +
+        (live && base ? '<span class="chip">vs 30-min baseline <b>' +
+          Math.round(live.rate/base*100) + "%</b></span>" : "") +
+        '<span class="chip">Difficulty <b>' + fmtNum(w.difficulty) + "</b>" +
+          (live && live.unstable ? " (" + fmtNum(live.dmin) + "–" + fmtNum(live.dmax) + ")" : "") + "</span>" +
+        '<span class="chip">Pool share <b>' + pct.toFixed(1) + "%</b></span>" +
+        (odds && odds.netShare != null ? '<span class="chip">Of network <b>' + odds.netShare.toFixed(3) + "%</b></span>" : "") +
+        '<span class="chip">Blocks <b>' + (blocks ? blocks.count : 0) + "</b></span>" +
+        '<span class="chip">Last share <b>' + agoCell(w.lastSeen) + "</b></span>" +
+        sessionChip +
+      "</div>" +
+      (lk ? '<div class="label" style="margin:15px 0 0">Luck <span class="badge ' +
+          (lk.pct == null ? "" : lk.pct >= 100 ? "good" : lk.pct >= 50 ? "" : "warn") + '">' +
+          (lk.pct == null ? "\u2014" : Math.round(lk.pct) + "%") + "</span></div>" +
+        '<div class="chips">' +
+          '<span class="chip">Found <b>' + lk.found + "</b></span>" +
+          '<span class="chip">Expected <b>' + lk.expected.toFixed(2) + "</b></span>" +
+          '<span class="chip">Tracked <b>' + fmtDur(lk.secs) + "</b></span>" +
+          '<button class="sm" id="luckReset">reset</button>' +
+        "</div>" +
+        '<div class="foot">Blocks found against blocks your measured hashrate should have produced at ' +
+        'the network difficulty over that time. Solo variance is brutal \u2014 this only means something ' +
+        'after days, not minutes.</div>' : "") +
+      (odds ? '<div class="label" style="margin:15px 0 0">Solo odds at this hashrate</div><div class="chips">' +
+        '<span class="chip">A block every <b>' + fmtDur(odds.seconds) + "</b></span>" +
+        '<span class="chip">Average <b>' + fmtTar(odds.perDay) + " TAR</b>/day</span>" +
+        '<span class="chip">Reward <b>' + fmtNum(odds.reward) + " TAR</b></span></div>" : "") +
+      (live && !idle ? '<div class="label" style="margin:15px 0 0">Calibration</div>' +
+        '<div class="row" style="margin-top:8px">' +
+          '<input type="text" id="calib" style="min-width:80px;flex:0 1 120px" placeholder="e.g. 2.17">' +
+          '<span class="muted" style="font-size:11.5px">TH/s your miners report</span>' +
+          '<button id="calibSet" class="sm">Set</button>' +
+          (live.calibrated ? '<button id="calibClear" class="sm">Clear</button>' : "") +
+        "</div>" +
+        '<div class="foot">Each rig negotiates its own share difficulty but the pool publishes one value per ' +
+        'address, so an uncalibrated figure is indicative. Enter your true combined rate once and it is solved ' +
+        'for exactly, while still tracking a rig dropping offline.</div>' : "") +
+      (names ? '<div class="label" style="margin:15px 0 0">Workers seen in blocks</div><div class="chips">' + names + "</div>" : "") +
+      (mineBlocks ? '<div class="label" style="margin:15px 0 0">Your recent blocks</div><div class="chips">' + mineBlocks + "</div>" : "") +
+    "</div>" +
+    '<div class="card">' +
+      '<div class="sec-head"><div class="label" style="margin:0">Hashrate</div>' +
+        '<div class="row" style="gap:4px">' + rangeBtns + cmpBtn +
+          '<button class="sm" id="csv" title="Download the samples this page collected">CSV</button></div></div>' +
+      chart(
+        [{ name: shortAddr(wallet), pts: seriesFor(m, wallet, RANGES[range]) }].concat(
+          compare ? others.map(a => ({ name: shortAddr(a), pts: seriesFor(m, a, RANGES[range]) })) : []),
+        { label: "Your hashrate over " + range,
+          empty: "Collecting samples \u2014 the line appears once a minute of shares has landed." }) +
+    "</div></div>";
+}
+function renderWatchlist(){
+  const el = $("watchlist");
+  if(!watch.length){ el.innerHTML = ""; return; }
+  el.innerHTML = watch.map(a =>
+    '<span class="chip act' + (a === wallet ? " hi" : "") + '" data-go="' + esc(a) + '">' +
+      esc(shortAddr(a)) + ' <b data-del="' + esc(a) + '" style="cursor:pointer;color:var(--text-muted)">×</b></span>').join("");
+}
+function renderWallet(){
+  const el = $("mine");
+  if(!wallet){
+    el.innerHTML = '<div class="card empty">No wallet tracked — paste a <span class="mono">tar1q…</span> address above ' +
+      "for shares, hashrate, solo odds, workers and blocks across both pools.</div>";
+    return;
+  }
+  const cards = balanceCard() + ["solo","pool"].map(m => data[m] ? walletCard(m, data[m]) : "").join("");
+  el.innerHTML = cards ||
+    '<div class="card"><div class="val" style="font-size:17px;font-weight:640">Not seen on either pool</div>' +
+    '<div class="sub">No shares or blocks for <span class="mono">' + esc(shortAddr(wallet)) +
+    "</span> right now.</div></div>";
+}
+
+// ---- main render ----------------------------------------------------------
+const sig = { miners:"", blocks:"" };
+function render(){
+  const d = data[mode];
+  $("dot").className = "dot " + (d ? (String(d.status).toLowerCase() === "online" ? "on" : "off") : "off");
+  $("statusText").textContent = d
+    ? d.status + " · " + d.algorithm + " · " + ENDPOINTS[mode].label + " port " + String(d.stratum).split(":").pop()
+    : (failed[mode] ? "pool unreachable — retrying" : "connecting…");
+  $("poolHeading").textContent = ENDPOINTS[mode].label + " pool";
+  $("minersHeading").textContent = ENDPOINTS[mode].label + " miners";
+  $("blocksHeading").textContent = ENDPOINTS[mode].label + " blocks found";
+  $("alerts").textContent = alertsOn ? "Alerts on" : "Alerts off";
+  $("alerts").className = "sm" + (alertsOn ? " primary" : "");
+  renderNetwork();
+  renderChain();
+  renderWatchlist();
+  $("valid").innerHTML = !wallet || !validity || validity.addr !== wallet ? ""
+    : validity.valid ? '<span class="badge good">valid</span>' : '<span class="badge bad">invalid address</span>';
+
+  if(!d){ renderWallet(); return; }
+  const workers = d.workers || {}, addrs = Object.keys(workers), blocks = blocksByMiner(d);
+  let totalShares = 0; for(const k in workers) totalShares += workers[k].shares || 0;
+  const other = mode === "solo" ? "pool" : "solo", od = data[other];
+
+  $("poolTiles").innerHTML =
+    tile(ENDPOINTS[mode].label + " hashrate", fmtHash(d[ENDPOINTS[mode].hashKey]),
+         od ? ENDPOINTS[other].label + " side: " + fmtHash(od[ENDPOINTS[other].hashKey]) : "") +
+    tile("Active miners", fmtNum(d.activeMiners), addrs.length + " with shares") +
+    tile("Total shares", fmtNum(d.totalShares != null ? d.totalShares : totalShares), "current round") +
+    tile("Latest block", (d.blocksFound||[]).length ? "#" + d.blocksFound[0].height : "—",
+         (d.blocksFound||[]).length ? agoCell(d.blocksFound[0].time) + " · " + d.blocksFound.length + " listed" : "none") +
+    tile("Stratum", '<span class="mono" style="font-size:12.5px">' +
+         esc(String(d.stratum).replace("stratum+tcp://","")) + "</span>",
+         '<button class="sm" id="copyStratum" data-s="' + esc(d.stratum) + '">copy</button>');
+
+  renderWallet();
+
+  const rows = addrs.map(a => {
+    const w = workers[a], live = measure(mode, a), b = blocks[a];
+    return { addr:a, shares:w.shares, diff:w.difficulty, seen:w.lastSeen,
+             rate: isIdle(w) ? 0 : (live ? live.rate : -1), live:live, idle:isIdle(w),
+             pct: totalShares ? w.shares/totalShares*100 : 0, blocks: b ? b.count : 0 };
+  });
+  rows.sort((x, y) => {
+    const k = sort.key;
+    if(k === "addr") return sort.dir * x.addr.localeCompare(y.addr);
+    return sort.dir * ((x[k] || 0) - (y[k] || 0));
+  });
+  const minerSig = mode + "|" + wallet + "|" + sort.key + sort.dir + "|" +
+    rows.map(r => r.addr + r.shares + r.diff + Math.round(r.rate)).join();
+  if(minerSig !== sig.miners){
+    sig.miners = minerSig;
+    $("minersBody").innerHTML = rows.map(r =>
+      '<tr class="' + (r.addr === wallet ? "mine" : "") + '">' +
+        '<td><span class="addr">' + esc(shortAddr(r.addr)) + "</span> " +
+          (r.addr === wallet ? '<span class="badge me">you</span>'
+                             : '<button class="pick sm" data-addr="' + esc(r.addr) + '">track</button>') + "</td>" +
+        '<td class="num">' + fmtNum(r.shares) + "</td>" +
+        '<td class="num">' + fmtNum(r.diff) + "</td>" +
+        '<td class="num">' + (r.idle ? '0 H/s <span class="muted">idle</span>'
+          : !r.live ? '<span class="muted">measuring…</span>'
+          : implausible(r.live.rate)
+            ? '<span class="muted">' + fmtHash(r.live.rate) + '</span> <span class="badge bad">?</span>'
+          : r.live.unstable ? fmtHash(r.live.lo) + '<span class="muted">–' + fmtHash(r.live.hi) + "</span>"
+          : fmtHash(r.live.rate) + (r.live.calibrated ? ' <span class="badge good">cal</span>'
+              : ' <span class="muted">±' + Math.round(r.live.err*100) + "%</span>")) + "</td>" +
+        '<td><div class="bar" title="' + r.pct.toFixed(1) + '%"><span style="width:' + r.pct.toFixed(1) + '%"></span></div></td>' +
+        '<td class="num">' + r.blocks + "</td>" +
+        '<td class="num">' + agoCell(r.seen) + "</td></tr>").join("") ||
+      '<tr><td colspan="7" class="empty">No active miners.</td></tr>';
+    document.querySelectorAll("#minersTable th").forEach(th => {
+      const k = th.dataset.sort;
+      if(!k) return;
+      th.innerHTML = (TH_LABELS[k] || k) +
+        (k === sort.key ? ' <span class="arr">' + (sort.dir < 0 ? "▼" : "▲") + "</span>" : "");
+    });
+  }
+
+  const tip = (data.net && data.net.blocks) || (data.chain && data.chain.blocks);
+  const blockSig = mode + "|" + wallet + "|" + tip + "|" + (d.blocksFound||[]).map(b => b.height).join();
+  if(blockSig !== sig.blocks){
+    sig.blocks = blockSig;
+    $("blocksBody").innerHTML = (d.blocksFound||[]).map(b => {
+      const parts = String(b.worker).split("."), addr = parts.shift(), name = parts.join(".") || "(unnamed)";
+      const conf = tip != null ? tip - b.height + 1 : null, mature = conf != null && conf >= COINBASE_MATURITY;
+      return '<tr class="' + (addr === wallet ? "mine" : "") + '">' +
+        '<td class="num">#' + b.height + "</td>" +
+        '<td><span class="addr">' + esc(shortAddr(addr)) + "</span>" +
+          (addr === wallet ? ' <span class="badge me">you</span>' : "") + "</td>" +
+        "<td>" + esc(name) + "</td>" +
+        '<td class="num">' + agoCell(b.time) + "</td>" +
+        '<td class="num">' + (conf == null ? '<span class="muted">—</span>'
+          : mature ? fmtNum(conf) + ' <span class="badge good">matured</span>'
+                   : fmtNum(conf) + ' <span class="muted">/ ' + COINBASE_MATURITY + "</span>") + "</td></tr>";
+    }).join("") || '<tr><td colspan="5" class="empty">No blocks recorded.</td></tr>';
+  }
+
+  // remember where this session started, for the session chip
+  const w = workers[wallet];
+  if(w && (session.startAddr !== wallet || session.startShares == null)){
+    session.startAddr = wallet; session.startShares = w.shares; session.start = Date.now();
+  }
+}
+
+// only timestamps are rewritten each second, never the DOM around them
+function tick(){
+  const now = Date.now();
+  document.querySelectorAll("[data-ts]").forEach(el => {
+    const s = Math.max(0, Math.round((now - Number(el.dataset.ts))/1000));
+    const next = s < 60 ? s + "s ago"
+      : s < 3600 ? Math.floor(s/60) + "m ago"
+      : s < 86400 ? Math.floor(s/3600) + "h " + Math.floor((s%3600)/60) + "m ago"
+      : Math.floor(s/86400) + "d ago";
+    if(el.textContent !== next) el.textContent = next;
+  });
+}
+
+// ---- wiring ---------------------------------------------------------------
+function setWallet(a){
+  wallet = (a || "").trim();
+  localStorage.setItem(LS.wallet, wallet);
+  $("wallet").value = wallet;
+  data.balance = null; wasIdle = null;
+  session.startAddr = null; session.startShares = null;
+  sig.miners = sig.blocks = "";
+  if(wallet && watch.indexOf(wallet) === -1){ watch.push(wallet); saveJSON(LS.watch, watch); }
+  render(); validate(wallet);
+  if(EXPLORER_BASE && wallet) pollNetwork();
+}
+function setMode(m){
+  mode = m; localStorage.setItem(LS.mode, m);
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.mode === m)));
+  sig.miners = sig.blocks = ""; render(); pollPool();
+}
+function startTimers(){ stopTimers(); poolTimer = setInterval(pollPool, POOL_MS); netTimer = setInterval(pollNetwork, NET_MS); }
+function stopTimers(){ clearInterval(poolTimer); clearInterval(netTimer); }
+
+function exportCSV(){
+  const h = history[key(mode, wallet)] || [];
+  if(!h.length) return;
+  let csv = "timestamp,iso,shares,difficulty\n";
+  h.forEach(s => { csv += s.t + "," + new Date(s.t).toISOString() + "," + s.shares + "," + s.diff + "\n"; });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv" }));
+  a.download = "tarcoin-" + mode + "-" + shortAddr(wallet).replace(/…/g,"") + ".csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+$("wallet").value = wallet;
+$("save").onclick = () => setWallet($("wallet").value);
+$("clear").onclick = () => setWallet("");
+$("wallet").addEventListener("keydown", e => { if(e.key === "Enter") setWallet(e.target.value); });
+$("refresh").onclick = () => { pollPool(true); pollNetwork(); };
+$("helpBtn").onclick = () => { $("help").hidden = !$("help").hidden; };
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+$("alerts").onclick = async () => {
+  alertsOn = !alertsOn;
+  localStorage.setItem(LS.alerts, alertsOn ? "1" : "0");
+  if(alertsOn && typeof Notification !== "undefined" && Notification.permission === "default"){
+    try { await Notification.requestPermission(); } catch(e){}
+  }
+  render();
+  toast(alertsOn ? "Alerts on" : "Alerts off",
+    alertsOn ? "You'll be told when your miner stops or finds a block." : "Notifications disabled.");
+};
+
+$("minersBody").addEventListener("click", e => {
+  const btn = e.target.closest(".pick");
+  if(btn) setWallet(btn.dataset.addr);
+});
+document.querySelectorAll("#minersTable th").forEach(th => th.onclick = () => {
+  const k = th.dataset.sort;
+  if(!k) return;
+  sort = { key:k, dir: sort.key === k ? -sort.dir : (k === "addr" ? 1 : -1) };
+  sig.miners = ""; render();
+});
+$("watchlist").addEventListener("click", e => {
+  const del = e.target.dataset.del;
+  if(del){ watch = watch.filter(a => a !== del); saveJSON(LS.watch, watch); render(); return; }
+  const go = e.target.closest("[data-go]");
+  if(go) setWallet(go.dataset.go);
+});
+$("poolTiles").addEventListener("click", e => {
+  const b = e.target.closest("#copyStratum");
+  if(!b) return;
+  const s = b.dataset.s;
+  if(navigator.clipboard) navigator.clipboard.writeText(s).then(
+    () => toast("Copied", s), () => toast("Copy failed", s));
+  else toast("Stratum URL", s);
+});
+// calibration, range buttons and CSV live inside the re-rendered wallet card
+$("mine").addEventListener("click", e => {
+  if(e.target.id === "calibSet"){
+    const box = $("calib"), ths = box ? parseFloat(box.value) : NaN, live = measure(mode, wallet);
+    if(!isFinite(ths) || ths <= 0 || !live) return;
+    calib[wallet] = ths * 1e12 * live.dt / (live.shares * 4294967296);
+    saveJSON(LS.calib, calib); render();
+    toast("Calibrated", "Share difficulty solved as " + fmtNum(calib[wallet]) + ".", "good");
+  }
+  if(e.target.id === "calibClear"){ delete calib[wallet]; saveJSON(LS.calib, calib); render(); }
+  if(e.target.id === "luckReset"){
+    delete luck[key(mode, wallet)];
+    saveJSON(LS.luck, luck);
+    render();
+    toast("Luck reset", "Counting again from now.");
+  }
+  if(e.target.id === "csv") exportCSV();
+  if(e.target.id === "cmp"){
+    compare = !compare;
+    localStorage.setItem(LS.compare, compare ? "1" : "0");
+    render();
+  }
+  const r = e.target.closest(".rng");
+  if(r){ range = r.dataset.range; localStorage.setItem(LS.range, range); render(); }
+});
+document.addEventListener("keydown", e => {
+  const t = e.target && e.target.tagName;
+  if(t === "INPUT" || t === "TEXTAREA"){
+    if(e.key === "Escape") e.target.blur();
+    return;
+  }
+  if(e.key === "/"){ e.preventDefault(); $("wallet").focus(); }
+  else if(e.key === "1") setMode("solo");
+  else if(e.key === "2") setMode("pool");
+  else if(e.key === "r"){ pollPool(true); pollNetwork(); }
+  else if(e.key === "e") exportCSV();
+  else if(e.key === "a") $("alerts").click();
+  else if(e.key === "c"){ const b = $("calib"); if(b) b.focus(); }
+  else if(e.key === "?" || e.key === "h") $("help").hidden = !$("help").hidden;
+  else if(e.key === "Escape") $("help").hidden = true;
+});
+$("help").addEventListener("click", e => {
+  if(e.target.id === "help" || e.target.id === "helpClose") $("help").hidden = true;
+});
+
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden) stopTimers();
+  else { startTimers(); pollPool(true); pollNetwork(); }
+});
+
+$("sources").innerHTML = 'Sources: <span class="mono">pool.tarcoin.org</span> (Pool Data) · ' +
+  '<span class="mono">api.tarcoin.org</span> (Network Data)' + (EXPLORER_BASE ? ' · <span class="mono">explorer.tarcoin.org</span> (Blockchain Data)' : "") +
+  '.<br>Hashrate and network statistics are updated continuously. Solo mining odds are based on statistical averages; individual results may vary due to network variance.';
+
+if(!EXPLORER_BASE){
+  const note = $("proxyNote");
+  note.hidden = false;
+  note.innerHTML = '<b>Wallet balance is off.</b> explorer.tarcoin.org refuses cross-origin requests, so a page ' +
+    'opened as a file cannot read it. Double-click <span class="mono">start.bat</span> to launch with balance, ' +
+    'total received and transaction count.';
+}
+
+setMode(mode);
+pollPool(true);
+pollNetwork();
+if(wallet) validate(wallet);
+startTimers();
+setInterval(tick, 1000);
+</script>
 </body>
 </html>
