@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
+/* Fonts loaded via next/font/google in layout.tsx (Orbitron, Space Grotesk, JetBrains Mono) */
 
 :root {
   --gold: #D4A843;
@@ -27,7 +27,7 @@ html {
 body {
   background: var(--black);
   color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space), 'Space Grotesk', sans-serif;
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -39,8 +39,8 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
 
 /* Typography */
-.font-orbitron { font-family: 'Orbitron', sans-serif; }
-.font-mono { font-family: 'JetBrains Mono', monospace; }
+.font-orbitron { font-family: var(--font-orbitron), 'Orbitron', sans-serif; }
+.font-mono { font-family: var(--font-mono), 'JetBrains Mono', monospace; }
 
 /* Glass card */
 .glass {
@@ -187,19 +187,9 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Scanlines effect */
+/* Scanlines effect — disabled */
 .scanlines {
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
-  pointer-events: none;
-  z-index: 9999;
+  display: none;
 }
 
 /* Pulse dot */

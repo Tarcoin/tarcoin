@@ -154,8 +154,8 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
       <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-          <span className="explorer-logo-text" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '20px', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>TARCOIN</span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--gold)', marginTop: '-2px' }}>
+          <span className="explorer-logo-text">TARCOIN</span>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', color: 'var(--gold)', marginTop: '-2px' }}>
             $TAR
           </span>
         </div>
@@ -380,8 +380,7 @@ export default function HomePage() {
             fontSize: 'clamp(1.4rem, 4vw, 2.4rem)',
             fontWeight: 900,
             color: 'var(--gold)',
-            textShadow: '0 0 30px rgba(212,168,67,0.5)',
-            marginBottom: '0.4rem',
+                        marginBottom: '0.4rem',
             letterSpacing: '0.08em',
           }}
         >
