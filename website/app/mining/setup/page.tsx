@@ -81,7 +81,7 @@ export default function MinerSetupGuide() {
                   </div>
                   <div className="bg-black/50 rounded-lg p-4 border border-white/5 flex flex-col sm:flex-row gap-4">
                     <div className="flex-1 border-l-2 border-tarcoin-cyan pl-3">
-                      <p className="text-gray-500 mb-1">Port <span className="text-tarcoin-cyan font-bold">(Shared Pool)</span></p>
+                      <p className="text-gray-500 mb-1">Port <span className="text-tarcoin-cyan font-bold">(PPLNS Pool)</span></p>
                       <code className="text-tarcoin-cyan text-base">3333</code>
                       <p className="text-xs text-gray-400 mt-1">Steady payouts. Best for small miners.</p>
                     </div>
@@ -123,12 +123,12 @@ export default function MinerSetupGuide() {
                 </div>
                 
                 <p className="text-gray-400 font-space mb-6 text-sm">
-                  Log into your ASIC&apos;s dashboard and configure your primary pool with the following settings. You can choose between Shared or Solo mining.
+                  Log into your ASIC&apos;s dashboard and configure your primary pool with the following settings. You can choose between PPLNS or Solo mining.
                 </p>
 
                 <div className="space-y-4 font-space text-sm">
                   <div className="bg-black/50 rounded-lg p-4 border border-white/5 border-l-2 border-l-tarcoin-cyan">
-                    <p className="text-gray-500 mb-1">URL <span className="text-tarcoin-cyan font-bold">(Shared Pool - Steady Payouts)</span></p>
+                    <p className="text-gray-500 mb-1">URL <span className="text-tarcoin-cyan font-bold">(PPLNS Pool - Steady Payouts)</span></p>
                     <code className="text-tarcoin-cyan text-base">stratum+tcp://stratum.tarcoin.org:3333</code>
                   </div>
                   <div className="bg-black/50 rounded-lg p-4 border border-white/5 border-l-2 border-l-tarcoin-gold">
