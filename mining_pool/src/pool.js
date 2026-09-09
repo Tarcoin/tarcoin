@@ -1122,6 +1122,69 @@ async function processPayouts() {
 cron.schedule('0 * * * *', processPayouts);
 
     // ====== HTTP API ======
+
+  // ====== Standard Aggregator API (MiningPoolStats Format) ======
+  app.get('/api/stats', async (req, res) => {
+    try {
+      // 1. Calculate Shared Pool Hashrate
+      let poolHashrate = 0;
+      let activeMiners = 0;
+      for (const [name, miner] of poolState.miners.entries()) {
+        if (Date.now() - miner.lastSeen < 600000) { 
+          poolHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          activeMiners++;
+        }
+      }
+
+      // 2. Calculate Solo Pool Hashrate
+      let soloHashrate = 0;
+      let soloActiveMiners = 0;
+      for (const [name, miner] of soloState.miners.entries()) {
+        if (Date.now() - miner.lastSeen < 600000) { 
+          soloHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          soloActiveMiners++;
+        }
+      }
+
+      // 3. Fetch Network Stats (Non-blocking fallback)
+      let networkHashrate = 0;
+      let networkDifficulty = 0;
+      try {
+        const miningInfo = await rpcCall('getmininginfo');
+        if (miningInfo) {
+          networkHashrate = miningInfo.networkhashps || 0;
+          networkDifficulty = miningInfo.difficulty || 0;
+        }
+      } catch (e) {
+        console.warn('Could not fetch getmininginfo for /api/stats:', e.message);
+      }
+
+      // 4. Output Generic standard JSON
+      res.json({
+        pool_name: "TARCOIN Official Pool",
+        coin: "TARCOIN",
+        symbol: "TAR",
+        algorithm: "SHA256d",
+        fee: 1.0, // 1% pool fee
+        stratum_port: 3333,
+        stratum_host: "stratum.tarcoin.org",
+        shared: {
+          hashrate: poolHashrate,
+          miners: activeMiners
+        },
+        solo: {
+          hashrate: soloHashrate,
+          miners: soloActiveMiners
+        },
+        total_hashrate: poolHashrate + soloHashrate,
+        total_miners: activeMiners + soloActiveMiners,
+        network_hashrate: networkHashrate,
+        network_difficulty: networkDifficulty
+      });
+    } catch (e) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
   app.get('/api/pool/stats', async (req, res) => {
     try {
       if (!redis) {
