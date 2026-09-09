@@ -144,7 +144,7 @@ kbd{display:inline-block;background:var(--surface-3);border:1px solid var(--bord
   <div style="display:flex; align-items:center; gap:16px;">
     <img src="https://tarcoin.org/logo.png" style="width:48px; height:48px; object-fit:contain;" alt="TAR">
     <div style="display:flex; flex-direction:column; gap:4px;">
-      <h1 style="font-size:22px; margin:0; letter-spacing:-.01em; font-weight:700;">Tarcoin Pool</h1>
+      <h1 style="font-size:22px; margin:0; letter-spacing:-.01em; font-weight:700;">TARCOIN Pool Dashboard</h1>
       <div class="status"><span class="dot" id="dot"></span><span id="statusText">connecting…</span></div>
     </div>
   </div>
@@ -936,9 +936,12 @@ function walletCard(m, d){
     ? '<button class="sm' + (compare ? " on primary" : "") + '" id="cmp" title="Overlay your other watched addresses">compare</button>'
     : "";
 
-  let myPts = seriesFor(m, wallet, RANGES[range]);
-  if(myPts.length < 2 && data[m] && data[m].apiMiner && data[m].apiMiner.hashrateHistory) {
-    myPts = data[m].apiMiner.hashrateHistory.map(h => ({t: h.time, v: h.hashrate}));
+  let myPts = [];
+  if(data[m] && data[m].apiMiner && data[m].apiMiner.hashrateHistory && data[m].apiMiner.hashrateHistory.length > 0) {
+    const fromMs = Date.now() - RANGES[range];
+    myPts = data[m].apiMiner.hashrateHistory.filter(h => h.time >= fromMs).map(h => ({t: h.time, v: h.hashrate}));
+  } else {
+    myPts = seriesFor(m, wallet, RANGES[range]);
   }
 
   return '<div class="hero" style="margin-bottom:13px">' +
