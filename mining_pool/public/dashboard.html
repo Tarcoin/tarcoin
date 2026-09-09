@@ -151,7 +151,7 @@ kbd{display:inline-block;background:var(--surface-3);border:1px solid var(--bord
   <div class="row">
     <div class="segs" role="tablist" id="tabs">
       <button role="tab" data-mode="solo" aria-selected="true">Solo</button>
-      <button role="tab" data-mode="pool" aria-selected="false">Shared</button>
+      <button role="tab" data-mode="pool" aria-selected="false">PPLNS</button>
     </div>
     <span class="muted" id="updated" style="font-size:12px">—</span>
     <button id="refresh" class="sm">Refresh</button>
@@ -166,7 +166,7 @@ kbd{display:inline-block;background:var(--surface-3);border:1px solid var(--bord
   <h2>Connection Info</h2>
   <div class="hero" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
     <div class="card" style="border-left: 3px solid var(--accent);">
-      <div class="label">Shared Pool</div>
+      <div class="label">PPLNS Pool</div>
       <div style="font-family:ui-monospace,monospace; font-size:14.5px; font-weight:640; margin: 8px 0; color:var(--text-primary); user-select:all; word-break:break-all;">stratum+tcp://stratum.tarcoin.org:3333</div>
       <div class="sub">Fee: 1% &nbsp;&bull;&nbsp; Algorithm: SHA256d</div>
     </div>
@@ -249,7 +249,7 @@ kbd{display:inline-block;background:var(--surface-3);border:1px solid var(--bord
       <button class="sm" id="helpClose">close</button></div>
     <div class="kbd-grid">
       <span><kbd>/</kbd></span><span>focus the wallet box</span>
-      <span><kbd>1</kbd> <kbd>2</kbd></span><span>solo / shared pool</span>
+      <span><kbd>1</kbd> <kbd>2</kbd></span><span>solo / PPLNS pool</span>
       <span><kbd>r</kbd></span><span>refresh now</span>
       <span><kbd>c</kbd></span><span>jump to calibration</span>
       <span><kbd>e</kbd></span><span>export samples as CSV</span>
@@ -285,7 +285,7 @@ const EXPLORER_BASE = PROXIED ? "/x/explorer" : null;
 
 const ENDPOINTS = {
   solo: { path: "/api/solo/stats", label: "Solo",   hashKey: "soloHashrate" },
-  pool: { path: "/api/pool/stats", label: "Shared", hashKey: "poolHashrate" }
+  pool: { path: "/api/pool/stats", label: "PPLNS", hashKey: "poolHashrate" }
 };
 const POOL_MS = 5000;
 const BACKGROUND_EVERY = 4;
@@ -864,7 +864,7 @@ function renderNetwork(){
     tile("Avg block time", avg ? fmtDur(avg) : "—",
          avg ? "last " + BLOCK_SPAN + " blocks · " + fmtNum(86400/avg, 0) + "/day" : "") +
     tile("Pool's recent blocks", recent ? recent.pool + ' <small class="muted">of last ' + recent.span + "</small>" : "—",
-         recent ? (recent.mine ? recent.mine + " of them yours" : "solo + shared combined") : "") +
+         recent ? (recent.mine ? recent.mine + " of them yours" : "solo + PPLNS combined") : "") +
     tile("Block reward", n ? fmtNum(n.blockReward) + ' <small class="muted">TAR</small>' : "—",
          n ? "era " + n.currentEra + " · halving in " + fmtNum(n.blocksUntilHalving) : "") +
     (ns ? tile("Mempool", fmtNum(ns.mempool && ns.mempool.size),
