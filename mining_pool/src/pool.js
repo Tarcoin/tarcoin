@@ -660,7 +660,8 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     // Track in Redis
     if (redis) {
       await redis.lPush('pool:shares', JSON.stringify({ worker: workerName, time: Date.now() }));
-      await redis.lTrim('pool:shares', 0, 9999);
+      // PPLNS: Increase the rolling window to 1,000,000 shares (approx. 24+ hours of shares)
+      await redis.lTrim('pool:shares', 0, 999999);
 
       // Save hashrate snapshot for per-wallet history chart
       const wallet = workerName.split('.')[0];
@@ -1038,9 +1039,9 @@ async function processPayouts() {
     const txid = await rpcCall('sendmany', ["", payouts, 101]);
     console.log(`💸 Payout successful! TXID: ${txid}`);
 
-    // 5. Clear the shares ONLY if successful
-    await redis.del('pool:shares');
-    console.log('Cleared processed shares from Redis.');
+    // 5. [PPLNS UPDATE] Do NOT clear the shares. This leaves them as a rolling window for true PPLNS payouts!
+    // await redis.del('pool:shares');
+    console.log('PPLNS: Kept shares on the rolling conveyor belt for the next block payout.');
 
     // 6. Bonus Engine (Miner Bounty Program)
     try {
