@@ -69,26 +69,35 @@ export default function MiningPage() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="grid sm:grid-cols-2 gap-6 mt-20 text-left"
+              className="grid sm:grid-cols-3 gap-6 mt-20 text-left"
             >
               <div className="glass rounded-xl p-6 border border-tarcoin-gold/10">
-                <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">Pool Parameters</h3>
+                <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">PPLNS Pool</h3>
                 <ul className="space-y-2 text-sm text-gray-400">
                   <li><span className="text-white">Algorithm:</span> SHA256d</li>
                   <li><span className="text-white">Stratum Port:</span> 3333</li>
-                  <li><span className="text-white">Block Reward:</span> 50,000 TAR</li>
-                  <li><span className="text-white">Block Time:</span> ~10 minutes</li>
+                  <li><span className="text-white">Reward Method:</span> True PPLNS</li>
                   <li><span className="text-white">Pool Fee:</span> 1%</li>
-                  <li><span className="text-white">Payouts:</span> Daily automatic</li>
+                  <li><span className="text-white">Payouts:</span> Hourly automatic</li>
+                </ul>
+              </div>
+              <div className="glass rounded-xl p-6 border border-tarcoin-gold/10">
+                <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">SOLO Pool</h3>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><span className="text-white">Algorithm:</span> SHA256d</li>
+                  <li><span className="text-white">Stratum Port:</span> 3334</li>
+                  <li><span className="text-white">Block Reward:</span> 50,000 TAR</li>
+                  <li><span className="text-white">Pool Fee:</span> 1%</li>
+                  <li><span className="text-white">Payouts:</span> Immediate on block</li>
                 </ul>
               </div>
               <div className="glass rounded-xl p-6 border border-tarcoin-gold/10">
                 <h3 className="text-lg font-orbitron font-semibold mb-4 text-tarcoin-gold">Getting Started</h3>
                 <ol className="space-y-2 text-sm text-gray-400 list-decimal list-inside">
-                  <li>Configure your ASIC miner for SHA256d</li>
-                  <li>Point to <code className="text-tarcoin-gold">stratum+tcp://stratum.tarcoin.org:3333</code> (Primary) and <code className="text-tarcoin-gold">stratum2.tarcoin.org:3333</code> (Backup)</li>
-                  <li>Set your TAR address as the worker username</li>
-                  <li>Start mining and track shares on the pool dashboard</li>
+                  <li>Configure ASIC for SHA256d</li>
+                  <li>Point to <code className="text-tarcoin-gold break-all">stratum.tarcoin.org:[PORT]</code></li>
+                  <li>Set your TAR wallet address as the worker username</li>
+                  <li>Track shares on the pool dashboard</li>
                 </ol>
               </div>
             </motion.div>
