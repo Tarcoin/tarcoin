@@ -27,6 +27,19 @@ export default function FaqPage() {
                 { q: "What is TARCOIN?", a: "TARCOIN (TAR) is a decentralized, UTXO-based cryptocurrency built on a fork of Bitcoin Core v31.x. It uses SHA256d Proof-of-Work, has a fixed supply of 50 billion TAR, and is fully ASIC compatible." },
                 { q: "How do I get TAR?", a: "You can mine TAR using any SHA256d ASIC miner or CPU miner. Point your miner to our official pool at stratum+tcp://stratum.tarcoin.org:3333 (or backup stratum2.tarcoin.org:3333) for the easiest setup, or mine solo directly to your own wallet address. TAR can also be obtained through peer-to-peer transactions or future exchange listings." },
                 { q: "What wallets are available?", a: "The official TARCOIN Core wallet is available for Windows, macOS, and Linux. It features full node capabilities, AES-256 encryption, and BIP39/BIP32 mnemonic seeds." },
+                { q: "How do I import my Web Wallet or Android Wallet into the Windows Wallet?", a: (
+                  <div className="space-y-3">
+                    <p><strong>Step 1:</strong> In the Web Wallet, go to <strong>Settings &rarr; Export Private Key</strong>, and copy your WIF Format key <em>(it will start with an &apos;L&apos; or &apos;K&apos;)</em>.</p>
+                    <p><strong>Step 2 (Optional):</strong> If you want to keep your Web Wallet balance completely separated from your main Windows Wallet, you can create a new blank wallet first! In Tarcoin-Qt, go to <strong>File &rarr; Create Wallet</strong>, name it &apos;Web Wallet&apos;, check the &quot;Make Blank Wallet&quot; box, and click Create. <em>(Make sure it is selected in the top right corner before continuing!)</em></p>
+                    <p><strong>Step 3:</strong> Open Tarcoin-Qt and go to <strong>Help &rarr; Debug Window &rarr; Console</strong>.</p>
+                    <p><strong>Step 4:</strong> First, we need to generate a cryptographic checksum for your key. Type this command and hit Enter <em>(replace YOUR_WIF_KEY with your actual key)</em>:<br />
+                    <code className="bg-black/40 px-2 py-1.5 rounded text-tarcoin-gold font-mono break-all block mt-2 border border-tarcoin-gold/20">getdescriptorinfo &quot;wpkh(YOUR_WIF_KEY)&quot;</code></p>
+                    <p><strong>Step 5:</strong> The console will output a &quot;checksum&quot;. Copy that 8-character checksum string <em>(for example: m0p2yd0c)</em>.</p>
+                    <p><strong>Step 6:</strong> Finally, run this exact command to officially import your wallet and scan for your balance. <em>(Replace the key with your key, and replace YOUR_CHECKSUM with the checksum you just copied)</em>:<br />
+                    <code className="bg-black/40 px-2 py-1.5 rounded text-tarcoin-gold font-mono break-all block mt-2 border border-tarcoin-gold/20">importdescriptors &quot;[&#123;&quot;desc&quot;:&quot;wpkh(YOUR_WIF_KEY)#YOUR_CHECKSUM&quot;,&quot;timestamp&quot;:0,&quot;internal&quot;:false&#125;]&quot;</code></p>
+                    <p className="text-tarcoin-gold pt-2"><em>Your wallet will freeze for a minute to scan the blockchain, and then your Web Wallet balance will magically appear on your desktop!</em></p>
+                  </div>
+                ) },
                 { q: "Can I mine TAR with my Bitcoin ASIC?", a: "Yes! TARCOIN uses the same SHA256d algorithm as Bitcoin. Any Bitcoin ASIC miner or CPU miner can mine TAR by pointing it to stratum+tcp://stratum.tarcoin.org:3333 (Backup: stratum2.tarcoin.org:3333) with your TAR wallet address as the username and any password (e.g. x)." },
                 { q: "What is the total supply?", a: "The total supply is 50,000,000,000 TAR. 80% (40B) is distributed through SHA256 Proof-of-Work mining rewards over 15-20 years. 20% (10B) is reserved and managed by the founding team for ecosystem growth, exchange listings, infrastructure, developer compensation, and community initiatives." },
                 { q: "Is TARCOIN a Bitcoin fork?", a: "TARCOIN is derived from Bitcoin Core v31.x with modified supply parameters, network parameters, address prefixes, and branding. The consensus rules and security model remain identical to Bitcoin." },
@@ -41,7 +54,7 @@ export default function FaqPage() {
                     </svg>
                   </summary>
                   <div className="px-6 pb-5 pt-0">
-                    <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+                    <div className="text-sm text-gray-400 leading-relaxed">{item.a}</div>
                   </div>
                 </details>
               ))}
