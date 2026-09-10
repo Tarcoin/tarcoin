@@ -1169,7 +1169,7 @@ cron.schedule('0 * * * *', processPayouts);
         fee: 1.0, // 1% pool fee
         stratum_port: 3333,
         stratum_host: "stratum.tarcoin.org",
-        shared: {
+        pplns: {
           hashrate: poolHashrate,
           miners: activeMiners
         },
