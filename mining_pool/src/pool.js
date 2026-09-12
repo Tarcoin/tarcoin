@@ -566,10 +566,8 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
     }
 
     let finalVersion = t.version;
-    if (message.params.length > 5) {
-      const versionBits = parseInt(message.params[5], 16);
-      const baseVersion = parseInt(t.version, 16);
-      finalVersion = (baseVersion | versionBits).toString(16).padStart(8, '0');
+    if (message.params.length > 5 && message.params[5]) {
+      finalVersion = message.params[5].padStart(8, '0');
     }
 
     const header = buildBlockHeader(finalVersion, t.prevHashBE, merkleRoot.toString('hex'), nTime, t.nBits, nonce);
@@ -640,10 +638,8 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 
     // Handle BIP320 Version Rolling (Bitaxe sends version bits in param 5)
     let finalVersion = t.version;
-    if (message.params.length > 5) {
-      const versionBits = parseInt(message.params[5], 16);
-      const baseVersion = parseInt(t.version, 16);
-      finalVersion = (baseVersion | versionBits).toString(16).padStart(8, '0');
+    if (message.params.length > 5 && message.params[5]) {
+      finalVersion = message.params[5].padStart(8, '0');
     }
 
     // Build 80-byte block header (uses internal prevHashBE and finalVersion)
