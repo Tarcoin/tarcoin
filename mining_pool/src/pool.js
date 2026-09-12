@@ -1083,7 +1083,7 @@ async function processPayouts() {
           // Add this hour's pool reward to their permanent lifetime pool stats:
           let lifetimePool = 0;
           if (payouts[worker]) {
-             lifetimePool = await redis.incrByFloat(lifetimeKey, payouts[worker]);
+             lifetimePool = parseFloat(await redis.incrByFloat(lifetimeKey, payouts[worker]));
           } else {
              lifetimePool = parseFloat(await redis.get(lifetimeKey) || 0);
           }
