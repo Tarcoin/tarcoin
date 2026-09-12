@@ -71,7 +71,7 @@ async function initRedis() {
     await redis.connect();
     console.log('Redis connected for mining pool');
   } catch {
-    console.warn('Redis unavailable ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â running without persistence');
+    console.warn('Redis unavailable - running without persistence');
   }
 }
 
@@ -95,13 +95,13 @@ async function rpcCall(method, params = [], walletOverride = null) {
   return data.result;
 }
 
-// ====== SHA256d ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â double SHA256 (Bitcoin/TARCOIN PoW) ======
+// ====== SHA256d - double SHA256 (Bitcoin/TARCOIN PoW) ======
 function sha256d(buffer) {
   const first = crypto.createHash('sha256').update(buffer).digest();
   return crypto.createHash('sha256').update(first).digest();
 }
 
-// ====== nBits ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ target (256-bit Buffer) ======
+// ====== nBits -> target (256-bit Buffer) ======
 function nBitsToTarget(nBits) {
   const nBitsInt = parseInt(nBits, 16);
   const exponent = (nBitsInt >>> 24) & 0xff;
@@ -263,7 +263,7 @@ const stratumServer = net.createServer((socket) => {
         let newDiff = Math.round(socketDiff * (VARDIFF.targetTime / actualTime));
         newDiff = Math.min(VARDIFF.maxDiff, Math.max(VARDIFF.minDiff, newDiff));
         if (newDiff !== socketDiff) {
-          console.log(`[Vardiff] ${sanitizeLog(workerName)}: ${socketDiff} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${newDiff} (${recentShares} shares in ${window}s)`);
+          console.log(`[Vardiff] ${sanitizeLog(workerName)}: ${socketDiff} -> ${newDiff} (${recentShares} shares in ${window}s)`);
           sendDifficulty(newDiff);
         }
       }
@@ -423,7 +423,7 @@ const soloStratumServer = net.createServer((socket) => {
         let newDiff = Math.round(socketDiff * (VARDIFF.targetTime / actualTime));
         newDiff = Math.min(VARDIFF.maxDiff, Math.max(VARDIFF.minDiff, newDiff));
         if (newDiff !== socketDiff) {
-          console.log(`[Solo Vardiff] ${sanitizeLog(workerName)}: ${socketDiff} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${newDiff}`);
+          console.log(`[Solo Vardiff] ${sanitizeLog(workerName)}: ${socketDiff} -> ${newDiff}`);
           sendSoloDifficulty(newDiff);
         }
       }
@@ -679,7 +679,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await handleBlockFound(header, coinbaseHex, workerName);
     }
 
-    console.log('Share accepted from %s ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â hash: %s...', sanitizeLog(workerName), headerHash.reverse().toString('hex').slice(0, 16));
+    console.log('Share accepted from %s - hash: %s...', sanitizeLog(workerName), headerHash.reverse().toString('hex').slice(0, 16));
   } catch (err) {
     console.error('Share verification error:', err.message);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
@@ -688,7 +688,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 
 async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
   const safeWorker = sanitizeLog(workerName);
-  console.log('ÃƒÂ°Ã…Â¸Ã…Â½Ã¢â‚¬Â° BLOCK FOUND by %s!', safeWorker);
+  console.log('🎉 BLOCK FOUND by %s!', safeWorker);
   poolState.blocksFound++;
 
   try {
@@ -725,7 +725,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
 
 async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
   const safeWorker = sanitizeLog(workerName);
-  console.log('ÃƒÂ°Ã…Â¸Ã…Â½Ã¢â‚¬Â° SOLO BLOCK FOUND by %s! Coinbase pays miner directly.', safeWorker);
+  console.log('🎉 SOLO BLOCK FOUND by %s! Coinbase pays miner directly.', safeWorker);
   soloState.blocksFound++;
 
   try {
@@ -746,7 +746,7 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
     console.log('[SOLO] Submitting block height %d to network...', height);
     const submissionResult = await rpcCall('submitblock', [blockHex]);
     console.log('[SOLO] submitblock result:', submissionResult || 'accepted');
-    console.log('[SOLO] ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â° 49,500 TAR paid DIRECTLY to %s via coinbase ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no extra tx needed!', safeWorker);
+    console.log('[SOLO] 💰 49,500 TAR paid DIRECTLY to %s via coinbase - no extra tx needed!', safeWorker);
 
     // Store solo block record in Redis
     if (redis) {
@@ -932,7 +932,7 @@ async function refreshBlockTemplate() {
         }
       }
 
-      console.log(`Block template refreshed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â height: ${template.height}, txs: ${(template.transactions || []).length}`);
+      console.log(`Block template refreshed - height: ${template.height}, txs: ${(template.transactions || []).length}`);
     }
   } catch (err) {
     console.warn('Template refresh failed (node may not be connected):', err.message);
@@ -1037,7 +1037,7 @@ async function processPayouts() {
 
     // 4. Send the transaction
     const txid = await rpcCall('sendmany', ["", payouts, 101]);
-    console.log(`ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¸ Payout successful! TXID: ${txid}`);
+    console.log(`💸 Payout successful! TXID: ${txid}`);
 
     // 5. [PPLNS UPDATE] Do NOT clear the shares. This leaves them as a rolling window for true PPLNS payouts!
     // await redis.del('pool:shares');
@@ -1105,7 +1105,7 @@ async function processPayouts() {
                 const bonusTxid = await rpcCall('sendtoaddress', [worker, 1000], 'faucet');
                 await redis.incr(globalBountyKey);
                 await redis.set(bonusClaimedKey, '1');
-                console.log('ÃƒÂ°Ã…Â¸Ã…Â½Ã¢â‚¬Â° MINER BOUNTY AWARDED! 1,000 TAR to %s (Miner #%d). TXID: %s', sanitizeLog(worker), bountyCount + 1, bonusTxid);
+                console.log('🎉 MINER BOUNTY AWARDED! 1,000 TAR to %s (Miner #%d). TXID: %s', sanitizeLog(worker), bountyCount + 1, bonusTxid);
               }
             }
           }
@@ -1356,7 +1356,7 @@ cron.schedule('0 * * * *', processPayouts);
       if (redis) {
         const histKey = `miner:hashrate_history:${wallet}`;
         const histData = await redis.lRange(histKey, 0, 8639);
-        // lPush stores newest first, so reverse to get oldestÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢newest for chart
+        // lPush stores newest first, so reverse to get oldest->newest for chart
         hashrateHistory = histData.reverse().map(h => JSON.parse(h));
       }
 
