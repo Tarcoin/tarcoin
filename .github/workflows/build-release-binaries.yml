@@ -258,8 +258,8 @@ jobs:
   #          tarcoin-macos-app.zip  (fallback if .dmg creation fails)
   # ────────────────────────────────────────────────────────────────────────────
   macos-wallet:
-    name: macOS Wallet (Universal — Intel + Apple Silicon)
-    runs-on: macos-14
+    name: macOS Wallet (Universal - Intel + Apple Silicon)
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
