@@ -48,7 +48,16 @@ export default function AddressPage() {
     setTxsLoading(true);
     fetch(`${API}/api/address/${address}/txs`)
       .then(r => r.ok ? r.json() : [])
-      .then(d => { setTxs(Array.isArray(d) ? d : []); setTxsLoading(false); })
+      .then(d => { 
+        if (Array.isArray(d)) {
+          // Sort transactions by time descending (newest first)
+          d.sort((a, b) => (b.time || 0) - (a.time || 0));
+          setTxs(d);
+        } else {
+          setTxs([]);
+        }
+        setTxsLoading(false); 
+      })
       .catch(() => setTxsLoading(false));
   }, [address]);
 
@@ -58,7 +67,16 @@ export default function AddressPage() {
     setUtxosLoading(true);
     fetch(`${API}/api/address/${address}/utxo`)
       .then(r => r.ok ? r.json() : [])
-      .then(d => { setUtxos(Array.isArray(d) ? d : []); setUtxosLoading(false); })
+      .then(d => { 
+        if (Array.isArray(d)) {
+          // Sort UTXOs by newest first (lowest confirmations)
+          d.sort((a, b) => (a.confirmations || 0) - (b.confirmations || 0));
+          setUtxos(d);
+        } else {
+          setUtxos([]);
+        }
+        setUtxosLoading(false); 
+      })
       .catch(() => setUtxosLoading(false));
   }, [tab, address, utxos.length]);
 
