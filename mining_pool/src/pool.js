@@ -567,7 +567,9 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
 
     let finalVersion = t.version;
     if (message.params.length > 5 && message.params[5]) {
-      finalVersion = message.params[5].padStart(8, '0');
+      const versionBits = parseInt(message.params[5], 16);
+      const baseVersion = parseInt(t.version, 16);
+      finalVersion = (baseVersion | versionBits).toString(16).padStart(8, '0');
     }
 
     const header = buildBlockHeader(finalVersion, t.prevHashBE, merkleRoot.toString('hex'), nTime, t.nBits, nonce);
@@ -639,7 +641,9 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     // Handle BIP320 Version Rolling (Bitaxe sends version bits in param 5)
     let finalVersion = t.version;
     if (message.params.length > 5 && message.params[5]) {
-      finalVersion = message.params[5].padStart(8, '0');
+      const versionBits = parseInt(message.params[5], 16);
+      const baseVersion = parseInt(t.version, 16);
+      finalVersion = (baseVersion | versionBits).toString(16).padStart(8, '0');
     }
 
     // Build 80-byte block header (uses internal prevHashBE and finalVersion)
@@ -704,15 +708,18 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
 
     console.log('Submitting block height %d to network...', height);
     // submitblock requires the raw hex of the full block
-    const submissionResult = await rpcCall('submitblock', [blockHex]);
-    console.log('submitblock result:', submissionResult || 'accepted');
-
-    if (redis) {
-      await redis.lPush('pool:blocks', JSON.stringify({
-        worker: workerName,
-        height: height,
-        time: Date.now(),
-      }));
+    const result = await rpcCall('submitblock', [blockHex]);
+    if (result === null) {
+      console.log('[PPLNS] Block accepted by network! 🎉');
+      if (redis) {
+        await redis.lPush('pool:blocks', JSON.stringify({
+          worker: workerName,
+          height: height,
+          time: Date.now(),
+        }));
+      }
+    } else {
+      console.error(`[PPLNS] NETWORK REJECTED BLOCK: ${result}`);
     }
   } catch (err) {
     console.error('Block found handling error:', err.message);
