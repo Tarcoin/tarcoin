@@ -23,7 +23,7 @@
 | **Block Reward** | 50,000 TAR |
 | **Halving Interval** | 400,000 blocks |
 | **Algorithm** | SHA256d |
-| **Smallest Unit** | Tar (1 TAR = 100,000,000 Tar) |
+| **Smallest Unit** | Stella / sTAR (1 TAR = 100,000,000 sTAR) |
 | **Block Time** | 10 minutes |
 | **Consensus** | Proof-of-Work |
 | **Mining Type** | Public ASIC Mining |

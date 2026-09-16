@@ -10,7 +10,7 @@
 | **Block Time** | ~10 minutes |
 | **Block Reward** | 50,000 TAR (halves every 400,000 blocks) |
 | **Max Supply** | 50,000,000,000 TAR |
-| **Smallest Unit** | tar (1 TAR = 100,000,000 tar) |
+| **Smallest Unit** | stella / sTAR (1 TAR = 100,000,000 sTAR) |
 | **Decimals** | 8 |
 | **Address Formats** | `tar1...` (bech32/SegWit), `T...` (base58/P2PKH) |
 | **Default P2P Port** | 19333 |
@@ -287,7 +287,7 @@ TARCOIN is a Bitcoin fork. The following Bitcoin Core RPC methods are fully comp
 | Max supply | 21M BTC | 50B TAR |
 | Block reward | 3.125 BTC | 50,000 TAR |
 | Halving interval | 210,000 blocks | 400,000 blocks |
-| Smallest unit name | satoshi | tar |
+| Smallest unit name | satoshi | stella / sTAR |
 | Network magic | `f9beb4d9` | `fabfb5da` |
 
 ---
