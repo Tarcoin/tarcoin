@@ -108,6 +108,7 @@ Additional halving eras continue beyond Era 4 until the remaining mineable suppl
 | Maximum Supply | 50,000,000,000 TAR |
 | Mineable Supply | 40,000,000,000 TAR (80%) |
 | Ecosystem Treasury | 10,000,000,000 TAR (20%) |
+| Smallest Unit | Stella / sTAR (1 TAR = 100,000,000 sTAR) |
 | P2P Port | 19333 |
 | RPC Port | 19332 |
 | Bech32 Address Prefix | tar1 |
