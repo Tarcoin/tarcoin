@@ -593,6 +593,11 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
       await redis.lTrim(histKey, 0, 8639); // keep last 8640 points (24 hours at 10s intervals)
       await redis.expire(histKey, 86400);
+
+      // --- UP-TIME TRACKING FOR SUNDAY 1M TAR DROP ---
+      const today = new Date().toISOString().split('T')[0];
+      await redis.sAdd(`miner:uptime:${wallet}`, today);
+      await redis.expire(`miner:uptime:${wallet}`, 86400 * 14); // Keep for 14 days
     }
 
     console.log('[SOLO] Share accepted from %s', sanitizeLog(workerName));
@@ -670,6 +675,11 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
       await redis.lTrim(histKey, 0, 8639); // keep last 8640 points (24 hours at 10s intervals)
       await redis.expire(histKey, 86400); // auto-expire after 24h
+
+      // --- UP-TIME TRACKING FOR SUNDAY 1M TAR DROP ---
+      const today = new Date().toISOString().split('T')[0];
+      await redis.sAdd(`miner:uptime:${wallet}`, today);
+      await redis.expire(`miner:uptime:${wallet}`, 86400 * 14); // Keep for 14 days
     }
 
 

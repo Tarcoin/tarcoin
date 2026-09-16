@@ -101,6 +101,34 @@ export default function MiningPage() {
                 </ol>
               </div>
             </motion.div>
+
+            {/* Hashpower Rental */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.9 }}
+              className="mt-16 glass rounded-xl p-8 border border-tarcoin-gold/20 flex flex-col md:flex-row items-center justify-between gap-8 text-left"
+            >
+              <div className="flex-1">
+                <h3 className="text-2xl font-orbitron font-semibold mb-4 text-white">Don&apos;t have hardware? <span className="text-tarcoin-gold">Rent Hashpower.</span></h3>
+                <p className="text-gray-400 mb-6 font-space text-lg">
+                  You can now instantly rent massive amounts of SHA-256d hashpower via KissMyHash and point it directly at our network pools. No account balance or custody required—just pay as you go with Bitcoin Lightning.
+                </p>
+                <div className="flex flex-col gap-3 text-sm text-gray-400">
+                  <div className="flex items-center gap-2"><svg className="w-5 h-5 text-tarcoin-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Support for Exahash-scale Ticket Parties</div>
+                  <div className="flex items-center gap-2"><svg className="w-5 h-5 text-tarcoin-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Zero setup time, instant hashpower delivery</div>
+                  <div className="flex items-center gap-2"><svg className="w-5 h-5 text-tarcoin-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Directly supports the Tarcoin ecosystem</div>
+                </div>
+              </div>
+              <div className="w-full md:w-[400px] flex justify-center">
+                <iframe 
+                  src="https://tarcoin.kissmyhash.com/embed?theme=dark&accent=e8b014" 
+                  className="w-full h-[640px] rounded-lg shadow-2xl border border-tarcoin-gold/20"
+                  allow="clipboard-write" 
+                  title="KissMyHash rental widget"
+                ></iframe>
+              </div>
+            </motion.div>
           </div>
         </section>
       </div>

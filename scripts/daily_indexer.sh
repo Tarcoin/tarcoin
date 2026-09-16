@@ -8,7 +8,7 @@ FAUCET_ADDRESS="tar1q9r9q9pypn3h5yccwa0nuzff4e0af9rawdetwh8"
 POOL_MAIN_ADDRESS="tar1qphshh7hzrx259th7ymeaergt6365wh33xn3lq7"
 EXPLORER_API="http://127.0.0.1:4000/api"
 VPS2_IP="66.175.236.170"
-TOP_N=100
+TOP_N=200
 # ---------------------
 
 echo "Starting Daily Rich List Indexer (Full Blockchain Scan Mode)..."
@@ -107,7 +107,7 @@ fi
 
 # Step 8: Build JSON
 echo "Building JSON..."
-JSON_OUTPUT="{\"updated_at\":$(date +%s),\"top_addresses\":["
+JSON_OUTPUT="{\"updated_at\":$(date +%s),\"total_wallets\":$TOTAL,\"top_addresses\":["
 
 rank=1
 first=true
