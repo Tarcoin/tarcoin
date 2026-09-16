@@ -34,7 +34,7 @@ QString BitcoinUnits::longName(Unit unit)
     case Unit::BTC: return QString("TAR");
     case Unit::mBTC: return QString("mTAR");
     case Unit::uBTC: return QString::fromUtf8("µTAR");
-    case Unit::SAT: return QString("Tar");
+    case Unit::SAT: return QString("sTAR");
     } // no default case, so the compiler can warn about missing cases
     assert(false);
 }
@@ -45,7 +45,7 @@ QString BitcoinUnits::shortName(Unit unit)
     case Unit::BTC: return longName(unit);
     case Unit::mBTC: return longName(unit);
     case Unit::uBTC: return QString("µTAR");
-    case Unit::SAT: return QString("tar");
+    case Unit::SAT: return QString("sTAR");
     } // no default case, so the compiler can warn about missing cases
     assert(false);
 }
@@ -56,7 +56,7 @@ QString BitcoinUnits::description(Unit unit)
     case Unit::BTC: return QString("Tarcoins");
     case Unit::mBTC: return QString("Milli-Tarcoins (1 / 1" THIN_SP_UTF8 "000)");
     case Unit::uBTC: return QString("Micro-Tarcoins (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-    case Unit::SAT: return QString("tar (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case Unit::SAT: return QString("Stella / sTAR (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     } // no default case, so the compiler can warn about missing cases
     assert(false);
 }
