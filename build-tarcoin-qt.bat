@@ -23,7 +23,8 @@ echo.
   -DCMAKE_BUILD_TYPE=Release ^
   -DBUILD_TESTS=OFF ^
   -DBUILD_BENCH=OFF ^
-  -DBUILD_GUI=ON
+  -DBUILD_GUI=ON ^
+  -DWITH_ZMQ=ON
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

@@ -64,6 +64,7 @@ jobs:
           touch contrib/filter-lcov.py || true
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DWITH_ZMQ=ON \
             -DBUILD_GUI=ON \
             -DENABLE_IPC=OFF \
             -DBUILD_TESTS=OFF \
@@ -126,6 +127,7 @@ jobs:
           touch contrib/filter-lcov.py || true
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DWITH_ZMQ=ON \
             -DBUILD_GUI=OFF \
             -DENABLE_IPC=OFF \
             -DBUILD_TESTS=OFF \
@@ -202,6 +204,7 @@ jobs:
           cmake -B build -G Ninja \
             --toolchain depends/x86_64-w64-mingw32/toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
+            -DWITH_ZMQ=ON \
             -DBUILD_GUI=ON \
             -DENABLE_IPC=OFF \
             -DBUILD_TESTS=OFF
@@ -281,6 +284,7 @@ jobs:
           Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DWITH_ZMQ=ON \
             -DCMAKE_CXX_STANDARD=20 \
             -DCMAKE_CXX_STANDARD_REQUIRED=ON \
             -DBUILD_GUI=ON \
