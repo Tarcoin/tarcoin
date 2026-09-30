@@ -14,6 +14,7 @@ const navLinks = [
   { name: "Wallet", href: "/wallet" },
   { name: "API", href: "/api" },
   { name: "Whitepaper", href: "/whitepaper" },
+  { name: "Transparency", href: "/transparency" },
 ];
 
 export default function Navbar() {

@@ -60,6 +60,8 @@ const POW_LIMIT = Buffer.from('0000ffff00000000000000000000000000000000000000000
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../public'))); // Serve images and static files
 app.use('/', apiLimiter);
 
 // ====== Redis client ======
@@ -181,8 +183,8 @@ function hashMeetsTarget(hashBuf, targetBuf) {
 
 // ====== Vardiff Config ======
 const VARDIFF = {
-  startDiff:   10000,    // Default starting difficulty (same as before, vardiff adjusts from here)
-  minDiff:     64,       // Absolute minimum (protects server from tiny miners)
+  startDiff:   12500,   // Default starting difficulty (same as before, vardiff adjusts from here)
+  minDiff:     2500,     // Absolute minimum (protects server from tiny miners)
   maxDiff:     30000000, // Absolute maximum (protects server from whale ASICs)
   targetTime:  10,       // Target seconds between shares
   retargetEvery: 60000,  // Retarget interval in ms (60 seconds)
@@ -199,6 +201,26 @@ function parseDiffOverride(password) {
   if (isNaN(requested)) return null;
   // Clamp to safe range
   return Math.min(VARDIFF.maxDiff, Math.max(VARDIFF.minDiff, requested));
+}
+
+// ====== Real hashrate from actual share submission rate ======
+// Uses a sliding window of share timestamps + difficulties.
+// Falls back to difficulty/targetTime if not enough data yet.
+function calcActualHashrate(shareHistory, windowMs = 300000) {
+  if (!shareHistory || shareHistory.length < 2) return 0;
+  const now = Date.now();
+  const cutoff = now - windowMs;
+  const recent = shareHistory.filter(s => s.t >= cutoff);
+  if (recent.length < 2) return 0;
+  const dtSec = (recent[recent.length - 1].t - recent[0].t) / 1000;
+  if (dtSec < 5) return 0;
+  const totalHashes = recent.slice(1).reduce((sum, s) => sum + s.d * 4294967296, 0);
+  return totalHashes / dtSec;
+}
+
+function minerHashrate(miner) {
+  const actual = calcActualHashrate(miner.shareHistory);
+  return actual > 0 ? actual : (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
 }
 
 // ====== Pool state ======
@@ -332,6 +354,7 @@ const stratumServer = net.createServer((socket) => {
               hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
               lastSeen: Date.now(), workerId, extraNonce1,
               difficulty: socketDiff,
+              shareHistory: [], // sliding window for real hashrate calculation
             });
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
@@ -578,6 +601,13 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
     worker.validShares++;
     worker.shares++;
     worker.lastSeen = Date.now();
+
+    // Track share for real hashrate calculation
+    if (!worker.shareHistory) worker.shareHistory = [];
+    worker.shareHistory.push({ t: Date.now(), d: worker.difficulty });
+    const hCutoff = Date.now() - 300000;
+    while (worker.shareHistory.length > 0 && worker.shareHistory[0].t < hCutoff) worker.shareHistory.shift();
+
     socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
 
     const networkTarget = nBitsToTarget(t.nBits);
@@ -585,10 +615,10 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
       await handleSoloBlockFound(header, coinbaseHex, workerName);
     }
 
-    // Save hashrate snapshot for per-wallet history chart (solo)
+    // Save hashrate snapshot for per-wallet history chart (solo) using REAL hashrate
     if (redis) {
       const wallet = workerName.split('.')[0];
-      const hashSnapshot = Math.round((worker.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime);
+      const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
       await redis.lTrim(histKey, 0, 8639); // keep last 8640 points (24 hours at 10s intervals)
@@ -660,6 +690,13 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
     worker.validShares++;
     worker.shares++;
     worker.lastSeen = Date.now();
+
+    // Track share for real hashrate calculation
+    if (!worker.shareHistory) worker.shareHistory = [];
+    worker.shareHistory.push({ t: Date.now(), d: worker.difficulty });
+    const hCutoff = Date.now() - 300000; // keep last 5 minutes
+    while (worker.shareHistory.length > 0 && worker.shareHistory[0].t < hCutoff) worker.shareHistory.shift();
+
     socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
 
     // Track in Redis
@@ -668,9 +705,9 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       // PPLNS: Increase the rolling window to 1,000,000 shares (approx. 24+ hours of shares)
       await redis.lTrim('pool:shares', 0, 999999);
 
-      // Save hashrate snapshot for per-wallet history chart
+      // Save hashrate snapshot using REAL share-rate-based hashrate
       const wallet = workerName.split('.')[0];
-      const hashSnapshot = Math.round((worker.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime);
+      const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
       await redis.lTrim(histKey, 0, 8639); // keep last 8640 points (24 hours at 10s intervals)
@@ -792,7 +829,7 @@ async function buildSoloCoinbase(minerAddress, template) {
   const feeValidation = await rpcCall('validateaddress', [feeWallet]);
   const feeScriptPubKey = feeValidation.scriptPubKey || ('76a914' + feeWallet + '88ac');
 
-  const blockReward = template.coinbasevalue || 5000000000000; // smallest units (10^-8 Tar)
+  const blockReward = template.coinbasevalue || 5000000000000; // smallest units (10^-8 sTAR)
   const feeAmount = Math.floor(blockReward * (soloState.fee / 100));
   const minerAmount = blockReward - feeAmount;
 
@@ -1137,6 +1174,11 @@ cron.schedule('0 * * * *', processPayouts);
 
     // ====== HTTP API ======
 
+  // ====== 30-Second Stats Cache (prevents recalculating on every page refresh) ======
+  let poolStatsCache = null;
+  let poolStatsCacheTime = 0;
+  const STATS_CACHE_TTL = 30000; // 30 seconds
+
   // ====== Standard Aggregator API (MiningPoolStats Format) ======
   app.get('/api/stats', async (req, res) => {
     try {
@@ -1146,7 +1188,7 @@ cron.schedule('0 * * * *', processPayouts);
       let activeWorkers = 0;
       for (const [name, miner] of poolState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
-          poolHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          poolHashrate += minerHashrate(miner);
           const wallet = name.includes('.') ? name.split('.')[0] : name;
           activeWallets.add(wallet);
           activeWorkers++;
@@ -1160,7 +1202,7 @@ cron.schedule('0 * * * *', processPayouts);
       let soloActiveWorkers = 0;
       for (const [name, miner] of soloState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
-          soloHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          soloHashrate += minerHashrate(miner);
           const wallet = name.includes('.') ? name.split('.')[0] : name;
           soloActiveWallets.add(wallet);
           soloActiveWorkers++;
@@ -1216,8 +1258,13 @@ cron.schedule('0 * * * *', processPayouts);
         return res.json({ status: 'offline', workers: {}, totalShares: 0, blocksFound: [], poolHashrate: 0 });
       }
 
+      // Serve from cache if it is still fresh (within 30 seconds)
+      if (poolStatsCache && (Date.now() - poolStatsCacheTime) < STATS_CACHE_TTL) {
+        return res.json(poolStatsCache);
+      }
+
       // 1. Fetch shares
-      const sharesData = await redis.lRange('pool:shares', 0, -1);
+      const sharesData = await redis.lRange('pool:shares', 0, 999999); // Last 1,000,000 shares
       const workers = {};
       let totalShares = 0;
 
@@ -1239,25 +1286,34 @@ cron.schedule('0 * * * *', processPayouts);
       const blocksData = await redis.lRange('pool:blocks', 0, 9);
       const blocksFound = blocksData.map(b => JSON.parse(b));
 
-      // 3. Calculate true Pool Hashrate based on active miners and their Vardiff
+      // 3. Calculate true Pool Hashrate and active miners from live state (not shares)
       let poolHashrate = 0;
+      const liveWallets = new Set();
       for (const [name, miner] of poolState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) { // Active in last 10 mins
-          // Expected Hashrate = (Difficulty * 2^32) / TargetTime
-          poolHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          poolHashrate += minerHashrate(miner);
+          const w = name.includes('.') ? name.split('.')[0] : name;
+          liveWallets.add(w);
+          if (workers[w]) workers[w].difficulty = miner.difficulty;
         }
       }
 
-      res.json({
+      const poolStatsResponse = {
         status: 'Online',
         stratum: 'stratum+tcp://stratum.tarcoin.org:3333',
         algorithm: 'SHA256d',
-        activeMiners: Object.keys(workers).length,
+        activeMiners: liveWallets.size,
         totalShares,
         workers,
         blocksFound,
         poolHashrate
-      });
+      };
+
+      // Save to cache and send response
+      poolStatsCache = poolStatsResponse;
+      poolStatsCacheTime = Date.now();
+      res.json(poolStatsResponse);
+
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -1287,7 +1343,7 @@ cron.schedule('0 * * * *', processPayouts);
       let soloHashrate = 0;
       for (const [name, miner] of soloState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
-          soloHashrate += (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          soloHashrate += minerHashrate(miner);
         }
       }
 
@@ -1312,7 +1368,7 @@ cron.schedule('0 * * * *', processPayouts);
       const wallet = req.params.wallet.toLowerCase();
 
       // 1. Fetch shares for this wallet
-      const sharesData = redis ? await redis.lRange('pool:shares', 0, -1) : [];
+      const sharesData = redis ? await redis.lRange('pool:shares', 0, 99999) : []; // Last 100,000 shares
       let walletShares = 0;
       let lastSeen = 0;
       let totalShares = 0;
@@ -1336,7 +1392,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of poolState.miners.entries()) {
         const w = name.split('.')[0].toLowerCase();
         if (w === wallet) {
-          const workerHashrate = (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          const workerHashrate = minerHashrate(miner);
           hashrate += workerHashrate;
           difficulty = miner.difficulty;
           workers.push({
@@ -1368,7 +1424,7 @@ cron.schedule('0 * * * *', processPayouts);
       let hashrateHistory = [];
       if (redis) {
         const histKey = `miner:hashrate_history:${wallet}`;
-        const histData = await redis.lRange(histKey, 0, 8639);
+        const histData = await redis.lRange(histKey, 0, 287); // Last 288 points (~30 mins at 10s intervals)
         // lPush stores newest first, so reverse to get oldest->newest for chart
         hashrateHistory = histData.reverse().map(h => JSON.parse(h));
       }
@@ -1408,7 +1464,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of soloState.miners.entries()) {
         const w = name.split('.')[0].toLowerCase();
         if (w === wallet) {
-          const workerHashrate = (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+          const workerHashrate = minerHashrate(miner);
           hashrate += workerHashrate;
           shares += miner.validShares || 0;
           difficulty = miner.difficulty;
@@ -1437,7 +1493,7 @@ cron.schedule('0 * * * *', processPayouts);
       let hashrateHistory = [];
       if (redis) {
         const histKey = `miner:hashrate_history:${wallet}`;
-        const histData = await redis.lRange(histKey, 0, 8639);
+        const histData = await redis.lRange(histKey, 0, 287); // Last 288 points (~30 mins at 10s intervals)
         hashrateHistory = histData.reverse().map(h => JSON.parse(h));
       }
 
@@ -1459,7 +1515,7 @@ cron.schedule('0 * * * *', processPayouts);
     }
   });
 
-  const path = require('path');
+  // path is already required at the top of the file
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/dashboard.html'));
   });

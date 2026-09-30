@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tarcoin Pool Stats</title>
 <link rel="icon" type="image/png" href="https://tarcoin.org/favicon.png">
+<link rel="manifest" href="/manifest.json?v=2">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root{
   color-scheme: dark;
@@ -868,9 +873,9 @@ function renderNetwork(){
     tile("Pool's recent blocks", recent ? recent.pool + ' <small class="muted">of last ' + recent.span + "</small>" : "—",
          recent ? (recent.mine ? recent.mine + " of them yours" : "solo + PPLNS combined") : "") +
     tile("Block reward", n ? fmtNum(n.blockReward) + ' <small class="muted">TAR</small>' : "—",
-         n ? "era " + n.currentEra + " · halving in " + fmtNum(n.blocksUntilHalving) : "") +
-    (ns ? tile("Mempool", fmtNum(ns.mempool && ns.mempool.size),
-         ns.connections != null ? ns.connections + " peers" : "") : "");
+         n ? "era " + n.currentEra + " · halving in " + fmtNum(n.blocksUntilHalving) : "");
+    // (ns ? tile("Mempool", fmtNum(ns.mempool && ns.mempool.size),
+    //      ns.connections != null ? ns.connections + " peers" : "") : "");
 }
 
 // ---- wallet ---------------------------------------------------------------
@@ -1112,12 +1117,12 @@ function render(){
         '<td class="num">' + fmtNum(r.shares) + "</td>" +
         '<td class="num">' + fmtNum(r.diff) + "</td>" +
         '<td class="num">' + (r.idle ? '0 H/s <span class="muted">idle</span>'
-          : !r.live ? '<span class="muted">measuring…</span>'
-          : implausible(r.live.rate)
-            ? '<span class="muted">' + fmtHash(r.live.rate) + '</span> <span class="badge bad">?</span>'
-          : r.live.unstable ? fmtHash(r.live.lo) + '<span class="muted">–' + fmtHash(r.live.hi) + "</span>"
+          : (!r.live || implausible(r.live.rate)) && r.diff > 0
+            ? fmtHash(r.diff * 4294967296 / 10) + ' <span class="muted">\xb1est</span>'
+          : !r.live ? '<span class="muted">measuring\u2026</span>'
+          : r.live.unstable ? fmtHash(r.live.lo) + '<span class="muted">\u2013' + fmtHash(r.live.hi) + '</span>'
           : fmtHash(r.live.rate) + (r.live.calibrated ? ' <span class="badge good">cal</span>'
-              : ' <span class="muted">±' + Math.round(r.live.err*100) + "%</span>")) + "</td>" +
+              : ' <span class="muted">\xb1' + Math.round(r.live.err*100) + '%</span>')) + '</td>' +
         '<td><div class="bar" title="' + r.pct.toFixed(1) + '%"><span style="width:' + r.pct.toFixed(1) + '%"></span></div></td>' +
         '<td class="num">' + r.blocks + "</td>" +
         '<td class="num">' + agoCell(r.seen) + "</td></tr>").join("") ||
