@@ -1,4 +1,4 @@
-// TARCOIN Mining Pool - Stratum Protocol Server
+﻿// TARCOIN Mining Pool - Stratum Protocol Server
 // Implements proper SHA256d block verification for TARCOIN mainnet
 'use strict';
 
@@ -73,7 +73,7 @@ async function initRedis() {
     await redis.connect();
     console.log('Redis connected for mining pool');
   } catch {
-    console.warn('Redis unavailable - running without persistence');
+    console.warn('Redis unavailable -Â running without persistence');
   }
 }
 
@@ -97,7 +97,7 @@ async function rpcCall(method, params = [], walletOverride = null) {
   return data.result;
 }
 
-// ====== SHA256d - double SHA256 (Bitcoin/TARCOIN PoW) ======
+// ====== SHA256d -Â double SHA256 (Bitcoin/TARCOIN PoW) ======
 function sha256d(buffer) {
   const first = crypto.createHash('sha256').update(buffer).digest();
   return crypto.createHash('sha256').update(first).digest();
@@ -564,6 +564,20 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
   const [_w, jobId, extraNonce2, nTime, nonce] = message.params;
   const safeJobId = String(jobId).replace(/[\r\n]/g, '').substring(0, 32);
 
+  // â”€â”€ SHARE DEDUPLICATION (Fix: case-variant replay attack) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const shareKey = `${String(jobId).toLowerCase()}:${String(extraNonce2).toLowerCase()}:${String(nTime).toLowerCase()}:${String(nonce).toLowerCase()}`;
+  if (!worker.submittedShares) worker.submittedShares = new Set();
+  if (worker.lastJobId !== jobId) {
+    worker.submittedShares.clear(); // new block template â€” reset the seen-set
+    worker.lastJobId = jobId;
+  }
+  if (worker.submittedShares.has(shareKey)) {
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [22, 'Duplicate share', null] }) + "\n");
+    return;
+  }
+  worker.submittedShares.add(shareKey);
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
   // Use the miner's own jobId, not the pool's shared one
   if (!poolState.blockTemplate || worker.jobId !== jobId) {
     socket.write(JSON.stringify({ id: message.id, result: null, error: [21, 'Job not found', null] }) + "\n");
@@ -649,9 +663,24 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
   workerName = message.params[0]; // Always trust the submit message for worker name
 
   const [_workerNameParam, jobId, extraNonce2, nTime, nonce] = message.params;
-  
+
   // Sanitize jobId to prevent log injection vulnerabilities
   const safeJobId = String(jobId).replace(/[\r\n]/g, '').substring(0, 32);
+
+  // â”€â”€ SHARE DEDUPLICATION (Fix: case-variant replay attack) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Normalize all fields to lowercase so nNonce=abcd and nNonce=ABCD are treated as identical
+  const shareKey = `${String(jobId).toLowerCase()}:${String(extraNonce2).toLowerCase()}:${String(nTime).toLowerCase()}:${String(nonce).toLowerCase()}`;
+  if (!worker.submittedShares) worker.submittedShares = new Set();
+  if (worker.lastJobId !== jobId) {
+    worker.submittedShares.clear(); // new block template â€” reset the seen-set
+    worker.lastJobId = jobId;
+  }
+  if (worker.submittedShares.has(shareKey)) {
+    socket.write(JSON.stringify({ id: message.id, result: null, error: [22, 'Duplicate share', null] }) + "\n");
+    return;
+  }
+  worker.submittedShares.add(shareKey);
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (!poolState.blockTemplate || poolState.blockTemplate.jobId !== jobId) {
     console.log(`[DEBUG] Share rejected: Job not found (Miner sent: ${safeJobId}, Current: ${poolState.blockTemplate?.jobId})`);
@@ -726,7 +755,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await handleBlockFound(header, coinbaseHex, workerName);
     }
 
-    console.log('Share accepted from %s - hash: %s...', sanitizeLog(workerName), headerHash.reverse().toString('hex').slice(0, 16));
+    console.log('Share accepted from %s -Â hash: %s...', sanitizeLog(workerName), headerHash.reverse().toString('hex').slice(0, 16));
   } catch (err) {
     console.error('Share verification error:', err.message);
     socket.write(JSON.stringify({ id: message.id, result: null, error: [20, 'Verification error', null] }) + "\n");
@@ -735,7 +764,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 
 async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
   const safeWorker = sanitizeLog(workerName);
-  console.log('🎉 BLOCK FOUND by %s!', safeWorker);
+  console.log('ðŸŽ‰ BLOCK FOUND by %s!', safeWorker);
   poolState.blocksFound++;
 
   try {
@@ -757,7 +786,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
     // submitblock requires the raw hex of the full block
     const result = await rpcCall('submitblock', [blockHex]);
     if (result === null) {
-      console.log('[PPLNS] Block accepted by network! 🎉');
+      console.log('[PPLNS] Block accepted by network! ðŸŽ‰');
       if (redis) {
         await redis.lPush('pool:blocks', JSON.stringify({
           worker: workerName,
@@ -766,7 +795,20 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
         }));
       }
     } else {
-      console.error(`[PPLNS] NETWORK REJECTED BLOCK: ${result}`);
+      console.error(`[PPLNS] NETWORK REJECTED BLOCK at height ${height}: ${result}`);
+      // â”€â”€ REJECTED BLOCK PERSISTENCE (Fix: re-org / daemon crash recovery) â”€â”€
+      // Save rejected blocks so we can poll them later â€” a rejected block can
+      // become valid again after a chain re-org or a temporary daemon crash.
+      if (redis) {
+        await redis.lPush('pool:blocks:rejected', JSON.stringify({
+          worker: workerName,
+          height: height,
+          time: Date.now(),
+          reason: result,
+        }));
+        await redis.lTrim('pool:blocks:rejected', 0, 99); // keep last 100 rejected blocks
+      }
+      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     }
   } catch (err) {
     console.error('Block found handling error:', err.message);
@@ -775,7 +817,7 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
 
 async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
   const safeWorker = sanitizeLog(workerName);
-  console.log('🎉 SOLO BLOCK FOUND by %s! Coinbase pays miner directly.', safeWorker);
+  console.log('ðŸŽ‰ SOLO BLOCK FOUND by %s! Coinbase pays miner directly.', safeWorker);
   soloState.blocksFound++;
 
   try {
@@ -795,17 +837,32 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
 
     console.log('[SOLO] Submitting block height %d to network...', height);
     const submissionResult = await rpcCall('submitblock', [blockHex]);
-    console.log('[SOLO] submitblock result:', submissionResult || 'accepted');
-    console.log('[SOLO] 💰 49,500 TAR paid DIRECTLY to %s via coinbase - no extra tx needed!', safeWorker);
 
-    // Store solo block record in Redis
-    if (redis) {
-      await redis.lPush('solo:blocks', JSON.stringify({
-        worker: workerName,
-        height: height,
-        time: Date.now(),
-      }));
-      await redis.lTrim('solo:blocks', 0, 99);
+    if (submissionResult === null) {
+      console.log('[SOLO] Block accepted at height %d', height);
+      console.log('[SOLO] 49,500 TAR paid DIRECTLY to %s via coinbase - no extra tx needed!', safeWorker);
+      // Store accepted solo block record in Redis
+      if (redis) {
+        await redis.lPush('solo:blocks', JSON.stringify({
+          worker: workerName,
+          height: height,
+          time: Date.now(),
+        }));
+        await redis.lTrim('solo:blocks', 0, 99);
+      }
+    } else {
+      console.error('[SOLO] NETWORK REJECTED BLOCK at height ' + height + ': ' + submissionResult);
+      // ── REJECTED BLOCK PERSISTENCE (Fix: re-org / daemon crash recovery) ──
+      if (redis) {
+        await redis.lPush('solo:blocks:rejected', JSON.stringify({
+          worker: workerName,
+          height: height,
+          time: Date.now(),
+          reason: submissionResult,
+        }));
+        await redis.lTrim('solo:blocks:rejected', 0, 99);
+      }
+      // ────────────────────────────────────────────────────────────────────
     }
 
   } catch (err) {
@@ -982,7 +1039,7 @@ async function refreshBlockTemplate() {
         }
       }
 
-      console.log(`Block template refreshed - height: ${template.height}, txs: ${(template.transactions || []).length}`);
+      console.log(`Block template refreshed -Â height: ${template.height}, txs: ${(template.transactions || []).length}`);
     }
   } catch (err) {
     console.warn('Template refresh failed (node may not be connected):', err.message);
@@ -1085,14 +1142,49 @@ async function processPayouts() {
 
     console.log('Executing sendmany:', payouts);
 
-    // 4. Send the transaction
-    const txid = await rpcCall('sendmany', ["", payouts, 101]);
-    console.log(`💸 Payout successful! TXID: ${txid}`);
+    // 4. ── PAYOUT SAFETY (Fix: double-payment prevention) ──────────────────
+    // Record the INTENT to pay BEFORE sending the tx. If the daemon crashes
+    // mid-send and throws an error, we use listtransactions to check whether
+    // the tx was actually broadcast before deciding to retry.
+    const payoutRecord = { time: Date.now(), payouts, txid: null };
+    if (redis) await redis.set('pool:payout:pending', JSON.stringify(payoutRecord));
+
+    let txid;
+    try {
+      txid = await rpcCall('sendmany', ['', payouts, 101]);
+    } catch (sendErr) {
+      // sendmany threw — but the tx may have still been broadcast.
+      // Check listtransactions for a recent matching tx before giving up.
+      console.error('[PAYOUT] sendmany threw error:', sendErr.message);
+      try {
+        const recent = await rpcCall('listtransactions', ['*', 10, 0, true]);
+        const match = (recent || []).find(tx => tx.category === 'send' && (Date.now() / 1000 - tx.time) < 120);
+        if (match) {
+          txid = match.txid;
+          console.warn('[PAYOUT] sendmany errored but tx found in listtransactions! TXID:', txid);
+        } else {
+          if (redis) await redis.del('pool:payout:pending');
+          throw sendErr; // genuinely failed — re-throw so outer catch handles it
+        }
+      } catch (listErr) {
+        if (redis) await redis.del('pool:payout:pending');
+        throw sendErr;
+      }
+    }
+
+    // Mark payout as complete
+    if (redis) {
+      payoutRecord.txid = txid;
+      await redis.lPush('pool:payout:history', JSON.stringify(payoutRecord));
+      await redis.lTrim('pool:payout:history', 0, 499); // keep last 500 payout records
+      await redis.del('pool:payout:pending');
+    }
+    console.log('Payout successful! TXID:', txid);
+    // ─────────────────────────────────────────────────────────────────────
 
     // 5. [PPLNS UPDATE] Do NOT clear the shares. This leaves them as a rolling window for true PPLNS payouts!
     // await redis.del('pool:shares');
     console.log('PPLNS: Kept shares on the rolling conveyor belt for the next block payout.');
-
     // 6. Bonus Engine (Miner Bounty Program)
     try {
       const faucetBalance = await rpcCall('getbalance', ['*', 1], 'faucet');
@@ -1155,7 +1247,7 @@ async function processPayouts() {
                 const bonusTxid = await rpcCall('sendtoaddress', [worker, 1000], 'faucet');
                 await redis.incr(globalBountyKey);
                 await redis.set(bonusClaimedKey, '1');
-                console.log('🎉 MINER BOUNTY AWARDED! 1,000 TAR to %s (Miner #%d). TXID: %s', sanitizeLog(worker), bountyCount + 1, bonusTxid);
+                console.log('ðŸŽ‰ MINER BOUNTY AWARDED! 1,000 TAR to %s (Miner #%d). TXID: %s', sanitizeLog(worker), bountyCount + 1, bonusTxid);
               }
             }
           }
@@ -1586,7 +1678,7 @@ app.post('/api/faucet', faucetLimiter, async (req, res) => {
     // 6. Send TAR
     const txid = await rpcCall('sendtoaddress', [address, 100], 'faucet');
 
-    console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â° Faucet payout sent! 100 TAR to %s. TXID: %s', sanitizeLog(address), txid);
+    console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â° Faucet payout sent! 100 TAR to %s. TXID: %s', sanitizeLog(address), txid);
     res.json({ success: true, txid, amount: 100 });
 
   } catch (err) {
