@@ -41,7 +41,7 @@ router.get('/info', async (req: Request, res: Response) => {
       blockReward: getCurrentBlockReward(miningInfo.blocks),
       blockRewardUnit: 'TAR',
       halvingInterval: HALVING_INTERVAL,
-      nextHalvingBlock: HALVING_INTERVAL - (miningInfo.blocks % HALVING_INTERVAL),
+      nextHalvingBlock: (Math.floor(miningInfo.blocks / HALVING_INTERVAL) + 1) * HALVING_INTERVAL,
       blocksUntilHalving: HALVING_INTERVAL - (miningInfo.blocks % HALVING_INTERVAL),
       currentEra: Math.floor(miningInfo.blocks / HALVING_INTERVAL) + 1,
       asicCompatible: true,
