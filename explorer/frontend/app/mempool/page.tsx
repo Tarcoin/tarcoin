@@ -140,6 +140,178 @@ type SortDir = 'asc' | 'desc';
 
 // ─── main ────────────────────────────────────────────────────────────────────
 
+const navLinks = [
+  { name: 'Blocks', href: '/blocks' },
+  { name: 'Rich List', href: 'https://tarcoin.org/richlist', external: true },
+  { name: 'Mining Pool', href: 'https://pool.tarcoin.org/', external: true },
+  { name: 'tarcoin.org', href: 'https://tarcoin.org/', external: true },
+];
+
+function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <nav style={{
+      background: scrolled ? 'rgba(5,5,5,0.97)' : 'rgba(5,5,5,0.90)',
+      borderBottom: '1px solid rgba(212,168,67,0.10)',
+      backdropFilter: 'blur(20px)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      transition: 'background 0.3s',
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: isMobile ? '0.75rem' : '1.5rem',
+        height: isMobile ? '64px' : '80px',
+        margin: '0 auto',
+        padding: isMobile ? '0 1rem' : '0 2rem',
+        width: '100%',
+        maxWidth: '1400px',
+      }}>
+
+        {/* Logo */}
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <img
+            src="https://tarcoin.org/logo.png"
+            alt="TARCOIN"
+            style={{ width: isMobile ? '40px' : '56px', height: isMobile ? '40px' : '56px', objectFit: 'contain' }}
+          />
+          <div>
+            <div style={{
+              fontFamily: 'Orbitron, sans-serif',
+              fontSize: isMobile ? '0.9rem' : '1.25rem',
+              fontWeight: 700,
+              color: '#ffffff',
+              letterSpacing: '0.05em',
+              lineHeight: 1.1,
+            }}>
+              TARCOIN
+            </div>
+            <div style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '0.65rem',
+              color: '#d4a843',
+              marginTop: '-1px',
+            }}>
+              $TAR
+            </div>
+          </div>
+        </Link>
+        {!isMobile && (
+          <>
+            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem', marginLeft: '0.5rem' }}>{'>'}</span>
+            <Link href="/mempool" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.75rem', color: '#d1d5db', letterSpacing: '0.1em', textDecoration: 'none' }}>MEMPOOL</Link>
+          </>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        {/* Desktop nav links */}
+        {!isMobile && (
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            {navLinks.map(link => (
+              <Link
+                key={link.name}
+                href={link.href}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? 'noopener noreferrer' : undefined}
+                style={{
+                  padding: '0.4rem 0.85rem', borderRadius: '8px',
+                  fontFamily: 'Orbitron, sans-serif', fontSize: '0.72rem',
+                  color: '#d1d5db', textDecoration: 'none',
+                  letterSpacing: '0.04em', transition: 'color 0.2s, background 0.2s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseOver={e => {
+                  (e.currentTarget as HTMLElement).style.color = '#d4a843';
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(212,168,67,0.05)';
+                }}
+                onMouseOut={e => {
+                  (e.currentTarget as HTMLElement).style.color = '#d1d5db';
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                }}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Mobile hamburger button */}
+        {isMobile && (
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            style={{
+              background: 'none', border: '1px solid rgba(212,168,67,0.3)',
+              color: '#d4a843', cursor: 'pointer',
+              padding: '0.4rem 0.7rem', fontSize: '1.2rem',
+              borderRadius: '8px', lineHeight: 1,
+            }}
+          >
+            {mobileOpen ? '✕' : '☰'}
+          </button>
+        )}
+      </div>
+
+      {/* Mobile dropdown menu */}
+      <AnimatePresence>
+        {mobileOpen && isMobile && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{
+              background: 'rgba(5,5,5,0.98)',
+              borderTop: '1px solid rgba(212,168,67,0.1)',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: '1rem' }}>
+              {navLinks.map(link => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center',
+                    padding: '0.85rem 1rem', borderRadius: '8px',
+                    fontFamily: 'Orbitron, sans-serif', fontSize: '0.82rem',
+                    color: '#d4a843', textDecoration: 'none',
+                    letterSpacing: '0.04em', marginBottom: '2px',
+                    borderBottom: '1px solid rgba(212,168,67,0.06)',
+                  }}
+                >
+                  {link.name} {link.external && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.5 }}>↗</span>}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
+  );
+}
+
+
 export default function MempoolPage() {
   const [txs, setTxs] = useState<MempoolTx[]>([]);
   const [stats, setStats] = useState<MempoolStats>({});
@@ -279,39 +451,19 @@ export default function MempoolPage() {
         .page-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
         .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
         .page-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.12); }
+        
+        @media (max-width: 768px) {
+          .main-content { padding: 1rem 0.75rem !important; }
+        }
+        @media (max-width: 480px) {
+          .main-content { padding: 0.75rem 0.5rem !important; }
+        }
       `}</style>
 
       {/* ── top bar ─────────────────────────────────────────────────────── */}
-      <nav
-        style={{
-          background: 'rgba(0,0,0,0.85)',
-          borderBottom: '1px solid var(--border)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          backdropFilter: 'blur(12px)',
-        }}
-      >
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '1rem',
-          height: '80px', margin: '0 auto', padding: '0 2rem',
-          width: '100%', maxWidth: '1200px'
-        }}>
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img src="https://tarcoin.org/logo.png" alt="TAR" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-              <span className="explorer-logo-text">TARCOIN</span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--gold)', marginTop: '-2px' }}>
-                $TAR
-              </span>
-            </div>
-          </Link>
-          <span style={{ color: 'var(--border)', fontSize: '1.2rem', marginLeft: '1rem' }}>{'>'}</span>
-          <Link href="/mempool" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.75rem', color: 'var(--text-dim)', letterSpacing: '0.1em', textDecoration: 'none' }}>MEMPOOL</Link>
-        </div>
-      </nav>
+      <Navbar />
 
-      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="main-content" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* ── page header ─────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
@@ -439,7 +591,7 @@ export default function MempoolPage() {
           <StatCard
             label="MIN FEE RATE"
             value={loadingStats ? '…' : (minFeeRate > 0 ? `${minFeeRate.toFixed(2)}` : '—')}
-            sub="Tar/vByte"
+            sub="sTAR/vByte"
             loading={loadingStats}
           />
         </div>
@@ -570,7 +722,7 @@ export default function MempoolPage() {
                         onClick={() => handleSort('feerate')}
                         style={{ textAlign: 'right', color: sortKey === 'feerate' ? 'var(--gold)' : undefined }}
                       >
-                        Fee Rate (Tar/vB) <SortIcon col="feerate" />
+                        Fee Rate (sTAR/vByte) <SortIcon col="feerate" />
                       </th>
                       <th
                         className="sort-th"
@@ -622,7 +774,7 @@ export default function MempoolPage() {
                               {size > 0 ? formatBytes(size) : '—'}
                             </td>
                             <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem' }}>
-                              {fee > 0 ? `${fee.toFixed(8)} TAR` : '—'}
+                              {fee > 0 ? `${Math.round(fee * 1e8).toLocaleString()} sTAR` : '—'}
                             </td>
                             <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem' }}>
                               {feerate > 0 ? (
@@ -662,9 +814,9 @@ export default function MempoolPage() {
                   FEE RATE:
                 </span>
                 {[
-                  { color: 'var(--neon, #00ff88)', label: 'High (>50 Tar/vB)' },
+                  { color: 'var(--neon, #00ff88)', label: 'High (>50 sTAR/vByte)' },
                   { color: 'var(--gold)', label: 'Normal' },
-                  { color: '#ff8c00', label: 'Low (<2 Tar/vB)' },
+                  { color: '#ff8c00', label: 'Low (<2 sTAR/vByte)' },
                 ].map(({ color, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block', boxShadow: `0 0 4px ${color}` }} />

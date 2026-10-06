@@ -280,3 +280,98 @@ body {
   color: var(--gold);
 }
 
+
+/* ═══════════════════════════════════════════════════════
+   EXPLORER HOMEPAGE — MOBILE RESPONSIVE
+   ═══════════════════════════════════════════════════════ */
+
+/* Main content padding on mobile */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem 0.75rem !important;
+  }
+
+  /* Hide "updated at" timestamp to save space */
+  .updated-label {
+    display: none !important;
+  }
+
+  /* Block conveyor — scale down the 3D cards */
+  .block-conveyor {
+    gap: 4px !important;
+  }
+  .block-3d-wrap {
+    transform: scale(0.76);
+    transform-origin: top left;
+    margin-right: -36px; /* compensate for scale shrinkage */
+  }
+
+  /* Pending block slot smaller */
+  .block-pending {
+    width: 108px !important;
+    height: 108px !important;
+  }
+
+  /* Two-column grid → single column */
+  .two-col-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fee cards row → stack vertically */
+  .fee-cards-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* Network stats grid → single column */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Navbar: hide desktop nav links and search */
+  .nav-links-desktop {
+    display: none !important;
+  }
+  .nav-search-desktop {
+    display: none !important;
+  }
+
+  /* Show mobile hamburger button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Stats ticker smaller font */
+  .ticker-label {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.06em !important;
+  }
+  .ticker-value {
+    font-size: 0.68rem !important;
+  }
+
+  /* Genesis block banner text wraps */
+  .genesis-banner {
+    font-size: 0.6rem !important;
+    padding: 8px 12px !important;
+  }
+  .genesis-hash {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small phones — scale blocks even smaller */
+  .block-3d-wrap {
+    transform: scale(0.63);
+    margin-right: -56px;
+  }
+  .block-conveyor {
+    gap: 2px !important;
+  }
+
+  /* Reduce page padding further */
+  .main-content {
+    padding: 0.75rem 0.5rem !important;
+  }
+}
