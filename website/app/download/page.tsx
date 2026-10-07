@@ -43,9 +43,9 @@ const downloads: Download[] = [
   },
   {
     id: "windows",
-    title: "Windows CLI Tools",
+    title: "Windows Wallet (GUI & CLI)",
     icon: "🪟",
-    desc: "Windows 10/11 64-bit · tarcoind.exe + tarcoin-cli.exe",
+    desc: "Windows 10/11 64-bit · tarcoin-qt.exe + tarcoind.exe + tarcoin-cli.exe",
     file: "tarcoin-windows-wallet-v1.2.2.zip",
     size: "~9.4 MB",
     source: "github",
