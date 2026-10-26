@@ -38,7 +38,8 @@ const emissionSchedule = [
 
 export default function TokenomicsSection() {
   return (
-    <section id="tokenomics" className="py-24 relative">
+    <section id="coinomics" className="py-24 relative">
+      <span id="tokenomics" className="sr-only" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Heading */}
@@ -49,7 +50,7 @@ export default function TokenomicsSection() {
           className="text-center mb-16"
         >
           <span className="text-xs font-orbitron text-tarcoin-gold tracking-widest uppercase mb-4 block">
-            Tokenomics
+            Coinomics
           </span>
           <h2 className="text-4xl md:text-5xl font-orbitron font-bold mb-6">
             Transparent{" "}

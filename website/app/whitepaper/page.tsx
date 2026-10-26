@@ -158,7 +158,7 @@ const overviewCards = [
     title: "ASIC Mineable",
     subtitle: "SHA256d Proof-of-Work",
     description:
-      "Identical mining algorithm to Bitcoin — supports all existing SHA-256 ASIC miners. Difficulty retargets every 2016 blocks (~2 weeks). Stratum protocol pool support. Decentralized mining with no central authority or pre-mine.",
+      "Identical mining algorithm to Bitcoin — supports all existing SHA-256 ASIC miners. Difficulty retargets dynamically on every block via Dark Gravity Wave v3 (24-block rolling average) with Emergency Difficulty Adjustment (EDA). Stratum protocol pool support. Decentralized mining with no central authority or pre-mine.",
     accent: "from-tarcoin-neon to-green-500",
     icon: "⛏️",
   },
@@ -243,7 +243,8 @@ const networkParams = [
   { label: "Block Time", value: "10 minutes" },
   { label: "Block Size (Base)", value: "1 MB" },
   { label: "Block Size (SegWit)", value: "4 MB" },
-  { label: "Difficulty Retarget", value: "Every 2016 blocks (~2 weeks)" },
+  { label: "Difficulty Retarget", value: "Every block (Dark Gravity Wave v3)" },
+  { label: "Emergency Adjustment (EDA)", value: "50% cut if block time > 6 hours" },
   { label: "P2P Port (Mainnet)", value: "19333" },
   { label: "RPC Port (Mainnet)", value: "19332" },
   { label: "Magic Bytes (Mainnet)", value: "0xfabfb5da" },
@@ -913,7 +914,7 @@ function FinalCTA() {
           <div className="mt-12 flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-500 font-space">
             <Link href="/" className="hover:text-tarcoin-gold transition-colors">Home</Link>
             <Link href="/#features" className="hover:text-tarcoin-gold transition-colors">Features</Link>
-            <Link href="/#tokenomics" className="hover:text-tarcoin-gold transition-colors">Tokenomics</Link>
+            <Link href="/#coinomics" className="hover:text-tarcoin-gold transition-colors">Coinomics</Link>
             <Link href="/#mining" className="hover:text-tarcoin-gold transition-colors">Mining</Link>
             <Link href="/#roadmap" className="hover:text-tarcoin-gold transition-colors">Roadmap</Link>
           </div>

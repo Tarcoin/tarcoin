@@ -806,6 +806,7 @@
   <p>TARCOIN is derived from Bitcoin Core v31.x. Only the following components are modified:</p>
   <ul>
     <li><strong>Supply constants</strong> (<code>amount.h</code>)</li>
+    <li><strong>Difficulty adjustment</strong> (<code>pow.cpp</code> — Dark Gravity Wave v3 per-block retargeting and 6-hour Emergency Difficulty Adjustment)</li>
     <li><strong>Network parameters</strong> (<code>chainparams.cpp</code> — magic bytes, ports, DNS seeds, checkpoints)</li>
     <li><strong>Address prefixes</strong> (bech32: <code>tar1</code>, base58: <code>T</code>)</li>
     <li><strong>Branding</strong> (coin name, ticker, UI identity)</li>
@@ -886,6 +887,8 @@ Era 4:  Block 1,200,001–1,600,000│   6,250 TAR/block  │  ~7.6 yrs  │   2
         <tr><td>Consensus</td><td>SHA256d Proof-of-Work</td></tr>
         <tr><td>Block Time</td><td>10 minutes (Bitcoin-standard)</td></tr>
         <tr><td>Initial Block Reward</td><td>50,000 TAR</td></tr>
+        <tr><td>Difficulty Retarget</td><td>Every block (Dark Gravity Wave v3, 24-block rolling)</td></tr>
+        <tr><td>Emergency Adjustment (EDA)</td><td>50% difficulty cut if block time &gt; 6 hours</td></tr>
         <tr><td>Halving Interval</td><td>400,000 blocks</td></tr>
         <tr><td>Maximum Supply</td><td>50,000,000,000 TAR</td></tr>
         <tr><td>Mineable Supply</td><td>40,000,000,000 TAR (80%)</td></tr>
@@ -923,8 +926,14 @@ Era 4:  Block 1,200,001–1,600,000│   6,250 TAR/block  │  ~7.6 yrs  │   2
     <div class="section-title">Consensus Rules</div>
   </div>
 
-  <h3>4.1 Proof-of-Work</h3>
-  <p>SHA256d Proof-of-Work with difficulty retargeting every 2016 blocks (approximately 2 weeks). Difficulty adjusts based on the time taken to mine the previous 2016 blocks, maintaining a ~10-minute average block time.</p>
+  <h3>4.1 Proof-of-Work &amp; Difficulty Adjustment</h3>
+  <p>TARCOIN employs the SHA256d (double SHA-256) Proof-of-Work algorithm, ensuring full hardware compatibility with all existing SHA-256 ASIC miners.</p>
+  <p>Unlike Bitcoin's static 2016-block retarget cycle, TARCOIN implements <strong>Dark Gravity Wave v3 (DGW v3)</strong> for dynamic, continuous difficulty adjustment:</p>
+  <ul>
+    <li><strong>Per-Block Retargeting:</strong> Network difficulty recalculates dynamically on <strong>every single block</strong> based on a rolling window of the preceding 24 blocks. This prevents multi-pool exploitation, eliminates "hashrate hopping," and ensures steady block production regardless of sudden hashrate fluctuations.</li>
+    <li><strong>Emergency Difficulty Adjustment (EDA):</strong> If network hashrate drops drastically and no block is mined for more than <strong>6 hours</strong>, consensus rules trigger an automatic difficulty reduction (cutting difficulty by 50% / doubling target: <code>bnTarget *= 2</code>). This guarantees the blockchain never stalls under low hashrate conditions.</li>
+    <li><strong>Target Block Time:</strong> 10-minute average block time maintained smoothly across all network hashrate scales.</li>
+  </ul>
 
   <h3>4.2 Block Validation</h3>
   <p>Block validation follows the Bitcoin Core consensus standard:</p>
@@ -1281,6 +1290,7 @@ Era 4:  Block 1,200,001–1,600,000│   6,250 TAR/block  │  ~7.6 yrs  │   2
     <li>BIP 39 — Mnemonic Code for Generating Deterministic Keys</li>
     <li>BIP 141 — Segregated Witness (SegWit)</li>
     <li>BIP 173 — Bech32 Address Format</li>
+    <li>Dark Gravity Wave v3 (DGW v3) — Continuous Difficulty Adjustment Algorithm</li>
   </ol>
 </div>
 

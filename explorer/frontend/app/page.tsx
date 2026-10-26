@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import TarPriceTicker from '../components/TarPriceTicker';
 
 const API_BASE = process.env.NEXT_PUBLIC_EXPLORER_API || 'http://localhost:4000';
 const GENESIS_HASH = '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e';
@@ -458,6 +459,13 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
 
         <div style={{ flex: 1 }} />
 
+        {/* Live TAR Price Ticker */}
+        {!isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', margin: '0 0.85rem' }}>
+            <TarPriceTicker />
+          </div>
+        )}
+
         {/* Desktop nav links */}
         {!isMobile && (
           <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
@@ -540,6 +548,12 @@ function Navbar({ onSearch }: { onSearch: (q: string) => void }) {
                   fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer',
                 }}>GO</button>
               </form>
+
+              {/* Mobile price ticker */}
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem 0', borderBottom: '1px solid rgba(212,168,67,0.08)', marginBottom: '0.5rem' }}>
+                <TarPriceTicker />
+              </div>
+
               {/* Mobile nav links */}
               {navLinks.map(link => (
                 <Link

@@ -26,7 +26,7 @@ const footerLinks = {
   ],
   developers: [
     { name: "API Docs", href: "/api" },
-    { name: "GitHub", href: "https://github.com/tarcoin" },
+    { name: "GitHub", href: "https://github.com/Tarcoin/tarcoin" },
     { name: "RPC Reference", href: "/api/rpc" },
     { name: "Source Code", href: "https://github.com/Tarcoin/tarcoin" },
   ],
@@ -55,7 +55,7 @@ export default function Footer() {
               A decentralized SHA-256 proof-of-work blockchain built for secure peer-to-peer value transfer, fixed digital scarcity, and long-term network sustainability.
             </p>
             <div className="flex space-x-3">
-              <a href="https://github.com/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
+              <a href="https://github.com/Tarcoin/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
                 <BsGithub size={18} />
               </a>
               <a href="https://twitter.com/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">

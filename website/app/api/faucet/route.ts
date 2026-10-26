@@ -5,24 +5,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1';
     
-    // Proxy the request server-to-server to the Mining Pool backend (Port 3001)
-    // This completely bypasses CORS and HTTPS mixed-content blocks!
-    const response = await fetch('http://localhost:3001/api/faucet', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-forwarded-for': ip,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
-
-    return NextResponse.json(data);
+    // Faucet has concluded with the official exchange listing
+    return NextResponse.json({ 
+      error: 'The bootstrap faucet has officially concluded following the live NestEx exchange listing. All rewards are now allocated to active Proof-of-Work miners.' 
+    }, { status: 403 });
   } catch (error: any) {
     console.error('Faucet Proxy Error:', error);
     return NextResponse.json({ error: 'Internal Server Error connecting to Faucet Backend' }, { status: 500 });

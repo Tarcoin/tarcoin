@@ -6,16 +6,28 @@ import { ShieldCheck, ArrowDownRight, Lock, ExternalLink, History, Info, Activit
 export default function TransparencyPage() {
   const [payouts, setPayouts] = useState<any[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
+  const [coldStorageBalance, setColdStorageBalance] = useState<number>(9980000000);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(50);
 
   useEffect(() => {
     const fetchLedger = async () => {
       try {
-        const res = await fetch('/api/faucet-ledger');
+        const [res, richRes] = await Promise.all([
+          fetch('/api/faucet-ledger'),
+          fetch('/richlist.json').catch(() => null),
+        ]);
         const data = await res.json();
         if (data.payouts) setPayouts(data.payouts);
         if (data.balance !== undefined && data.balance !== null) setBalance(data.balance);
+
+        if (richRes && richRes.ok) {
+          const richData = await richRes.json();
+          const treasuryEntry = richData?.top_addresses?.find((item: any) => item.balance > 1000000000);
+          if (treasuryEntry) {
+            setColdStorageBalance(Math.round(treasuryEntry.balance));
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch payouts", err);
       } finally {
@@ -43,26 +55,40 @@ export default function TransparencyPage() {
         </div>
 
         {/* High-Level Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#11141A] border border-gray-800 rounded-2xl p-6 relative overflow-hidden">
-            <div className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-2">Initial Genesis Reserve</div>
-            <div className="text-3xl font-bold text-white mb-1">10,000,000,000</div>
-            <div className="text-sm text-yellow-500 font-mono">TAR</div>
-            <Lock className="absolute -right-4 -bottom-4 w-24 h-24 text-white opacity-5" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-[#11141A] border border-gray-800 rounded-2xl p-5 relative overflow-hidden">
+            <div className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-2">Genesis Reserve</div>
+            <div className="text-xl font-bold text-white mb-1">10,000,000,000</div>
+            <div className="text-xs text-yellow-500 font-mono">TAR</div>
+            <Lock className="absolute -right-4 -bottom-4 w-20 h-20 text-white opacity-5" />
           </div>
 
-          <div className="bg-[#11141A] border border-green-500/20 rounded-2xl p-6 relative overflow-hidden">
-            <div className="text-xs font-bold tracking-widest text-green-500 uppercase mb-2">Initial Faucet Funding</div>
-            <div className="text-3xl font-bold text-white mb-1">5,000,000</div>
-            <div className="text-sm text-green-400 font-mono">TAR</div>
-            <ArrowDownRight className="absolute -right-4 -bottom-4 w-24 h-24 text-green-500 opacity-5" />
+          <div className="bg-[#11141A] border border-green-500/20 rounded-2xl p-5 relative overflow-hidden">
+            <div className="text-xs font-bold tracking-widest text-green-500 uppercase mb-2">Faucet Funding</div>
+            <div className="text-xl font-bold text-white mb-1">5,000,000</div>
+            <div className="text-xs text-green-400 font-mono">TAR</div>
+            <ArrowDownRight className="absolute -right-4 -bottom-4 w-20 h-20 text-green-500 opacity-5" />
           </div>
 
-          <div className="bg-yellow-500/5 border border-yellow-500/30 rounded-2xl p-6 relative overflow-hidden">
+          <div className="bg-[#11141A] border border-cyan-500/20 rounded-2xl p-5 relative overflow-hidden">
+            <div className="text-xs font-bold tracking-widest text-cyan-400 uppercase mb-2">NestEx Liquidity</div>
+            <div className="text-xl font-bold text-white mb-1">5,000,000</div>
+            <div className="text-xs text-cyan-400 font-mono">TAR</div>
+            <ArrowDownRight className="absolute -right-4 -bottom-4 w-20 h-20 text-cyan-500 opacity-5" />
+          </div>
+
+          <div className="bg-[#11141A] border border-purple-500/20 rounded-2xl p-5 relative overflow-hidden">
+            <div className="text-xs font-bold tracking-widest text-purple-400 uppercase mb-2">CryptoJar Tipbot</div>
+            <div className="text-xl font-bold text-white mb-1">10,000,000</div>
+            <div className="text-xs text-purple-400 font-mono">TAR (Full Integration)</div>
+            <ArrowDownRight className="absolute -right-4 -bottom-4 w-20 h-20 text-purple-500 opacity-5" />
+          </div>
+
+          <div className="bg-yellow-500/5 border border-yellow-500/30 rounded-2xl p-5 relative overflow-hidden">
             <div className="text-xs font-bold tracking-widest text-yellow-500 uppercase mb-2">Currently Locked</div>
-            <div className="text-3xl font-bold text-yellow-500 mb-1">9,995,000,000</div>
-            <div className="text-sm text-gray-400 font-mono">TAR</div>
-            <ShieldCheck className="absolute -right-4 -bottom-4 w-24 h-24 text-yellow-500 opacity-10" />
+            <div className="text-xl font-bold text-yellow-500 mb-1">{coldStorageBalance !== null ? coldStorageBalance.toLocaleString() : "..."}</div>
+            <div className="text-xs text-gray-400 font-mono">TAR (In Cold Storage)</div>
+            <ShieldCheck className="absolute -right-4 -bottom-4 w-20 h-20 text-yellow-500 opacity-10" />
           </div>
         </div>
 
@@ -76,6 +102,111 @@ export default function TransparencyPage() {
           <div className="p-6">
             <div className="relative border-l-2 border-gray-800 ml-3 md:ml-4 space-y-12">
               
+              {/* Ledger Item: October 13th, 2026 - CryptoJar Tipbot Milestone 2 */}
+              <div className="relative pl-8 md:pl-10">
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-purple-400 border-4 border-[#11141A]" />
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest text-purple-400 uppercase">October 13, 2026 &middot; Tipbot Completion</span>
+                    <h3 className="text-xl font-bold text-white mt-1">CryptoJar Tipbot Integration (Milestone 2 - Final)</h3>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg font-mono font-bold">
+                    - 7,000,000 TAR
+                  </div>
+                </div>
+
+                <div className="bg-[#1A1E26] rounded-xl p-5 border border-gray-800/50 mb-6">
+                  <h4 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Purpose of Funds</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    Final milestone payment completing the CryptoJar (cjar.cc) partnership. Node synchronization verified, 8-decimal native precision confirmed, and real-time NestEx price feed active across Discord communities.
+                  </p>
+                  
+                  <div className="space-y-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">TxID Proof:</span>
+                      <a href="https://explorer.tarcoin.org/tx/1091886d5d258633d42de07ed62c4d96630fc71a1b7602453a599fe2cbee4ec0" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        1091886d5d258633d42de07ed62c4d96630fc71a1b7602453a599fe2cbee4ec0 <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Recipient:</span>
+                      <span className="text-xs text-gray-300 font-mono break-all">
+                        tar1q03uk5lqqc3gt5cvtlk9q4svvjymd5glvvel8ms (CryptoJar Escrow / Jestag)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ledger Item: October 12th, 2026 - CryptoJar Tipbot Milestone 1 */}
+              <div className="relative pl-8 md:pl-10">
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-purple-400 border-4 border-[#11141A]" />
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest text-purple-400 uppercase">October 12, 2026 &middot; Discord Tipbot Partnership</span>
+                    <h3 className="text-xl font-bold text-white mt-1">CryptoJar Tipbot Integration (Milestone 1)</h3>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg font-mono font-bold">
+                    - 3,000,000 TAR
+                  </div>
+                </div>
+
+                <div className="bg-[#1A1E26] rounded-xl p-5 border border-gray-800/50 mb-6">
+                  <h4 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Purpose of Funds</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    Ecosystem reserve funding deployed for direct Layer-1 node integration with CryptoJar (cjar.cc), the premier multi-chain tipping bot across Discord. Powers automated micro-tipping, community rains, and viral trader distribution without selling coins on the open market.
+                  </p>
+                  
+                  <div className="space-y-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">TxID Proof:</span>
+                      <a href="https://explorer.tarcoin.org/tx/a05ef843ba22248eda5ccaf88740492778f1507e9941245840c6a5062f2e8025" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        a05ef843ba22248eda5ccaf88740492778f1507e9941245840c6a5062f2e8025 <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Recipient:</span>
+                      <span className="text-xs text-gray-300 font-mono break-all">
+                        tar1q03uk5lqqc3gt5cvtlk9q4svvjymd5glvvel8ms (CryptoJar Escrow / Jestag)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ledger Item: October 11th, 2026 - NestEx Listing */}
+              <div className="relative pl-8 md:pl-10">
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-cyan-400 border-4 border-[#11141A]" />
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest text-cyan-400 uppercase">October 11, 2026 &middot; NestEx Listing</span>
+                    <h3 className="text-xl font-bold text-white mt-1">NestEx Exchange Market Liquidity Allocation</h3>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-3 py-1.5 rounded-lg font-mono font-bold">
+                    - 5,000,000 TAR
+                  </div>
+                </div>
+
+                <div className="bg-[#1A1E26] rounded-xl p-5 border border-gray-800/50 mb-6">
+                  <h4 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Purpose of Funds</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    Seed market depth and liquidity on NestEx exchange spot trading market (TAR/USDT) to enable open global trading for miners and investors.
+                  </p>
+                  
+                  <div className="space-y-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">TxID Proof:</span>
+                      <a href="https://explorer.tarcoin.org/tx/f08b784a9671afea182766d3f8a297fc234cf051f8a6d110f0e58c636ad9858f" target="_blank" rel="noreferrer" className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        f08b784a9671afea182766d3f8a297fc234cf051f8a6d110f0e58c636ad9858f <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Ledger Item: August 4th, 2026 */}
               <div className="relative pl-8 md:pl-10">
                 <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-green-500 border-4 border-[#11141A]" />
@@ -98,8 +229,8 @@ export default function TransparencyPage() {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                     <div className="bg-[#11141A] rounded-lg p-3 border border-gray-800">
-                      <div className="text-yellow-500 font-bold mb-1">100 TAR</div>
-                      <div className="text-xs text-gray-500">Wallet Download Claim</div>
+                      <div className="text-gray-400 font-bold mb-1 line-through">100 TAR</div>
+                      <div className="text-xs text-yellow-500 font-bold">Wallet Claim (Concluded)</div>
                     </div>
                     <div className="bg-[#11141A] rounded-lg p-3 border border-gray-800">
                       <div className="text-yellow-500 font-bold mb-1">1,000 TAR</div>

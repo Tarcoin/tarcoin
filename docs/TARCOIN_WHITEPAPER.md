@@ -39,6 +39,7 @@ TARCOIN follows the original Bitcoin philosophy: a peer-to-peer electronic cash 
 TARCOIN is derived from Bitcoin Core v31.x. Only the following components are modified:
 
 - **Supply constants** (`amount.h`)
+- **Difficulty adjustment** (`pow.cpp` — Dark Gravity Wave v3 per-block retargeting and 6-hour Emergency Difficulty Adjustment)
 - **Network parameters** (`chainparams.cpp` — magic bytes, ports, DNS seeds, checkpoints)
 - **Address prefixes** (bech32: `tar1`, base58: `T`)
 - **Branding** (coin name, ticker, UI identity)
@@ -104,6 +105,8 @@ Additional halving eras continue beyond Era 4 until the remaining mineable suppl
 | Consensus | SHA256d Proof-of-Work |
 | Block Time | 10 minutes (Bitcoin-standard) |
 | Initial Block Reward | 50,000 TAR |
+| Difficulty Retarget | Every block (Dark Gravity Wave v3, 24-block rolling) |
+| Emergency Adjustment (EDA) | 50% difficulty cut if block time > 6 hours |
 | Halving Interval | 400,000 blocks |
 | Maximum Supply | 50,000,000,000 TAR |
 | Mineable Supply | 40,000,000,000 TAR (80%) |
@@ -132,9 +135,14 @@ TARCOIN uses the standard Bitcoin-compatible P2P protocol:
 
 ## 4. Consensus Rules
 
-### 4.1 Proof-of-Work
+### 4.1 Proof-of-Work & Difficulty Adjustment
 
-SHA256d Proof-of-Work with difficulty retargeting every 2016 blocks (approximately 2 weeks). Difficulty adjusts based on the time taken to mine the previous 2016 blocks, maintaining a ~10-minute average block time.
+TARCOIN employs the SHA256d (double SHA-256) Proof-of-Work algorithm, ensuring full hardware compatibility with all existing SHA-256 ASIC miners.
+
+Unlike Bitcoin's static 2016-block retarget cycle, TARCOIN implements **Dark Gravity Wave v3 (DGW v3)** for dynamic, continuous difficulty adjustment:
+- **Per-Block Retargeting:** Network difficulty recalculates dynamically on **every single block**, evaluating a rolling window of the preceding 24 blocks. This prevents multi-pool exploitation, eliminates "hashrate hopping," and ensures steady block production regardless of sudden hashrate fluctuations.
+- **Emergency Difficulty Adjustment (EDA):** If network hashrate drops drastically and no block is mined for more than **6 hours**, the consensus rules trigger an automatic difficulty reduction (cutting difficulty by 50% / doubling the target: `bnTarget *= 2`). This guarantees the chain never freezes or deadlocks under low hash conditions.
+- **Target Block Time:** 10 minutes average block time maintained across all network hashrate scales.
 
 ### 4.2 Block Validation
 
@@ -419,6 +427,7 @@ TARCOIN represents a return to the foundational principles of decentralized cryp
 4. BIP 39 — Mnemonic Code for Generating Deterministic Keys
 5. BIP 141 — Segregated Witness (SegWit)
 6. BIP 173 — Bech32 Address Format
+7. Dark Gravity Wave v3 (DGW v3) — Continuous Difficulty Adjustment Algorithm
 
 ---
 

@@ -72,12 +72,12 @@ export default function FaucetPage() {
           
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="text-4xl sm:text-5xl font-orbitron font-black text-white mb-4">
-            Claim <span className="text-tarcoin-gold">100 Free TAR</span>
+            Bootstrap Faucet <span className="text-tarcoin-gold">Concluded</span>
           </motion.h1>
           
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-gray-400 font-space max-w-2xl mx-auto mb-8">
-            To help bootstrap the network and allow new users to test the TARCOIN ecosystem, the developers have allocated funds from the Treasury to give away free TAR.
+            The initial bootstrapping giveaway has successfully completed. TAR is now officially tradable on exchange markets and rewarded via Proof-of-Work mining!
           </motion.p>
 
           {/* Miner Bounty Banner */}
@@ -96,82 +96,36 @@ export default function FaucetPage() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="max-w-xl mx-auto">
-          <div className="cyber-border-container bg-tarcoin-gray-900/50 backdrop-blur-sm p-8">
+          <div className="cyber-border-container bg-tarcoin-gray-900/50 backdrop-blur-sm p-8 text-center">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-tarcoin-cyan/50 to-transparent" />
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="address" className="block text-sm font-orbitron text-tarcoin-cyan mb-2">
-                  Your Tarcoin Address
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="tar1q... or T..."
-                  disabled={loading}
-                  className="w-full bg-tarcoin-black border border-tarcoin-gray-800 rounded-lg px-4 py-3 text-white font-mono focus:border-tarcoin-cyan focus:ring-1 focus:ring-tarcoin-cyan transition-colors disabled:opacity-50 outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-2 font-space">
-                  Limit: 1 claim per person.
-                </p>
-              </div>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-tarcoin-gold/10 border border-tarcoin-gold/30 mb-6">
+              <FaCheckCircle className="w-8 h-8 text-tarcoin-gold" />
+            </div>
 
-              {error && (
-                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3">
-                  <FaExclamationCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-200 font-space">{error}</p>
-                </div>
-              )}
+            <h2 className="text-2xl font-orbitron font-bold text-white mb-3">
+              Bootstrap Faucet Concluded
+            </h2>
 
-              {success && (
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col items-center gap-3 text-center">
-                  <FaCheckCircle className="w-8 h-8 text-green-500" />
-                  <div>
-                    <p className="text-green-400 font-orbitron font-bold mb-1">
-                      {success.amount} TAR Sent Successfully!
-                    </p>
-                    <p className="text-xs text-green-200/70 font-mono break-all">
-                      TXID: {success.txid}
-                    </p>
-                  </div>
-                  <Link href={`https://explorer.tarcoin.org/tx/${success.txid}`} target="_blank" className="text-xs text-tarcoin-gold hover:underline mt-2">
-                    View on Block Explorer
-                  </Link>
-                </div>
-              )}
+            <p className="text-gray-300 font-space text-sm mb-6 leading-relaxed">
+              With TARCOIN officially listed and trading live on <strong>NestEx</strong>, the initial bootstrap faucet has successfully concluded to protect network value and liquidity.
+            </p>
 
-              <div className="flex justify-center mt-6">
-                <Turnstile
-                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                  onSuccess={(t) => setToken(t)}
-                  onExpire={() => setToken("")}
-                  onError={() => setError("Bot verification failed. Please refresh the page.")}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || !address}
-                className="w-full cyber-button py-4 font-orbitron font-bold tracking-wider relative group disabled:opacity-50 disabled:cursor-not-allowed"
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="https://trade.nestex.one/spot/tar" 
+                target="_blank"
+                className="cyber-button py-3 px-6 font-orbitron font-bold text-sm tracking-wider text-tarcoin-cyan border border-tarcoin-cyan/40 hover:bg-tarcoin-cyan/10 transition-all"
               >
-                <div className="absolute inset-0 bg-tarcoin-cyan opacity-10 group-hover:opacity-20 transition-opacity" />
-                <span className="relative flex items-center justify-center gap-2 text-tarcoin-cyan">
-                  {loading ? (
-                    <>
-                      <FaSpinner className="w-5 h-5 animate-spin" />
-                      PROCESSING...
-                    </>
-                  ) : (
-                    <>
-                      CLAIM 100 TAR
-                      <FaArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </span>
-              </button>
-            </form>
+                Trade on NestEx 🚀
+              </Link>
+              <Link 
+                href="/mining" 
+                className="cyber-button py-3 px-6 font-orbitron font-bold text-sm tracking-wider text-tarcoin-gold border border-tarcoin-gold/40 hover:bg-tarcoin-gold/10 transition-all"
+              >
+                Start Mining TAR ⛏️
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>
