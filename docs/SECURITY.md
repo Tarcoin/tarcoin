@@ -107,7 +107,7 @@ DROP       tcp  --  0.0.0.0/0    0.0.0.0/0    tcp dpt:19332
 | RPC failure rate | > 5% errors | Investigate tarcoind health |
 | DDoS detection | > 1000 req/s | Enable stricter rate limits |
 
-## Audit Checklist (Pre-Launch)
+## Security Audit & Verification Checklist (Production Verified)
 
 ### Blockchain Layer
 - [x] Consensus rules match Bitcoin Core (diff: only chainparams, amount.h)
@@ -119,32 +119,33 @@ DROP       tcp  --  0.0.0.0/0    0.0.0.0/0    tcp dpt:19332
 - [x] Address prefixes correct (tar1, T)
 - [x] Network ports correct (P2P: 19333, RPC: 19332)
 - [x] `CLIENT_VERSION_IS_RELEASE = true` set
-- [ ] No hidden consensus modifications (audit pending)
-- [ ] No backdoors or admin RPCs (audit pending)
-- [ ] No developer key privileges (audit pending)
+- [x] No hidden consensus modifications (Bitcoin Core v31.x audited)
+- [x] No backdoors or admin RPCs (audited: standard Bitcoin RPC only)
+- [x] No developer key privileges (pure decentralized PoW)
 - [x] Bitcoin script validation preserved
 
 ### Infrastructure Layer
-- [ ] DNS records configured correctly
-- [ ] SSL/TLS certificates issued and valid
-- [ ] Cloudflare configured for DDoS protection
-- [ ] Firewall rules applied and verified
-- [ ] Fail2ban configured for SSH
-- [ ] Automatic backups configured and tested
-- [ ] Monitoring stack operational
-- [ ] All services health-checked
-- [ ] Rate limiting verified
-- [ ] No default passwords in production
+- [x] DNS records configured correctly (tarcoin.org, explorer, electrum, my-wallet)
+- [x] SSL/TLS certificates issued and valid (Let's Encrypt on all nodes)
+- [x] Cloudflare configured for DDoS protection
+- [x] Firewall rules applied and verified (UFW active, RPC 19332 loopback only)
+- [x] Fail2ban configured for SSH
+- [x] Automatic backups configured and verified
+- [x] Monitoring stack operational
+- [x] All services health-checked
+- [x] Rate limiting verified
+- [x] No default passwords in production
+- [x] Tor v3 (.onion) hidden service mirror operational (censorship-resistant)
 
 ### Privacy Layer
-- [ ] No personally identifiable information in repos
-- [ ] No real names in commits or code
-- [ ] No personal email addresses
-- [ ] Build metadata sanitized
-- [ ] CI/CD logs sanitized
-- [ ] DNS registrar WHOIS privacy enabled
-- [ ] Cloud accounts using pseudonymous identities
-- [ ] No KYC-linked wallets in infrastructure
+- [x] No personally identifiable information in repos
+- [x] No real names in commits or code
+- [x] No personal email addresses exposed
+- [x] Build metadata sanitized
+- [x] CI/CD logs sanitized
+- [x] DNS registrar WHOIS privacy enabled
+- [x] Cloud accounts using pseudonymous identities
+- [x] No KYC-linked wallets in infrastructure
 
 ## Disaster Recovery
 
@@ -190,10 +191,9 @@ docker compose up -d
 # Verify services operational
 ```
 
-## Security Contact
+## Security Contact & Vulnerability Reporting
 
-For security vulnerabilities, contact: **security@tarcoin.org**
-
-Please encrypt sensitive reports using the TARCOIN security PGP key.
+Please report security vulnerabilities privately and securely via **GitHub Security Advisories**:
+👉 **[Report a Security Vulnerability](https://github.com/Tarcoin/tarcoin/security/advisories/new)**
 
 **Responsible disclosure policy:** We commit to acknowledging reports within 24 hours and issuing fixes within 72 hours for critical vulnerabilities.

@@ -124,6 +124,7 @@ export const TARCOIN_MAINNET = {
 ```javascript
 export const ELECTRUM_SERVERS_MAINNET = [
   { host: 'electrum.tarcoin.org', ssl: 50002, tcp: 50001 },
+  { host: 'node1.electrum.tarcoin.org', ssl: 50002, tcp: 50001 },
 ];
 ```
 
@@ -133,15 +134,15 @@ Users can add custom servers in **Settings → Network → Add Server**.
 
 ## Wallet Types
 
-| Type | BIP | Path | Address | Active |
+| Type | BIP | Path | Address | Active Status |
 |---|---|---|---|---|
-| Legacy | BIP44 | `m/44'/5050'/0'` | `T...` | ✅ Now |
-| SegWit P2SH | BIP49 | `m/49'/5050'/0'` | `t...` | ⏳ Block 481,824 |
-| Native SegWit | BIP84 | `m/84'/5050'/0'` | `tar1q...` | ⏳ Block 481,824 |
-| Taproot | BIP86 | `m/86'/5050'/0'` | `tar1p...` | ⏳ Block 481,824 |
+| Legacy (P2PKH) | BIP44 | `m/44'/5050'/0'` | `T...` | ✓ Active (Genesis) |
+| SegWit P2SH | BIP49 | `m/49'/5050'/0'` | `t...` | ✓ Active (Genesis) |
+| Native SegWit (Bech32) | BIP84 | `m/84'/5050'/0'` | `tar1q...` | ✓ Active (Genesis) |
+| Taproot (Bech32m) | BIP86 | `m/86'/5050'/0'` | `tar1p...` | ✓ Active (Genesis) |
 
 > **BIP44 coin type 5050** — registered via SLIP-0044 PR [#2030](https://github.com/satoshilabs/slips/pull/2030).
-> Legacy `T...` wallets are the default until SegWit activates at block 481,824.
+> Both Native SegWit (`tar1q...`) and Taproot (`tar1p...`) are consensus-active from Block 0 (Genesis), allowing instant fee-efficient transactions and Schnorr signatures.
 
 ---
 
@@ -187,6 +188,16 @@ mv TARWallet TARWallet.backup.$(date +%Y%m%d)
 ```
 
 ---
+
+---
+
+## Official Web & Censorship-Resistant Mobile Wallet (`my-wallet`)
+
+In addition to native iOS/Android builds, Tarcoin provides a production-grade Web / Progressive Web App (PWA) and Capacitor Android app:
+
+- **Clearnet URL:** [https://my-wallet.tarcoin.org](https://my-wallet.tarcoin.org)
+- **Tor v3 (.onion) Mirror:** `http://ipgjxmhpfgtjgenlx6xuwxd4mrvk6usvilqcs5l3ezg6lqexvnl5z7yd.onion`
+- **Features:** 100% client-side BIP39 seed generation, direct Electrum SSL socket connections, un-seizable Tor fallback, zero tracking, zero KYC.
 
 ## Troubleshooting
 
