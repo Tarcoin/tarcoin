@@ -1025,7 +1025,7 @@ function parsePoolFromCoinbase(hex, isOurPool){
   if(s.includes("bitaxermt")) return { name: "BitaxeRMT", isOfficial: false, color: "#a855f7" };
   if(s.includes("cryptopickaxe")) return { name: "CryptoPickaxe", isOfficial: false, color: "#f59e0b" };
   if(s.includes("fewbit")) return { name: "FewBit", isOfficial: false, color: "#3b82f6" };
-  if(s.includes("tarcoin") || s.includes("pool.tarcoin.org")) return { name: "Tarcoin Pool", isOfficial: true, color: "#F2C02B" };
+  if(s.includes("tarcoin")) return { name: "Tarcoin Pool", isOfficial: true, color: "#F2C02B" };
   return { name: "Solo Miner", isOfficial: false, color: "#9ca3af" };
 }
 
