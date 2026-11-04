@@ -120,25 +120,37 @@ function parseMinerWorker(workerInput) {
 
 async function resolveTnsToAddress(walletOrDomain) {
   if (!walletOrDomain || typeof walletOrDomain !== 'string') return '';
-  if (!walletOrDomain.toLowerCase().endsWith('.tar')) {
+  const domain = walletOrDomain.toLowerCase().trim();
+  if (!domain.endsWith('.tar')) {
     return walletOrDomain;
   }
-  const domain = walletOrDomain.toLowerCase();
+  // Strict regex whitelist validation to prevent SSRF and injection
+  if (!/^[a-z0-9][a-z0-9_-]{0,62}\.tar$/.test(domain)) {
+    return walletOrDomain;
+  }
   const cached = tnsResolutionCache.get(domain);
   const now = Date.now();
   if (cached && now < cached.expiresAt) {
     return cached.address;
   }
   try {
-    const res = await axios.get(`https://tarcoin.org/api/tns/resolve/${domain}`, { timeout: 3500 });
+    const safeDomain = encodeURIComponent(domain);
+    const targetUrl = new URL(`https://tarcoin.org/api/tns/resolve/${safeDomain}`);
+    if (targetUrl.hostname !== 'tarcoin.org') {
+      return walletOrDomain;
+    }
+    const res = await axios.get(targetUrl.href, { timeout: 3500 });
     if (res.data && res.data.success && res.data.targetAddress) {
       const resolved = res.data.targetAddress;
-      tnsResolutionCache.set(domain, { address: resolved, expiresAt: now + 300000 });
-      console.log(`[TNS] Resolved miner domain ${domain} -> ${resolved}`);
-      return resolved;
+      if (typeof resolved === 'string' && /^tar1[a-z0-9]{38,62}$/i.test(resolved.trim())) {
+        const cleanResolved = resolved.trim();
+        tnsResolutionCache.set(domain, { address: cleanResolved, expiresAt: now + 300000 });
+        console.log('[TNS] Resolved miner domain %s -> %s', sanitizeLog(domain), sanitizeLog(cleanResolved));
+        return cleanResolved;
+      }
     }
   } catch (err) {
-    console.warn(`[TNS] Could not resolve miner domain ${domain}:`, err.message);
+    console.warn('[TNS] Could not resolve miner domain %s: %s', sanitizeLog(domain), sanitizeLog(err.message || String(err)));
   }
   return walletOrDomain;
 }

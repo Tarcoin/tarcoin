@@ -128,9 +128,16 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { domain, years, txHash, tarAddress, ipfsCid, paymentMethod } = body;
 
-    if (!domain || !txHash) {
+    if (!domain || typeof domain !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}(\.tar)?$/.test(domain.trim())) {
       return NextResponse.json(
-        { error: 'Domain name and Polygon TX hash are required.' },
+        { error: 'Invalid domain name format.' },
+        { status: 400 }
+      );
+    }
+
+    if (!txHash || typeof txHash !== 'string' || !/^0x[a-fA-F0-9]{64}$/.test(txHash.trim())) {
+      return NextResponse.json(
+        { error: 'Invalid Polygon transaction hash format. Must be 66-character 0x hex.' },
         { status: 400 }
       );
     }
@@ -146,9 +153,11 @@ export async function POST(req: Request) {
     try {
       verification = await verifyPolygonUsdtPayment(cleanTx);
     } catch (verErr: any) {
-      console.warn('[Polygon Verification Warning]', verErr.message);
-      // Fallback: If external RPC failed or is blocked, permit order logging
-      verification = { verified: true, fallback: true, warning: verErr.message };
+      console.warn('[Polygon Verification Error]', verErr.message);
+      return NextResponse.json(
+        { error: 'Failed to verify Polygon transaction. Please ensure the transaction has confirmed.' },
+        { status: 400 }
+      );
     }
 
     if (!verification.verified && verification.pending) {
@@ -200,24 +209,26 @@ export async function POST(req: Request) {
       status: tnsActivated ? 'active' : 'logged',
     };
 
-    // 3. Log registration order safely to server storage
+    // 3. Log registration order safely to server storage (atomic write, no TOCTOU race)
     try {
       const dataDir = path.join(process.cwd(), 'data');
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
+      fs.mkdirSync(dataDir, { recursive: true });
       const filePath = path.join(dataDir, 'domain-registrations.json');
       let current: any[] = [];
-      if (fs.existsSync(filePath)) {
-        try {
-          const raw = fs.readFileSync(filePath, 'utf-8');
-          current = JSON.parse(raw);
-        } catch {
-          current = [];
+      try {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        current = JSON.parse(raw);
+        if (!Array.isArray(current)) current = [];
+      } catch (readErr: any) {
+        if (readErr.code !== 'ENOENT') {
+          console.warn('Error reading registrations file:', readErr.message);
         }
+        current = [];
       }
       current.push(order);
-      fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf-8');
+      const tmpPath = path.join(dataDir, `domain-registrations-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
+      fs.writeFileSync(tmpPath, JSON.stringify(current, null, 2), 'utf-8');
+      fs.renameSync(tmpPath, filePath);
     } catch (fsErr) {
       console.warn('Could not persist domain order to disk:', fsErr);
     }
