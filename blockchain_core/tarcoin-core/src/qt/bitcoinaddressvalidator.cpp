@@ -64,12 +64,12 @@ QValidator::State BitcoinAddressEntryValidator::validate(QString &input, int &po
     {
         int ch = input.at(idx).unicode();
 
-        if (((ch >= '0' && ch<='9') ||
-            (ch >= 'a' && ch<='z') ||
-            (ch >= 'A' && ch<='Z')) &&
-            ch != 'I' && ch != 'O') // Characters invalid in both Base58 and Bech32
+        if ((ch >= '0' && ch <= '9') ||
+            (ch >= 'a' && ch <= 'z') ||
+            (ch >= 'A' && ch <= 'Z') ||
+            ch == '.' || ch == '-' || ch == '_')
         {
-            // Alphanumeric and not a 'forbidden' character
+            // Alphanumeric, dot, dash, or underscore for addresses and .tar domains
         }
         else
         {
@@ -88,6 +88,10 @@ BitcoinAddressCheckValidator::BitcoinAddressCheckValidator(QObject *parent) :
 QValidator::State BitcoinAddressCheckValidator::validate(QString &input, int &pos) const
 {
     Q_UNUSED(pos);
+    const QString s = input.trimmed();
+    if (s.toLower().endsWith(".tar") && s.length() >= 5) {
+        return QValidator::Acceptable;
+    }
     // Validate the passed Bitcoin address
     if (IsValidDestinationString(input.toStdString())) {
         return QValidator::Acceptable;

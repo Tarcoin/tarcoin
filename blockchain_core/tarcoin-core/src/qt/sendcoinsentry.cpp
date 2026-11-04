@@ -5,6 +5,15 @@
 #include <qt/sendcoinsentry.h>
 #include <qt/forms/ui_sendcoinsentry.h>
 
+#include <QEventLoop>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QTimer>
+#include <QUrl>
+
 #include <qt/addressbookpage.h>
 #include <qt/addresstablemodel.h>
 #include <qt/guiutil.h>
@@ -65,6 +74,58 @@ void SendCoinsEntry::on_addressBookButton_clicked()
 void SendCoinsEntry::on_payTo_textChanged(const QString &address)
 {
     updateLabel(address);
+    checkTnsDomain(address);
+}
+
+void SendCoinsEntry::checkTnsDomain(const QString &address)
+{
+    QString domain = address.trimmed().toLower();
+    if (!domain.endsWith(".tar") || domain.length() < 5) {
+        m_resolvedDomain.clear();
+        m_resolvedAddress.clear();
+        ui->payTo->setToolTip(tr("The Tarcoin address to send the payment to"));
+        return;
+    }
+
+    if (domain == m_resolvedDomain && !m_resolvedAddress.isEmpty()) {
+        return;
+    }
+
+    if (!m_networkManager) {
+        m_networkManager = new QNetworkAccessManager(this);
+    }
+
+    QUrl url(QString("https://tarcoin.org/api/tns/resolve/%1").arg(domain));
+    QNetworkRequest req(url);
+    req.setHeader(QNetworkRequest::UserAgentHeader, "Tarcoin-Qt/1.2.4");
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QNetworkReply *reply = m_networkManager->get(req);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, domain]() {
+        reply->deleteLater();
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray data = reply->readAll();
+            QJsonDocument doc = QJsonDocument::fromJson(data);
+            if (doc.isObject()) {
+                QJsonObject obj = doc.object();
+                if (obj.value("success").toBool()) {
+                    QString target = obj.value("targetAddress").toString();
+                    if (!target.isEmpty()) {
+                        m_resolvedDomain = domain;
+                        m_resolvedAddress = target;
+                        ui->payTo->setToolTip(tr("TNS Domain: %1\nTarget Address: %2").arg(domain, target));
+                        if (ui->addAsLabel->text().isEmpty()) {
+                            ui->addAsLabel->setText(domain);
+                        }
+                        ui->payTo->setValid(true);
+                        return;
+                    }
+                }
+            }
+        }
+        m_resolvedAddress.clear();
+        ui->payTo->setToolTip(tr("TNS domain '%1' could not be resolved.").arg(domain));
+    });
 }
 
 void SendCoinsEntry::setModel(WalletModel *_model)
@@ -79,6 +140,8 @@ void SendCoinsEntry::setModel(WalletModel *_model)
 
 void SendCoinsEntry::clear()
 {
+    m_resolvedDomain.clear();
+    m_resolvedAddress.clear();
     // clear UI elements for normal payment
     ui->payTo->clear();
     ui->addAsLabel->clear();
@@ -117,10 +180,55 @@ bool SendCoinsEntry::validate(interfaces::Node& node)
     // Check input validity
     bool retval = true;
 
-    if (!model->validateAddress(ui->payTo->text()))
-    {
-        ui->payTo->setValid(false);
-        retval = false;
+    QString addrText = ui->payTo->text().trimmed();
+    if (addrText.toLower().endsWith(".tar")) {
+        if (m_resolvedDomain != addrText.toLower() || m_resolvedAddress.isEmpty()) {
+            if (!m_networkManager) {
+                m_networkManager = new QNetworkAccessManager(this);
+            }
+            QUrl url(QString("https://tarcoin.org/api/tns/resolve/%1").arg(addrText.toLower()));
+            QNetworkRequest req(url);
+            req.setHeader(QNetworkRequest::UserAgentHeader, "Tarcoin-Qt/1.2.4");
+            req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+            QNetworkReply *reply = m_networkManager->get(req);
+            QEventLoop loop;
+            QTimer timer;
+            timer.setSingleShot(true);
+            connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+            connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+            timer.start(3000);
+            loop.exec();
+
+            if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
+                QByteArray data = reply->readAll();
+                QJsonDocument doc = QJsonDocument::fromJson(data);
+                if (doc.isObject()) {
+                    QJsonObject obj = doc.object();
+                    if (obj.value("success").toBool()) {
+                        QString target = obj.value("targetAddress").toString();
+                        if (!target.isEmpty()) {
+                            m_resolvedDomain = addrText.toLower();
+                            m_resolvedAddress = target;
+                        }
+                    }
+                }
+            }
+            reply->deleteLater();
+        }
+
+        if (m_resolvedAddress.isEmpty() || !model->validateAddress(m_resolvedAddress)) {
+            ui->payTo->setValid(false);
+            retval = false;
+        } else {
+            ui->payTo->setValid(true);
+        }
+    } else {
+        if (!model->validateAddress(ui->payTo->text()))
+        {
+            ui->payTo->setValid(false);
+            retval = false;
+        }
     }
 
     if (!ui->payAmount->validate())
@@ -136,7 +244,8 @@ bool SendCoinsEntry::validate(interfaces::Node& node)
     }
 
     // Reject dust outputs:
-    if (retval && GUIUtil::isDust(node, ui->payTo->text(), ui->payAmount->value())) {
+    QString targetForDust = m_resolvedAddress.isEmpty() ? ui->payTo->text() : m_resolvedAddress;
+    if (retval && GUIUtil::isDust(node, targetForDust, ui->payAmount->value())) {
         ui->payAmount->setValid(false);
         retval = false;
     }
@@ -146,8 +255,14 @@ bool SendCoinsEntry::validate(interfaces::Node& node)
 
 SendCoinsRecipient SendCoinsEntry::getValue()
 {
-    recipient.address = ui->payTo->text();
-    recipient.label = ui->addAsLabel->text();
+    QString rawAddr = ui->payTo->text().trimmed();
+    if (rawAddr.toLower().endsWith(".tar") && !m_resolvedAddress.isEmpty()) {
+        recipient.address = m_resolvedAddress;
+        recipient.label = ui->addAsLabel->text().isEmpty() ? rawAddr : ui->addAsLabel->text();
+    } else {
+        recipient.address = rawAddr;
+        recipient.label = ui->addAsLabel->text();
+    }
     recipient.amount = ui->payAmount->value();
     recipient.message = ui->messageTextLabel->text();
     recipient.fSubtractFeeFromAmount = (ui->checkboxSubtractFeeFromAmount->checkState() == Qt::Checked);

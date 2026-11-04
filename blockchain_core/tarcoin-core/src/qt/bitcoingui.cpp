@@ -5,6 +5,8 @@
 #include <bitcoin-build-config.h> // IWYU pragma: keep
 
 #include <qt/bitcoingui.h>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include <qt/bitcoinunits.h>
 #include <qt/clientmodel.h>
@@ -567,6 +569,18 @@ void BitcoinGUI::createMenuBar()
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
+
+    QMenu *domainsMenu = appMenuBar->addMenu(tr("&.tar Domains"));
+    QAction *buyDomainAction = domainsMenu->addAction(tr("&Register or Manage .tar Domain..."));
+    buyDomainAction->setStatusTip(tr("Open the official TNS portal to register human-readable .tar domains"));
+    connect(buyDomainAction, &QAction::triggered, [] {
+        QDesktopServices::openUrl(QUrl("https://tarcoin.org/domains"));
+    });
+    QAction *dnsLookupAction = domainsMenu->addAction(tr("TNS &Explorer..."));
+    dnsLookupAction->setStatusTip(tr("Explore registered .tar domains on the TARCOIN network"));
+    connect(dnsLookupAction, &QAction::triggered, [] {
+        QDesktopServices::openUrl(QUrl("https://tarcoin.org/explorer"));
+    });
 
     QMenu* window_menu = appMenuBar->addMenu(tr("&Window"));
 

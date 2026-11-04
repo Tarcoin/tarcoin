@@ -145,6 +145,10 @@ void WalletModel::updateAddressBook(const QString &address, const QString &label
 
 bool WalletModel::validateAddress(const QString& address) const
 {
+    const QString s = address.trimmed();
+    if (s.toLower().endsWith(".tar") && s.length() >= 5) {
+        return true;
+    }
     return IsValidDestinationString(address.toStdString());
 }
 
