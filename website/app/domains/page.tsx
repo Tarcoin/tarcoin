@@ -1,5 +1,13 @@
 "use client";
 
+function getSafePolygonScanUrl(txHash: string | undefined): string {
+  const safe = String(txHash || '').trim();
+  if (/^0x[a-fA-F0-9]{64}$/.test(safe)) {
+    return `https://polygonscan.com/tx/${safe}`;
+  }
+  return 'https://polygonscan.com';
+}
+
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -516,7 +524,7 @@ export default function DomainsPage() {
                     Register Another Domain
                   </button>
                   <a
-                    href={`https://polygonscan.com/tx/${submittedOrder.txHash}`}
+                    href={getSafePolygonScanUrl(submittedOrder?.txHash)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 font-orbitron text-xs transition-all flex items-center gap-1.5"

@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
 const TNS_TREASURY_USDT_POLYGON = '0x1D48feF097989b698009716965ACb8eC4d7c3CbF'.toLowerCase();
 const USDT_POLYGON_CONTRACT = '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'.toLowerCase();
@@ -128,9 +126,16 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { domain, years, txHash, tarAddress, ipfsCid, paymentMethod } = body;
 
-    if (!domain || !txHash) {
+    if (!domain || typeof domain !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}(\.tar)?$/.test(domain.trim())) {
       return NextResponse.json(
-        { error: 'Domain name and Polygon TX hash are required.' },
+        { error: 'Invalid domain name format.' },
+        { status: 400 }
+      );
+    }
+
+    if (!txHash || typeof txHash !== 'string' || !/^0x[a-fA-F0-9]{64}$/.test(txHash.trim())) {
+      return NextResponse.json(
+        { error: 'Invalid Polygon transaction hash format. Must be 66-character 0x hex.' },
         { status: 400 }
       );
     }
@@ -146,9 +151,11 @@ export async function POST(req: Request) {
     try {
       verification = await verifyPolygonUsdtPayment(cleanTx);
     } catch (verErr: any) {
-      console.warn('[Polygon Verification Warning]', verErr.message);
-      // Fallback: If external RPC failed or is blocked, permit order logging
-      verification = { verified: true, fallback: true, warning: verErr.message };
+      console.warn('[Polygon Verification Error]', verErr.message);
+      return NextResponse.json(
+        { error: 'Failed to verify Polygon transaction. Please ensure the transaction has confirmed.' },
+        { status: 400 }
+      );
     }
 
     if (!verification.verified && verification.pending) {
@@ -199,28 +206,6 @@ export async function POST(req: Request) {
       tnsActivated,
       status: tnsActivated ? 'active' : 'logged',
     };
-
-    // 3. Log registration order safely to server storage
-    try {
-      const dataDir = path.join(process.cwd(), 'data');
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-      const filePath = path.join(dataDir, 'domain-registrations.json');
-      let current: any[] = [];
-      if (fs.existsSync(filePath)) {
-        try {
-          const raw = fs.readFileSync(filePath, 'utf-8');
-          current = JSON.parse(raw);
-        } catch {
-          current = [];
-        }
-      }
-      current.push(order);
-      fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf-8');
-    } catch (fsErr) {
-      console.warn('Could not persist domain order to disk:', fsErr);
-    }
 
     return NextResponse.json({
       success: true,
