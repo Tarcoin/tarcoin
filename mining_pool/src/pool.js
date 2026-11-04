@@ -96,6 +96,53 @@ async function rpcCall(method, params = [], walletOverride = null) {
   if (data.error) throw new Error(data.error.message);
   return data.result;
 }
+// ====== TNS (.tar domain) Resolution Helper ======
+const tnsResolutionCache = new Map();
+
+function parseMinerWorker(workerInput) {
+  if (!workerInput || typeof workerInput !== 'string') return { wallet: '', worker: 'default', isTns: false };
+  const str = workerInput.trim();
+  const tarMatch = str.match(/^([a-z0-9\-]+\.tar)(?:\.(.+))?$/i);
+  if (tarMatch) {
+    return {
+      wallet: tarMatch[1].toLowerCase(),
+      worker: tarMatch[2] || 'default',
+      isTns: true,
+    };
+  }
+  const parts = str.split('.');
+  return {
+    wallet: parts[0],
+    worker: parts.slice(1).join('.') || 'default',
+    isTns: false,
+  };
+}
+
+async function resolveTnsToAddress(walletOrDomain) {
+  if (!walletOrDomain || typeof walletOrDomain !== 'string') return '';
+  if (!walletOrDomain.toLowerCase().endsWith('.tar')) {
+    return walletOrDomain;
+  }
+  const domain = walletOrDomain.toLowerCase();
+  const cached = tnsResolutionCache.get(domain);
+  const now = Date.now();
+  if (cached && now < cached.expiresAt) {
+    return cached.address;
+  }
+  try {
+    const res = await axios.get(`https://tarcoin.org/api/tns/resolve/${domain}`, { timeout: 3500 });
+    if (res.data && res.data.success && res.data.targetAddress) {
+      const resolved = res.data.targetAddress;
+      tnsResolutionCache.set(domain, { address: resolved, expiresAt: now + 300000 });
+      console.log(`[TNS] Resolved miner domain ${domain} -> ${resolved}`);
+      return resolved;
+    }
+  } catch (err) {
+    console.warn(`[TNS] Could not resolve miner domain ${domain}:`, err.message);
+  }
+  return walletOrDomain;
+}
+
 
 // ====== SHA256d -Â double SHA256 (Bitcoin/TARCOIN PoW) ======
 function sha256d(buffer) {
@@ -518,7 +565,8 @@ const soloStratumServer = net.createServer((socket) => {
             (async () => {
               try {
                 if (poolState.blockTemplate?.rawTemplate) {
-                  const minerAddress = workerName.split('.')[0];
+                  const rawMiner = parseMinerWorker(workerName).wallet;
+                  const minerAddress = await resolveTnsToAddress(rawMiner);
                   const { coinbase1, coinbase2 } = await buildSoloCoinbase(minerAddress, poolState.blockTemplate.rawTemplate);
                   soloMinerEntry.coinbase1 = coinbase1;
                   soloMinerEntry.coinbase2 = coinbase2;
@@ -636,7 +684,8 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
 
     // Save hashrate snapshot for per-wallet history chart (solo) using REAL hashrate
     if (redis) {
-      const wallet = workerName.split('.')[0];
+      const rawWallet = parseMinerWorker(workerName).wallet;
+      const wallet = await resolveTnsToAddress(rawWallet);
       const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
@@ -740,7 +789,8 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       await redis.lTrim('pool:shares', 0, 999999);
 
       // Save hashrate snapshot using REAL share-rate-based hashrate
-      const wallet = workerName.split('.')[0];
+      const rawWallet = parseMinerWorker(workerName).wallet;
+      const wallet = await resolveTnsToAddress(rawWallet);
       const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
@@ -1033,7 +1083,8 @@ async function refreshBlockTemplate() {
       for (const [workerName, minerState] of soloState.miners.entries()) {
         if (!minerState.socket || minerState.socket.destroyed) continue;
         try {
-          const minerAddress = workerName.split('.')[0];
+          const rawMiner = parseMinerWorker(workerName).wallet;
+                  const minerAddress = await resolveTnsToAddress(rawMiner);
           const { coinbase1, coinbase2 } = await buildSoloCoinbase(minerAddress, template);
           minerState.coinbase1 = coinbase1;
           minerState.coinbase2 = coinbase2;
@@ -1082,12 +1133,13 @@ async function processPayouts() {
 
     const workerShares = {};
     let totalShares = 0;
-    shares.forEach((s) => {
+    for (const s of shares) {
       const { worker } = JSON.parse(s);
-      const walletAddress = worker.split('.')[0];
+      const rawW = parseMinerWorker(worker).wallet;
+      const walletAddress = await resolveTnsToAddress(rawW);
       workerShares[walletAddress] = (workerShares[walletAddress] || 0) + 1;
       totalShares++;
-    });
+    }
 
     console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers.`);
 
@@ -1198,13 +1250,14 @@ async function processPayouts() {
         // --- ADD SOLO MINER REWARDS TO BOUNTY CHECK ---
         const soloBlocks = await redis.lRange('solo:blocks', 0, -1);
         const soloRewards = {};
-        soloBlocks.forEach(b => {
+        for (const b of soloBlocks) {
           try {
             const data = JSON.parse(b);
-            const wallet = data.wallet || data.worker.split('.')[0];
+            const rawWallet = data.wallet || parseMinerWorker(data.worker).wallet;
+            const wallet = await resolveTnsToAddress(rawWallet);
             soloRewards[wallet] = (soloRewards[wallet] || 0) + 49500; // 49,500 TAR per block
           } catch (e) {}
-        });
+        }
 
         // Combine shared pool payouts and solo rewards for the bounty check
         const allRewards = { ...payouts };
@@ -1493,7 +1546,10 @@ cron.schedule('0 * * * *', processPayouts);
   // ====== Per-Wallet Stats API (Shared Pool) ======
   app.get('/api/pool/miner/:wallet', async (req, res) => {
     try {
-      const wallet = req.params.wallet.toLowerCase();
+      let wallet = req.params.wallet.toLowerCase();
+      if (wallet.endsWith('.tar')) {
+        wallet = (await resolveTnsToAddress(wallet)).toLowerCase();
+      }
 
       // 1. Fetch shares for this wallet
       const sharesData = redis ? await redis.lRange('pool:shares', 0, 99999) : []; // Last 100,000 shares
@@ -1580,7 +1636,10 @@ cron.schedule('0 * * * *', processPayouts);
   // ====== Per-Wallet Stats API (Solo Pool) ======
   app.get('/api/solo/miner/:wallet', async (req, res) => {
     try {
-      const wallet = req.params.wallet.toLowerCase();
+      let wallet = req.params.wallet.toLowerCase();
+      if (wallet.endsWith('.tar')) {
+        wallet = (await resolveTnsToAddress(wallet)).toLowerCase();
+      }
 
       // 1. Live data from soloState
       let shares = 0;
