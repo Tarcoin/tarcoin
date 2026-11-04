@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
 const TNS_TREASURY_USDT_POLYGON = '0x1D48feF097989b698009716965ACb8eC4d7c3CbF'.toLowerCase();
 const USDT_POLYGON_CONTRACT = '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'.toLowerCase();
@@ -208,30 +206,6 @@ export async function POST(req: Request) {
       tnsActivated,
       status: tnsActivated ? 'active' : 'logged',
     };
-
-    // 3. Log registration order safely to server storage (atomic write, no TOCTOU race)
-    try {
-      const dataDir = path.join(process.cwd(), 'data');
-      fs.mkdirSync(dataDir, { recursive: true });
-      const filePath = path.join(dataDir, 'domain-registrations.json');
-      let current: any[] = [];
-      try {
-        const raw = fs.readFileSync(filePath, 'utf-8');
-        current = JSON.parse(raw);
-        if (!Array.isArray(current)) current = [];
-      } catch (readErr: any) {
-        if (readErr.code !== 'ENOENT') {
-          console.warn('Error reading registrations file:', readErr.message);
-        }
-        current = [];
-      }
-      current.push(order);
-      const tmpPath = path.join(dataDir, `domain-registrations-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
-      fs.writeFileSync(tmpPath, JSON.stringify(current, null, 2), 'utf-8');
-      fs.renameSync(tmpPath, filePath);
-    } catch (fsErr) {
-      console.warn('Could not persist domain order to disk:', fsErr);
-    }
 
     return NextResponse.json({
       success: true,
