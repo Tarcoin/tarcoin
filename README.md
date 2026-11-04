@@ -154,7 +154,7 @@ TARCOIN uses **SHA256d** Proof-of-Work, making it compatible with Bitcoin ASIC m
 Connect your miners to:
 - **Primary Stratum URL:** `stratum+tcp://stratum.tarcoin.org:3333`
 - **Backup Stratum URL:** `stratum+tcp://stratum2.tarcoin.org:3333`
-- **Username:** Your TAR wallet address
+- **Username:** Your TAR wallet address (or your registered TNS domain name, e.g. `miner.tar.worker1` per [TIP-0001](docs/TIP-0001-TNS.md))
 - **Password:** Anything (or d= difficulty)
 
 ### Supported Miners
@@ -168,6 +168,14 @@ Connect your miners to:
 tarcoind -daemon
 tarcoin-cli generatetoaddress 1 <YOUR_ADDRESS>
 ```
+
+## Tarcoin Name System (TNS)
+
+Tarcoin is the first Layer-1 PoW blockchain to implement native, on-chain human-readable `.tar` domain names for peer-to-peer wallet payments and miner Stratum payout resolution:
+
+* **Official Specification:** [TIP-0001: Tarcoin Name System](docs/TIP-0001-TNS.md)
+* **Web Registration & Explorer:** [https://tarcoin.org/domains](https://tarcoin.org/domains)
+* **Architecture:** Native `OP_RETURN` script payloads embedded directly in Layer-1 transactions with zero smart contract or EVM dependencies.
 
 ## Wallets
 
