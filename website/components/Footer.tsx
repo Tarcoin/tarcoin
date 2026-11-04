@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BsGithub, BsTwitter, BsDiscord, BsTelegram, BsMedium } from "react-icons/bs";
+import { BsGithub, BsTwitterX, BsDiscord, BsMedium } from "react-icons/bs";
 
 const footerLinks = {
   blockchain: [
@@ -13,6 +13,8 @@ const footerLinks = {
     { name: "Verify Signature", href: "/verify" },
   ],
   wallets: [
+    { name: "Web Wallet", href: "https://my-wallet.tarcoin.org" },
+    { name: "Tor Mirror (.onion)", href: "http://ipgjxmhpfgtjgenlx6xuwxd4mrvk6usvilqcs5l3ezg6lqexvnl5z7yd.onion" },
     { name: "Windows Wallet", href: "/download#windows" },
     { name: "macOS Wallet", href: "/download#macos" },
     { name: "Linux Wallet", href: "/download#linux" },
@@ -32,6 +34,7 @@ const footerLinks = {
   ],
   resources: [
     { name: "FAQ", href: "/faq" },
+    { name: "Blockspot (Verified)", href: "https://blockspot.io/coin/tarcoin-tar/" },
     { name: "Mining Guide", href: "/mining/guide" },
     { name: "Security", href: "/security" },
     { name: "Brand Assets", href: "/brand" },
@@ -55,17 +58,14 @@ export default function Footer() {
               A decentralized SHA-256 proof-of-work blockchain built for secure peer-to-peer value transfer, fixed digital scarcity, and long-term network sustainability.
             </p>
             <div className="flex space-x-3">
-              <a href="https://github.com/Tarcoin/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
+              <a href="https://github.com/Tarcoin/tarcoin" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
                 <BsGithub size={18} />
               </a>
-              <a href="https://twitter.com/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
-                <BsTwitter size={18} />
+              <a href="https://x.com/TarcoinNetwork" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
+                <BsTwitterX size={18} />
               </a>
-              <a href="https://discord.gg/QXm4CxDzJC" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
+              <a href="https://discord.gg/QXm4CxDzJC" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
                 <BsDiscord size={18} />
-              </a>
-              <a href="https://t.me/tarcoin" className="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-400 hover:text-tarcoin-gold hover:border-tarcoin-gold/30 transition-all">
-                <BsTelegram size={18} />
               </a>
             </div>
           </div>
@@ -82,6 +82,7 @@ export default function Footer() {
                     <Link
                       href={link.href}
                       className="text-sm text-gray-500 hover:text-tarcoin-gold transition-colors"
+                      {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     >
                       {link.name}
                     </Link>
@@ -97,11 +98,21 @@ export default function Footer() {
           <p className="text-xs text-gray-600">
             &copy; {new Date().getFullYear()} TARCOIN. Open source. MIT licensed.
           </p>
-          <div className="flex items-center gap-4 text-xs text-gray-600">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+            <a
+              href="http://ipgjxmhpfgtjgenlx6xuwxd4mrvk6usvilqcs5l3ezg6lqexvnl5z7yd.onion"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-tarcoin-gold hover:text-white transition-colors flex items-center gap-1 font-mono"
+              title="Tor v3 Censorship-Resistant Hidden Service"
+            >
+              🧅 Tor: http://ipgjxm...z7yd.onion
+            </a>
+            <span className="w-1 h-1 rounded-full bg-gray-600 hidden sm:inline-block" />
             <span>P2P Port: 19333</span>
-            <span className="w-1 h-1 rounded-full bg-gray-600" />
+            <span className="w-1 h-1 rounded-full bg-gray-600 hidden sm:inline-block" />
             <span>RPC Port: 19332</span>
-            <span className="w-1 h-1 rounded-full bg-gray-600" />
+            <span className="w-1 h-1 rounded-full bg-gray-600 hidden sm:inline-block" />
             <span>bech32: tar1</span>
           </div>
         </div>

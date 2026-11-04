@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "export:ipfs": "node export-ipfs.js",
     "start": "next start",
     "lint": "next lint"
   },

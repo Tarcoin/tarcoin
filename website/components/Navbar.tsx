@@ -10,7 +10,7 @@ const navLinks = [
   { name: "Home", href: "/" },
   { name: "Explorer", href: "/explorer" },
   { name: "Mining", href: "/mining" },
-  { name: "Faucet", href: "/faucet" },
+  { name: ".tar Domains", href: "/domains" },
   { name: "Wallet", href: "/wallet" },
   { name: "API", href: "/api" },
   { name: "Whitepaper", href: "/whitepaper" },

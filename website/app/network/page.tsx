@@ -35,8 +35,11 @@ export default function NetworkPage() {
 
   async function fetchStats() {
     try {
-      const res = await fetch(`${EXPLORER_API}/api/network/stats`);
-      if (res.ok) {
+      let res = await fetch(`${EXPLORER_API}/api/network/stats`).catch(() => null);
+      if (!res || !res.ok) {
+        res = await fetch(`https://tarcoin.org/api/explorer/network/stats`).catch(() => null);
+      }
+      if (res && res.ok) {
         const data: NetStats = await res.json();
         setStats(data);
         setLastUpdated(new Date().toLocaleTimeString());

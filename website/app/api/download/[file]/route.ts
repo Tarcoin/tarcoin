@@ -13,6 +13,15 @@ const FILE_MAP: Record<string, {
   localPaths: string[];
   githubAsset?: string;
 }> = {
+  // Chrome and Brave Extension (MV3)
+  'tarcoin-extension.zip': {
+    filename: 'tarcoin-extension.zip',
+    contentType: 'application/zip',
+    localPaths: [
+      'public/downloads/tarcoin-extension.zip',
+      'public/tarcoin-extension.zip',
+    ],
+  },
   // Linux full package: tarcoind + tarcoin-cli + tarcoin-qt (GUI wallet)
   'tarcoin-linux-full.zip': {
     filename: 'tarcoin-linux-full.zip',
@@ -111,4 +120,8 @@ export async function GET(
   }
 
   return NextResponse.json({ error: 'File not found on server' }, { status: 404 });
+}
+
+export function generateStaticParams() {
+  return [{ file: 'tarcoin-wallet.apk' }, { file: 'tarcoin-extension.zip' }];
 }
