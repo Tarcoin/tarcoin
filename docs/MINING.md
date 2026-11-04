@@ -28,7 +28,7 @@ TARCOIN uses SHA256d Proof-of-Work, making it fully compatible with Bitcoin ASIC
 Primary URL:  stratum+tcp://stratum.tarcoin.org:3333
 Backup URL:   stratum+tcp://stratum2.tarcoin.org:3333
 Port:         3333
-Username:     <YOUR_TAR_ADDRESS>
+Username:     <YOUR_TAR_ADDRESS> (or <NAME>.tar per TIP-0001)
 Password:     x (or any value)
 Pool Fee:     1%
 ```
@@ -39,7 +39,7 @@ Pool Fee:     1%
 ```
 Model     : Antminer S19, S19 Pro, S19 XP, S21
 URL       : stratum+tcp://pool.tarcoin.org:3333
-Worker    : <TAR_ADDRESS>.<WORKER_NAME>
+Worker    : <TAR_ADDRESS>.<WORKER_NAME> (or <NAME>.tar.<WORKER_NAME>)
 Password  : x
 ```
 
@@ -47,7 +47,7 @@ Password  : x
 ```
 Model     : Whatsminer M50, M50S, M60, M60S
 URL       : stratum+tcp://pool.tarcoin.org:3333
-Worker    : <TAR_ADDRESS>.<WORKER_NAME>
+Worker    : <TAR_ADDRESS>.<WORKER_NAME> (or <NAME>.tar.<WORKER_NAME>)
 Password  : x
 ```
 
@@ -55,7 +55,7 @@ Password  : x
 ```
 Model     : Avalonminer A12+, A13, A15
 URL       : stratum+tcp://pool.tarcoin.org:3333
-Worker    : <TAR_ADDRESS>.<WORKER_NAME>
+Worker    : <TAR_ADDRESS>.<WORKER_NAME> (or <NAME>.tar.<WORKER_NAME>)
 Password  : x
 ```
 
