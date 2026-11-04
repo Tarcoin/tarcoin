@@ -219,8 +219,13 @@ function calcActualHashrate(shareHistory, windowMs = 300000) {
 }
 
 function minerHashrate(miner) {
+  if (!miner) return 0;
   const actual = calcActualHashrate(miner.shareHistory);
-  return actual > 0 ? actual : (miner.difficulty * Math.pow(2, 32)) / VARDIFF.targetTime;
+  if (actual && !isNaN(actual) && actual > 0) return actual;
+  const diff = Number(miner.difficulty) || (VARDIFF && VARDIFF.startDiff) || 12500;
+  const targetTime = (VARDIFF && VARDIFF.targetTime) ? VARDIFF.targetTime : 10;
+  const estimated = (diff * Math.pow(2, 32)) / targetTime;
+  return (!isNaN(estimated) && estimated > 0) ? estimated : 0;
 }
 
 // ====== Pool state ======
@@ -1315,6 +1320,22 @@ cron.schedule('0 * * * *', processPayouts);
         console.warn('Could not fetch getmininginfo for /api/stats:', e.message);
       }
 
+      // Fetch recent blocks (combining PPLNS + SOLO)
+      let combinedBlocks = [];
+      if (redis) {
+        try {
+          const pplnsRaw = await redis.lRange('pool:blocks', 0, 19);
+          const soloRaw = await redis.lRange('solo:blocks', 0, 19);
+          combinedBlocks = [
+            ...pplnsRaw.map(b => { try { return { ...JSON.parse(b), type: 'PPLNS' }; } catch (e) { return null; } }).filter(Boolean),
+            ...soloRaw.map(b => { try { return { ...JSON.parse(b), type: 'SOLO' }; } catch (e) { return null; } }).filter(Boolean)
+          ].sort((a, b) => (b.height || 0) - (a.height || 0));
+        } catch (err) {}
+      }
+
+      const currentHeight = poolState.blockTemplate?.height || (combinedBlocks[0]?.height || 0);
+      const lastBlockFound = combinedBlocks[0] || null;
+
       // 4. Output Generic standard JSON
       res.json({
         pool_name: "TARCOIN Official Pool",
@@ -1324,21 +1345,27 @@ cron.schedule('0 * * * *', processPayouts);
         fee: 1.0, // 1% pool fee
         stratum_port: 3333,
         stratum_host: "stratum.tarcoin.org",
+        height: currentHeight,
+        current_block: currentHeight,
+        block_height: currentHeight,
+        last_block: lastBlockFound ? lastBlockFound.height : currentHeight,
+        last_block_time: lastBlockFound ? lastBlockFound.time : Date.now(),
         pplns: {
-          hashrate: poolHashrate,
+          hashrate: (!isNaN(poolHashrate) && poolHashrate >= 0 ? poolHashrate : 0),
           miners: activeMiners,
           workers: activeWorkers
         },
         solo: {
-          hashrate: soloHashrate,
+          hashrate: (!isNaN(soloHashrate) && soloHashrate >= 0 ? soloHashrate : 0),
           miners: soloActiveMiners,
           workers: soloActiveWorkers
         },
-        total_hashrate: poolHashrate + soloHashrate,
+        total_hashrate: ((!isNaN(poolHashrate) && poolHashrate >= 0 ? poolHashrate : 0) + (!isNaN(soloHashrate) && soloHashrate >= 0 ? soloHashrate : 0)),
         total_miners: activeMiners + soloActiveMiners,
         total_workers: activeWorkers + soloActiveWorkers,
         network_hashrate: networkHashrate,
-        network_difficulty: networkDifficulty
+        network_difficulty: networkDifficulty,
+        blocks_found: combinedBlocks.slice(0, 10)
       });
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
@@ -1374,9 +1401,15 @@ cron.schedule('0 * * * *', processPayouts);
         } catch(e) {}
       });
 
-      // 2. Fetch recent blocks
-      const blocksData = await redis.lRange('pool:blocks', 0, 9);
-      const blocksFound = blocksData.map(b => JSON.parse(b));
+      // 2. Fetch recent blocks (combined PPLNS + SOLO)
+      const pplnsBlocksData = await redis.lRange('pool:blocks', 0, 19);
+      let soloBlocksData = [];
+      try { soloBlocksData = await redis.lRange('solo:blocks', 0, 19); } catch (err) {}
+      const blocksFound = [
+        ...pplnsBlocksData.map(b => { try { return JSON.parse(b); } catch (e) { return null; } }).filter(Boolean),
+        ...soloBlocksData.map(b => { try { return { ...JSON.parse(b), solo: true }; } catch (e) { return null; } }).filter(Boolean)
+      ].sort((a, b) => (b.height || 0) - (a.height || 0)).slice(0, 20);
+      const currentHeight = poolState.blockTemplate?.height || (blocksFound[0]?.height || 0);
 
       // 3. Calculate true Pool Hashrate and active miners from live state (not shares)
       let poolHashrate = 0;
@@ -1398,6 +1431,9 @@ cron.schedule('0 * * * *', processPayouts);
         totalShares,
         workers,
         blocksFound,
+        height: currentHeight,
+        blockHeight: currentHeight,
+        currentBlock: currentHeight,
         poolHashrate
       };
 

@@ -12,6 +12,7 @@ import MiningSection from "@/components/MiningSection";
 import DownloadSection from "@/components/DownloadSection";
 import RunNodeSection from "@/components/RunNodeSection";
 import ExplorerPreview from "@/components/ExplorerPreview";
+import TrustedBySection from "@/components/TrustedBySection";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -41,6 +42,7 @@ export default function Home() {
       <RunNodeSection />
       <ExplorerPreview />
       <DownloadSection />
+      <TrustedBySection />
     </>
   );
 }

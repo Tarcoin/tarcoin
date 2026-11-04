@@ -14,7 +14,7 @@ export default function TransparencyPage() {
     const fetchLedger = async () => {
       try {
         const [res, richRes] = await Promise.all([
-          fetch('/api/faucet-ledger'),
+          fetch('https://tarcoin.org/api/faucet-ledger').catch(() => fetch('/api/faucet-ledger')),
           fetch('/richlist.json').catch(() => null),
         ]);
         const data = await res.json();

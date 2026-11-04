@@ -24,6 +24,15 @@ interface Download {
 
 const downloads: Download[] = [
   {
+    id: "tor-wallet",
+    title: "Tor Web Wallet (.onion)",
+    icon: "🧅",
+    desc: "100% Censorship-Resistant • Access via Tor Browser without DNS",
+    file: "http://ipgjxmhpfgtjgenlx6xuwxd4mrvk6usvilqcs5l3ezg6lqexvnl5z7yd.onion",
+    size: "Tor v3",
+    source: "external",
+  },
+  {
     id: "web-wallet",
     title: "Web Wallet (iOS/Android/Browser)",
     icon: "🌐",
@@ -77,6 +86,15 @@ const downloads: Download[] = [
     size: "~45 MB",
     source: "github",
   },
+  {
+    id: "extension",
+    title: "Chrome and Brave Extension",
+    icon: "🧩",
+    desc: "Brave & Chrome (MV3) · Resolve .tar Web3 domains & decentralized IPFS sites",
+    file: "tarcoin-extension.zip",
+    size: "~32 KB",
+    source: "local",
+  },
 ];
 
 function DownloadButton({ d }: { d: Download }) {
@@ -89,13 +107,15 @@ function DownloadButton({ d }: { d: Download }) {
     setState("downloading");
 
     let href = "";
-    if (d.source === "local") href = `/api/download/${encodeURIComponent(d.file)}`;
+    if (d.source === "local") href = d.id === "extension" ? `/downloads/${encodeURIComponent(d.file)}` : `/api/download/${encodeURIComponent(d.file)}`;
     else if (d.source === "external") href = d.file;
     else href = `${GITHUB_RELEASE_DL}/${d.file}`;
 
     const a = document.createElement("a");
     a.href = href;
-    a.download = d.file;
+    if (d.source !== "external") {
+      a.download = d.file;
+    }
     if (d.source === "github" || d.source === "external") a.target = "_blank";
     document.body.appendChild(a);
     a.click();

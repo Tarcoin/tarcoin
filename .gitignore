@@ -67,3 +67,19 @@ android/app/google-services.json
 temp_blue/
 
 ESP-Miner/
+
+# TNS Service & Internal SQLite Databases - NEVER commit to git
+tns-service/
+*.sqlite
+*.db
+
+# Git Bundles and Binary Releases
+*.bundle
+*.bundle.lock
+*.apk
+*.bin
+website/public/downloads/*.apk
+website/public/downloads/*.bin
+website/tsconfig.tsbuildinfo
+
+
