@@ -1,3 +1,5 @@
+"use client";
+
 function getSafePolygonScanUrl(txHash: string | undefined): string {
   const safe = String(txHash || '').trim();
   if (/^0x[a-fA-F0-9]{64}$/.test(safe)) {
@@ -5,8 +7,6 @@ function getSafePolygonScanUrl(txHash: string | undefined): string {
   }
   return 'https://polygonscan.com';
 }
-
-"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
