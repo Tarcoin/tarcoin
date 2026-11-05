@@ -676,7 +676,8 @@ async function getJSON(url, ms){
 async function fetchPool(m){
   try {
     const jobs = [getJSON(POOL_BASE + ENDPOINTS[m].path)];
-    if(wallet) jobs.push(getJSON(POOL_BASE + "/api/" + m + "/miner/" + encodeURIComponent(wallet)).catch(()=>null));
+    const queryTarget = (validity && validity.resolved) ? validity.resolved : wallet;
+    if(queryTarget) jobs.push(getJSON(POOL_BASE + "/api/" + m + "/miner/" + encodeURIComponent(queryTarget)).catch(()=>null));
     const res = await Promise.all(jobs);
     const d = res[0];
     if(res[1]) d.apiMiner = res[1];
@@ -780,6 +781,7 @@ async function validate(addr){
             validity = { valid: true, addr: addr, resolved: checkAddr, domain: domain };
             render();
             if(EXPLORER_BASE) pollNetwork();
+            pollPool(true);
             return;
           }
         } catch(e) {}
@@ -1051,7 +1053,8 @@ function parsePoolFromCoinbase(hex, isOurPool){
 // ---- wallet ---------------------------------------------------------------
 function balanceCard(){
   const b = data.balance;
-  if(!b || b.address !== wallet) return "";
+  const targetWallet = (validity && validity.resolved) ? validity.resolved : wallet;
+  if(!b || (b.address !== wallet && b.address !== targetWallet)) return "";
   return '<div class="tiles" style="margin-bottom:13px">' +
     tile("Wallet balance", fmtTar(b.balance) + ' <small class="muted">TAR</small>',
          b.unconfirmedBalance ? fmtTar(b.unconfirmedBalance) + " unconfirmed" : "confirmed on chain") +
