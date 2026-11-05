@@ -11,7 +11,6 @@
 
 class WalletModel;
 class PlatformStyle;
-class QNetworkAccessManager;
 
 namespace interfaces {
 class Node;
@@ -78,11 +77,6 @@ private:
     const PlatformStyle *platformStyle;
 
     bool updateLabel(const QString &address);
-    void checkTnsDomain(const QString &address);
-
-    QNetworkAccessManager *m_networkManager{nullptr};
-    QString m_resolvedDomain;
-    QString m_resolvedAddress;
 };
 
 #endif // BITCOIN_QT_SENDCOINSENTRY_H
