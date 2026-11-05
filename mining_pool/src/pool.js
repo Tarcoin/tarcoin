@@ -1577,7 +1577,8 @@ cron.schedule('0 * * * *', processPayouts);
   // ====== Per-Wallet Stats API (Shared Pool) ======
   app.get('/api/pool/miner/:wallet', async (req, res) => {
     try {
-      let wallet = req.params.wallet.toLowerCase();
+      const rawQueryWallet = parseMinerWorker(req.params.wallet.trim()).wallet.toLowerCase();
+      let wallet = rawQueryWallet;
       if (wallet.endsWith('.tar')) {
         wallet = (await resolveTnsToAddress(wallet)).toLowerCase();
       }
@@ -1630,8 +1631,8 @@ cron.schedule('0 * * * *', processPayouts);
       if (redis) {
         const blocksData = await redis.lRange('pool:blocks', 0, 49);
         blocksFound = blocksData.map(b => JSON.parse(b)).filter(b => {
-          const w = (b.worker || '').split('.')[0].toLowerCase();
-          return w === wallet;
+          const rawW = parseMinerWorker(b.worker || '').wallet.toLowerCase();
+          return rawW === wallet || rawW === rawQueryWallet;
         });
       }
 
@@ -1667,7 +1668,8 @@ cron.schedule('0 * * * *', processPayouts);
   // ====== Per-Wallet Stats API (Solo Pool) ======
   app.get('/api/solo/miner/:wallet', async (req, res) => {
     try {
-      let wallet = req.params.wallet.toLowerCase();
+      const rawQueryWallet = parseMinerWorker(req.params.wallet.trim()).wallet.toLowerCase();
+      let wallet = rawQueryWallet;
       if (wallet.endsWith('.tar')) {
         wallet = (await resolveTnsToAddress(wallet)).toLowerCase();
       }
@@ -1680,8 +1682,8 @@ cron.schedule('0 * * * *', processPayouts);
       let workers = [];
 
       for (const [name, miner] of soloState.miners.entries()) {
-        const w = name.split('.')[0].toLowerCase();
-        if (w === wallet) {
+        const rawW = parseMinerWorker(name).wallet.toLowerCase();
+        if (rawW === wallet || rawW === rawQueryWallet) {
           const workerHashrate = minerHashrate(miner);
           hashrate += workerHashrate;
           shares += miner.validShares || 0;
@@ -1702,8 +1704,8 @@ cron.schedule('0 * * * *', processPayouts);
       if (redis) {
         const blocksData = await redis.lRange('solo:blocks', 0, 49);
         blocksFound = blocksData.map(b => JSON.parse(b)).filter(b => {
-          const w = (b.worker || '').split('.')[0].toLowerCase();
-          return w === wallet;
+          const rawW = parseMinerWorker(b.worker || '').wallet.toLowerCase();
+          return rawW === wallet || rawW === rawQueryWallet;
         });
       }
 

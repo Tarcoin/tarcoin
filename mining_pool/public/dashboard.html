@@ -1223,6 +1223,11 @@ function renderWallet(){
       "for shares, hashrate, solo odds, workers and blocks across both pools.</div>";
     return;
   }
+  if (!data.solo && !data.pool) {
+    el.innerHTML = '<div class="card"><div class="val" style="font-size:17px;font-weight:640">Connecting to pool…</div>' +
+      '<div class="sub">Loading live shares and hashrate for <span class="mono">' + esc(shortAddr(wallet)) + '</span>…</div></div>';
+    return;
+  }
   const cards = balanceCard() + ["solo","pool"].map(m => data[m] ? walletCard(m, data[m]) : "").join("");
   el.innerHTML = cards ||
     '<div class="card"><div class="val" style="font-size:17px;font-weight:640">Not seen on either pool</div>' +
