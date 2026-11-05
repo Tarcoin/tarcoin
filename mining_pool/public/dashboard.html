@@ -1076,17 +1076,22 @@ function walletCard(m, d){
       '<div class="val" style="font-size:17px;font-weight:640">Idle — no active shares</div>' +
       '<div class="sub">Found <b>' + blocks.count + "</b> of the recent blocks here.</div></div>";
 
-  let live = measure(m, wallet);
-  if(!live && (dom || targetWallet)) live = measure(m, dom || targetWallet);
-  const idle = isIdle(w);
-  const apiH = data[m] && data[m].apiMiner && data[m].apiMiner.hashrate != null ? data[m].apiMiner.hashrate : null;
-  if(apiH != null && apiH > 0 && !idle) {
-    if(!live) live = { rate: apiH, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0 };
-    else live.rate = apiH;
-    live.isApi = true;
-  } else if(apiH === 0 && !live && w && w.shares > 0 && !idle) {
-    const est = (w.shares * (w.difficulty || 12500) * 4294967296) / Math.max(10, (Date.now() - (d.startTime || Date.now() - 60000)) / 1000);
-    live = { rate: est, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0 };
+  const apiMiner = data[m] && data[m].apiMiner;
+  const apiH = apiMiner && apiMiner.hashrate != null ? apiMiner.hashrate : null;
+  const hasLiveWorker = apiMiner && apiMiner.workers && apiMiner.workers.length > 0;
+  const idle = isIdle(w) || (apiMiner && !hasLiveWorker);
+
+  // If this card is for the other pool and the miner is not active on it, don't show phantom card
+  if (m !== mode && (idle || !hasLiveWorker || apiH === 0)) {
+    return "";
+  }
+
+  let live = null;
+  if (hasLiveWorker && apiH != null && apiH > 0 && !idle) {
+    live = { rate: apiH, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0, isApi: true };
+  } else if (!idle && !apiMiner) {
+    live = measure(m, wallet);
+    if (!live && (dom || targetWallet)) live = measure(m, dom || targetWallet);
   }
   const prog = live ? null : progress(m, wallet);
   const rate = idle || !live ? 0 : live.rate;
