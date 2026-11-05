@@ -701,8 +701,9 @@ async function pollNetwork(){
     getJSON(API_BASE + "/api/v1/mining/hashrate?blocks=10").then(d => data.hash10 = d).catch(() => {}),
     getJSON((EXPLORER_BASE || "https://explorer.tarcoin.org") + "/api/blocks").then(d => data.recentNetBlocks = d).catch(() => {})
   ];
-  if(EXPLORER_BASE && wallet)
-    jobs.push(getJSON(EXPLORER_BASE + "/api/address/" + encodeURIComponent(wallet))
+  const queryTarget = (validity && validity.resolved) ? validity.resolved : wallet;
+  if(EXPLORER_BASE && queryTarget)
+    jobs.push(getJSON(EXPLORER_BASE + "/api/address/" + encodeURIComponent(queryTarget))
       .then(d => data.balance = d).catch(() => data.balance = null));
   if(EXPLORER_BASE)
     jobs.push(getJSON(EXPLORER_BASE + "/api/network/stats").then(d => data.netstats = d).catch(() => {}));
@@ -767,8 +768,25 @@ async function validate(addr){
   validity = null;
   if(!addr){ render(); return; }
   try {
-    const d = await getJSON(API_BASE + "/api/v1/wallet/validate/" + encodeURIComponent(addr), 8000);
-    validity = { valid: !!d.valid, addr: addr };
+    let checkAddr = addr.trim();
+    if (checkAddr.toLowerCase().includes('.tar')) {
+      const match = checkAddr.match(/([a-zA-Z0-9_-]+\.tar)/i);
+      if (match) {
+        const domain = match[1].toLowerCase();
+        try {
+          const tnsRes = await getJSON("https://tarcoin.org/api/tns/resolve/" + encodeURIComponent(domain), 8000);
+          if (tnsRes && tnsRes.targetAddress) {
+            checkAddr = tnsRes.targetAddress;
+            validity = { valid: true, addr: addr, resolved: checkAddr, domain: domain };
+            render();
+            if(EXPLORER_BASE) pollNetwork();
+            return;
+          }
+        } catch(e) {}
+      }
+    }
+    const d = await getJSON(API_BASE + "/api/v1/wallet/validate/" + encodeURIComponent(checkAddr), 8000);
+    validity = { valid: !!d.valid, addr: addr, resolved: d.valid ? checkAddr : null };
   } catch(e){ validity = null; }
   render();
 }
@@ -1042,7 +1060,10 @@ function balanceCard(){
     tile("Transactions", fmtNum(b.txCount), "on this address") + "</div>";
 }
 function walletCard(m, d){
-  const w = (d.workers||{})[wallet], blocks = blocksByMiner(d)[wallet];
+  const targetWallet = (validity && validity.resolved) ? validity.resolved : wallet;
+  const dom = (validity && validity.domain) ? validity.domain : null;
+  const w = (d.workers||{})[wallet] || (dom && (d.workers||{})[dom]) || (targetWallet ? (d.workers||{})[targetWallet] : null),
+        blocks = blocksByMiner(d)[wallet] || (dom && blocksByMiner(d)[dom]) || (targetWallet ? blocksByMiner(d)[targetWallet] : null);
   if(!w && !blocks) return "";
   const label = ENDPOINTS[m].label;
   if(!w)
@@ -1206,7 +1227,7 @@ function renderWallet(){
   el.innerHTML = cards ||
     '<div class="card"><div class="val" style="font-size:17px;font-weight:640">Not seen on either pool</div>' +
     '<div class="sub">No shares or blocks for <span class="mono">' + esc(shortAddr(wallet)) +
-    "</span> right now.</div></div>";
+    "</span> right now." + (validity && validity.resolved ? '<br><span class="muted" style="font-size:12px">Resolved to: ' + esc(shortAddr(validity.resolved)) + '</span>' : '') + "</div></div>";
 }
 
 // ---- main render ----------------------------------------------------------
@@ -1226,7 +1247,7 @@ function render(){
   renderChain();
   renderWatchlist();
   $("valid").innerHTML = !wallet || !validity || validity.addr !== wallet ? ""
-    : validity.valid ? '<span class="badge good">valid</span>' : '<span class="badge bad">invalid address</span>';
+    : validity.valid ? (validity.domain ? '<span class="badge good">' + esc(validity.domain) + ' (valid)</span>' : '<span class="badge good">valid</span>') : '<span class="badge bad">invalid address</span>';
 
   if(!d){ renderWallet(); return; }
   const workers = d.workers || {}, addrs = Object.keys(workers), blocks = blocksByMiner(d);

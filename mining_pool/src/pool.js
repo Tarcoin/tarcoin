@@ -1351,7 +1351,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of poolState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
           poolHashrate += minerHashrate(miner);
-          const wallet = name.includes('.') ? name.split('.')[0] : name;
+          const wallet = parseMinerWorker(name).wallet;
           activeWallets.add(wallet);
           activeWorkers++;
         }
@@ -1365,7 +1365,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of soloState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
           soloHashrate += minerHashrate(miner);
-          const wallet = name.includes('.') ? name.split('.')[0] : name;
+          const wallet = parseMinerWorker(name).wallet;
           soloActiveWallets.add(wallet);
           soloActiveWorkers++;
         }
@@ -1474,7 +1474,7 @@ cron.schedule('0 * * * *', processPayouts);
       sharesData.forEach((s) => {
         try {
           const { worker, time } = JSON.parse(s);
-          const wallet = worker.split('.')[0];
+          const wallet = parseMinerWorker(worker).wallet;
           if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0, difficulty: 0 };
           workers[wallet].shares++;
           if (time > workers[wallet].lastSeen) workers[wallet].lastSeen = time;
@@ -1501,7 +1501,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of poolState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) { // Active in last 10 mins
           poolHashrate += minerHashrate(miner);
-          const w = name.includes('.') ? name.split('.')[0] : name;
+          const w = parseMinerWorker(name).wallet;
           liveWallets.add(w);
           if (workers[w]) workers[w].difficulty = miner.difficulty;
         }
@@ -1537,7 +1537,7 @@ cron.schedule('0 * * * *', processPayouts);
       // 1. Build solo workers from live soloState
       const workers = {};
       for (const [name, miner] of soloState.miners.entries()) {
-        const wallet = name.split('.')[0];
+        const wallet = parseMinerWorker(name).wallet;
         if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0, difficulty: 0 };
         workers[wallet].shares += miner.validShares || 0;
         if (miner.lastSeen > workers[wallet].lastSeen) workers[wallet].lastSeen = miner.lastSeen;
@@ -1591,9 +1591,9 @@ cron.schedule('0 * * * *', processPayouts);
       sharesData.forEach((s) => {
         try {
           const { worker, time } = JSON.parse(s);
-          const w = worker.split('.')[0].toLowerCase();
+          const rawW = parseMinerWorker(worker).wallet.toLowerCase();
           totalShares++;
-          if (w === wallet) {
+          if (rawW === wallet || rawW === rawQueryWallet) {
             walletShares++;
             if (time > lastSeen) lastSeen = time;
           }
@@ -1605,8 +1605,8 @@ cron.schedule('0 * * * *', processPayouts);
       let difficulty = 0;
       let workers = [];
       for (const [name, miner] of poolState.miners.entries()) {
-        const w = name.split('.')[0].toLowerCase();
-        if (w === wallet) {
+        const rawW = parseMinerWorker(name).wallet.toLowerCase();
+        if (rawW === wallet || rawW === rawQueryWallet) {
           const workerHashrate = minerHashrate(miner);
           hashrate += workerHashrate;
           difficulty = miner.difficulty;
