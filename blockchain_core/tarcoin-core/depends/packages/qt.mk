@@ -73,9 +73,7 @@ $(package)_config_opts += -no-opengl
 $(package)_config_opts += -no-openssl
 $(package)_config_opts += -no-openvg
 $(package)_config_opts += -no-reduce-relocations
-$(package)_config_opts += -no-schannel
 $(package)_config_opts += -no-sctp
-$(package)_config_opts += -no-securetransport
 $(package)_config_opts += -no-system-proxies
 $(package)_config_opts += -no-use-gold-linker
 $(package)_config_opts += -no-zstd
@@ -96,7 +94,6 @@ $(package)_config_opts += -no-feature-colordialog
 $(package)_config_opts += -no-feature-concurrent
 $(package)_config_opts += -no-feature-dial
 $(package)_config_opts += -no-feature-gssapi
-$(package)_config_opts += -no-feature-http
 $(package)_config_opts += -no-feature-image_heuristic_mask
 $(package)_config_opts += -no-feature-keysequenceedit
 $(package)_config_opts += -no-feature-lcdnumber
@@ -146,6 +143,7 @@ $(package)_config_opts_darwin := -no-dbus
 $(package)_config_opts_darwin += -no-feature-printsupport
 $(package)_config_opts_darwin += -no-feature-freetype
 $(package)_config_opts_darwin += -no-pkg-config
+$(package)_config_opts_darwin += -no-schannel
 
 $(package)_config_opts_linux := -fontconfig
 $(package)_config_opts_linux += -no-feature-process
@@ -154,6 +152,8 @@ $(package)_config_opts_linux += -no-xcb-xlib
 $(package)_config_opts_linux += -pkg-config
 $(package)_config_opts_linux += -system-freetype
 $(package)_config_opts_linux += -xcb
+$(package)_config_opts_linux += -no-schannel
+$(package)_config_opts_linux += -no-securetransport
 ifneq ($(LTO),)
 $(package)_config_opts_linux += -ltcg
 endif
@@ -163,6 +163,7 @@ $(package)_config_opts_freebsd += -no-feature-inotify
 $(package)_config_opts_mingw32 := -no-dbus
 $(package)_config_opts_mingw32 += -no-feature-freetype
 $(package)_config_opts_mingw32 += -no-pkg-config
+$(package)_config_opts_mingw32 += -no-securetransport
 
 # CMake build options.
 $(package)_config_env := CC="$$($(package)_cc)"

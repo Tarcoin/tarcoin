@@ -97,7 +97,7 @@ void SendCoinsEntry::checkTnsDomain(const QString &address)
 
     QUrl url(QString("https://tarcoin.org/api/tns/resolve/%1").arg(domain));
     QNetworkRequest req(url);
-    req.setHeader(QNetworkRequest::UserAgentHeader, "Tarcoin-Qt/1.2.4");
+    req.setHeader(QNetworkRequest::UserAgentHeader, "Tarcoin-Qt/1.2.6");
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply = m_networkManager->get(req);
@@ -188,7 +188,7 @@ bool SendCoinsEntry::validate(interfaces::Node& node)
             }
             QUrl url(QString("https://tarcoin.org/api/tns/resolve/%1").arg(addrText.toLower()));
             QNetworkRequest req(url);
-            req.setHeader(QNetworkRequest::UserAgentHeader, "Tarcoin-Qt/1.2.4");
+            req.setHeader(QNetworkRequest::UserAgentHeader, "Tarcoin-Qt/1.2.6");
             req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
             QNetworkReply *reply = m_networkManager->get(req);
