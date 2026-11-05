@@ -668,7 +668,9 @@ async function getJSON(url, ms){
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), ms || 12000);
   try {
-    const r = await fetch(url, { cache:"no-store", signal: ctl.signal });
+    const sep = url.indexOf('?') === -1 ? '?' : '&';
+    const fetchUrl = url + sep + '_=' + Date.now();
+    const r = await fetch(fetchUrl, { cache:"no-store", signal: ctl.signal });
     if(!r.ok) throw new Error("HTTP " + r.status);
     return await r.json();
   } finally { clearTimeout(t); }
@@ -676,7 +678,8 @@ async function getJSON(url, ms){
 async function fetchPool(m){
   try {
     const jobs = [getJSON(POOL_BASE + ENDPOINTS[m].path)];
-    if(wallet) jobs.push(getJSON(POOL_BASE + "/api/" + m + "/miner/" + encodeURIComponent(wallet)).catch(()=>null));
+    const queryTarget = wallet;
+    if(queryTarget) jobs.push(getJSON(POOL_BASE + "/api/" + m + "/miner/" + encodeURIComponent(queryTarget)).catch(()=>null));
     const res = await Promise.all(jobs);
     const d = res[0];
     if(res[1]) d.apiMiner = res[1];
@@ -701,8 +704,9 @@ async function pollNetwork(){
     getJSON(API_BASE + "/api/v1/mining/hashrate?blocks=10").then(d => data.hash10 = d).catch(() => {}),
     getJSON((EXPLORER_BASE || "https://explorer.tarcoin.org") + "/api/blocks").then(d => data.recentNetBlocks = d).catch(() => {})
   ];
-  if(EXPLORER_BASE && wallet)
-    jobs.push(getJSON(EXPLORER_BASE + "/api/address/" + encodeURIComponent(wallet))
+  const queryTarget = (validity && validity.resolved) ? validity.resolved : wallet;
+  if(EXPLORER_BASE && queryTarget)
+    jobs.push(getJSON(EXPLORER_BASE + "/api/address/" + encodeURIComponent(queryTarget))
       .then(d => data.balance = d).catch(() => data.balance = null));
   if(EXPLORER_BASE)
     jobs.push(getJSON(EXPLORER_BASE + "/api/network/stats").then(d => data.netstats = d).catch(() => {}));
@@ -767,8 +771,26 @@ async function validate(addr){
   validity = null;
   if(!addr){ render(); return; }
   try {
-    const d = await getJSON(API_BASE + "/api/v1/wallet/validate/" + encodeURIComponent(addr), 8000);
-    validity = { valid: !!d.valid, addr: addr };
+    let checkAddr = addr.trim();
+    if (checkAddr.toLowerCase().includes('.tar')) {
+      const match = checkAddr.match(/([a-zA-Z0-9_-]+\.tar)/i);
+      if (match) {
+        const domain = match[1].toLowerCase();
+        try {
+          const tnsRes = await getJSON("https://tarcoin.org/api/tns/resolve/" + encodeURIComponent(domain), 8000);
+          if (tnsRes && tnsRes.targetAddress) {
+            checkAddr = tnsRes.targetAddress;
+            validity = { valid: true, addr: addr, resolved: checkAddr, domain: domain };
+            render();
+            if(EXPLORER_BASE) pollNetwork();
+            pollPool(true);
+            return;
+          }
+        } catch(e) {}
+      }
+    }
+    const d = await getJSON(API_BASE + "/api/v1/wallet/validate/" + encodeURIComponent(checkAddr), 8000);
+    validity = { valid: !!d.valid, addr: addr, resolved: d.valid ? checkAddr : null };
   } catch(e){ validity = null; }
   render();
 }
@@ -1033,7 +1055,8 @@ function parsePoolFromCoinbase(hex, isOurPool){
 // ---- wallet ---------------------------------------------------------------
 function balanceCard(){
   const b = data.balance;
-  if(!b || b.address !== wallet) return "";
+  const targetWallet = (validity && validity.resolved) ? validity.resolved : wallet;
+  if(!b || (b.address !== wallet && b.address !== targetWallet)) return "";
   return '<div class="tiles" style="margin-bottom:13px">' +
     tile("Wallet balance", fmtTar(b.balance) + ' <small class="muted">TAR</small>',
          b.unconfirmedBalance ? fmtTar(b.unconfirmedBalance) + " unconfirmed" : "confirmed on chain") +
@@ -1042,7 +1065,10 @@ function balanceCard(){
     tile("Transactions", fmtNum(b.txCount), "on this address") + "</div>";
 }
 function walletCard(m, d){
-  const w = (d.workers||{})[wallet], blocks = blocksByMiner(d)[wallet];
+  const targetWallet = (validity && validity.resolved) ? validity.resolved : wallet;
+  const dom = (validity && validity.domain) ? validity.domain : null;
+  const w = (d.workers||{})[wallet] || (dom && (d.workers||{})[dom]) || (targetWallet ? (d.workers||{})[targetWallet] : null),
+        blocks = blocksByMiner(d)[wallet] || (dom && blocksByMiner(d)[dom]) || (targetWallet ? blocksByMiner(d)[targetWallet] : null);
   if(!w && !blocks) return "";
   const label = ENDPOINTS[m].label;
   if(!w)
@@ -1050,13 +1076,22 @@ function walletCard(m, d){
       '<div class="val" style="font-size:17px;font-weight:640">Idle — no active shares</div>' +
       '<div class="sub">Found <b>' + blocks.count + "</b> of the recent blocks here.</div></div>";
 
-  let live = measure(m, wallet);
-  const idle = isIdle(w);
-  const apiH = data[m] && data[m].apiMiner && data[m].apiMiner.hashrate != null ? data[m].apiMiner.hashrate : null;
-  if(apiH != null && !idle) {
-    if(!live) live = { rate: apiH, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0 };
-    else live.rate = apiH;
-    live.isApi = true;
+  const apiMiner = data[m] && data[m].apiMiner;
+  const apiH = apiMiner && apiMiner.hashrate != null ? apiMiner.hashrate : null;
+  const hasLiveWorker = apiMiner && apiMiner.workers && apiMiner.workers.length > 0;
+  const idle = isIdle(w) || (apiMiner && !hasLiveWorker);
+
+  // If this card is for the other pool and the miner is not active on it, don't show phantom card
+  if (m !== mode && (idle || !hasLiveWorker || apiH === 0)) {
+    return "";
+  }
+
+  let live = null;
+  if (hasLiveWorker && apiH != null && apiH > 0 && !idle) {
+    live = { rate: apiH, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0, isApi: true };
+  } else if (!idle && !apiMiner) {
+    live = measure(m, wallet);
+    if (!live && (dom || targetWallet)) live = measure(m, dom || targetWallet);
   }
   const prog = live ? null : progress(m, wallet);
   const rate = idle || !live ? 0 : live.rate;
@@ -1202,11 +1237,16 @@ function renderWallet(){
       "for shares, hashrate, solo odds, workers and blocks across both pools.</div>";
     return;
   }
+  if (!data.solo && !data.pool) {
+    el.innerHTML = '<div class="card"><div class="val" style="font-size:17px;font-weight:640">Connecting to pool…</div>' +
+      '<div class="sub">Loading live shares and hashrate for <span class="mono">' + esc(shortAddr(wallet)) + '</span>…</div></div>';
+    return;
+  }
   const cards = balanceCard() + ["solo","pool"].map(m => data[m] ? walletCard(m, data[m]) : "").join("");
   el.innerHTML = cards ||
     '<div class="card"><div class="val" style="font-size:17px;font-weight:640">Not seen on either pool</div>' +
     '<div class="sub">No shares or blocks for <span class="mono">' + esc(shortAddr(wallet)) +
-    "</span> right now.</div></div>";
+    "</span> right now." + (validity && validity.resolved ? '<br><span class="muted" style="font-size:12px">Resolved to: ' + esc(shortAddr(validity.resolved)) + '</span>' : '') + "</div></div>";
 }
 
 // ---- main render ----------------------------------------------------------
@@ -1226,7 +1266,7 @@ function render(){
   renderChain();
   renderWatchlist();
   $("valid").innerHTML = !wallet || !validity || validity.addr !== wallet ? ""
-    : validity.valid ? '<span class="badge good">valid</span>' : '<span class="badge bad">invalid address</span>';
+    : validity.valid ? (validity.domain ? '<span class="badge good">' + esc(validity.domain) + ' (valid)</span>' : '<span class="badge good">valid</span>') : '<span class="badge bad">invalid address</span>';
 
   if(!d){ renderWallet(); return; }
   const workers = d.workers || {}, addrs = Object.keys(workers), blocks = blocksByMiner(d);

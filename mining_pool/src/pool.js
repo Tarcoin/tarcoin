@@ -64,6 +64,15 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, '../public'))); // Serve images and static files
 app.use('/', apiLimiter);
 
+// Prevent Cloudflare Edge and browsers from caching any API responses (crucial for .tar domains)
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // ====== Redis client ======
 let redis;
 async function initRedis() {
@@ -414,16 +423,28 @@ const stratumServer = net.createServer((socket) => {
               sendDifficulty(overrideDiff);
             }
 
-            poolState.miners.set(workerName, {
+            const minerEntry = {
               hashrate: 0, shares: 0, validShares: 0, invalidShares: 0,
               lastSeen: Date.now(), workerId, extraNonce1,
               difficulty: socketDiff,
+              resolvedAddress: '',
               shareHistory: [], // sliding window for real hashrate calculation
-            });
+            };
+            poolState.miners.set(workerName, minerEntry);
             socket.write(JSON.stringify({ id: message.id, result: true, error: null }) + "\n");
             poolState.activeWorkers = poolState.miners.size;
             console.log('Miner authorized: %s (diff: %d%s)', sanitizeLog(workerName), socketDiff, diffOverridden ? ' [override]' : ' [vardiff]');
             startVardiff();
+
+            (async () => {
+              try {
+                const rawW = parseMinerWorker(workerName).wallet;
+                if (rawW.endsWith('.tar')) {
+                  const addr = await resolveTnsToAddress(rawW);
+                  if (addr) minerEntry.resolvedAddress = addr.toLowerCase();
+                }
+              } catch (e) {}
+            })();
             break;
 
           case 'mining.submit':
@@ -567,6 +588,7 @@ const soloStratumServer = net.createServer((socket) => {
               workerId, extraNonce1, difficulty: socketDiff,
               socket, // store socket for template refresh pushes
               coinbase1: null, coinbase2: null,
+              resolvedAddress: '',
               jobId: crypto.randomBytes(4).toString('hex'),
             };
             soloState.miners.set(workerName, soloMinerEntry);
@@ -579,6 +601,7 @@ const soloStratumServer = net.createServer((socket) => {
                 if (poolState.blockTemplate?.rawTemplate) {
                   const rawMiner = parseMinerWorker(workerName).wallet;
                   const minerAddress = await resolveTnsToAddress(rawMiner);
+                  if (minerAddress) soloMinerEntry.resolvedAddress = minerAddress.toLowerCase();
                   const { coinbase1, coinbase2 } = await buildSoloCoinbase(minerAddress, poolState.blockTemplate.rawTemplate);
                   soloMinerEntry.coinbase1 = coinbase1;
                   soloMinerEntry.coinbase2 = coinbase2;
@@ -698,6 +721,7 @@ async function handleSoloSubmit(socket, message, workerName, extraNonce1) {
     if (redis) {
       const rawWallet = parseMinerWorker(workerName).wallet;
       const wallet = await resolveTnsToAddress(rawWallet);
+      if (worker && wallet) worker.resolvedAddress = wallet.toLowerCase();
       const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
@@ -803,6 +827,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       // Save hashrate snapshot using REAL share-rate-based hashrate
       const rawWallet = parseMinerWorker(workerName).wallet;
       const wallet = await resolveTnsToAddress(rawWallet);
+      if (worker && wallet) worker.resolvedAddress = wallet.toLowerCase();
       const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
@@ -1351,7 +1376,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of poolState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
           poolHashrate += minerHashrate(miner);
-          const wallet = name.includes('.') ? name.split('.')[0] : name;
+          const wallet = parseMinerWorker(name).wallet;
           activeWallets.add(wallet);
           activeWorkers++;
         }
@@ -1365,7 +1390,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of soloState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) {
           soloHashrate += minerHashrate(miner);
-          const wallet = name.includes('.') ? name.split('.')[0] : name;
+          const wallet = parseMinerWorker(name).wallet;
           soloActiveWallets.add(wallet);
           soloActiveWorkers++;
         }
@@ -1474,7 +1499,7 @@ cron.schedule('0 * * * *', processPayouts);
       sharesData.forEach((s) => {
         try {
           const { worker, time } = JSON.parse(s);
-          const wallet = worker.split('.')[0];
+          const wallet = parseMinerWorker(worker).wallet;
           if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0, difficulty: 0 };
           workers[wallet].shares++;
           if (time > workers[wallet].lastSeen) workers[wallet].lastSeen = time;
@@ -1501,7 +1526,7 @@ cron.schedule('0 * * * *', processPayouts);
       for (const [name, miner] of poolState.miners.entries()) {
         if (Date.now() - miner.lastSeen < 600000) { // Active in last 10 mins
           poolHashrate += minerHashrate(miner);
-          const w = name.includes('.') ? name.split('.')[0] : name;
+          const w = parseMinerWorker(name).wallet;
           liveWallets.add(w);
           if (workers[w]) workers[w].difficulty = miner.difficulty;
         }
@@ -1537,7 +1562,7 @@ cron.schedule('0 * * * *', processPayouts);
       // 1. Build solo workers from live soloState
       const workers = {};
       for (const [name, miner] of soloState.miners.entries()) {
-        const wallet = name.split('.')[0];
+        const wallet = parseMinerWorker(name).wallet;
         if (!workers[wallet]) workers[wallet] = { shares: 0, lastSeen: 0, difficulty: 0 };
         workers[wallet].shares += miner.validShares || 0;
         if (miner.lastSeen > workers[wallet].lastSeen) workers[wallet].lastSeen = miner.lastSeen;
@@ -1577,7 +1602,8 @@ cron.schedule('0 * * * *', processPayouts);
   // ====== Per-Wallet Stats API (Shared Pool) ======
   app.get('/api/pool/miner/:wallet', async (req, res) => {
     try {
-      let wallet = req.params.wallet.toLowerCase();
+      const rawQueryWallet = parseMinerWorker(req.params.wallet.trim()).wallet.toLowerCase();
+      let wallet = rawQueryWallet;
       if (wallet.endsWith('.tar')) {
         wallet = (await resolveTnsToAddress(wallet)).toLowerCase();
       }
@@ -1591,9 +1617,16 @@ cron.schedule('0 * * * *', processPayouts);
       sharesData.forEach((s) => {
         try {
           const { worker, time } = JSON.parse(s);
-          const w = worker.split('.')[0].toLowerCase();
+          const rawW = parseMinerWorker(worker).wallet.toLowerCase();
           totalShares++;
-          if (w === wallet) {
+          let matches = (rawW === wallet || rawW === rawQueryWallet);
+          if (!matches && rawW.endsWith('.tar')) {
+            const cachedAddr = tnsResolutionCache.get(rawW)?.address?.toLowerCase();
+            if (cachedAddr && (cachedAddr === wallet || cachedAddr === rawQueryWallet)) {
+              matches = true;
+            }
+          }
+          if (matches) {
             walletShares++;
             if (time > lastSeen) lastSeen = time;
           }
@@ -1605,8 +1638,18 @@ cron.schedule('0 * * * *', processPayouts);
       let difficulty = 0;
       let workers = [];
       for (const [name, miner] of poolState.miners.entries()) {
-        const w = name.split('.')[0].toLowerCase();
-        if (w === wallet) {
+        const rawW = parseMinerWorker(name).wallet.toLowerCase();
+        let matches = (rawW === wallet || rawW === rawQueryWallet);
+        if (!matches && miner.resolvedAddress) {
+          matches = (miner.resolvedAddress === wallet || miner.resolvedAddress === rawQueryWallet);
+        }
+        if (!matches && rawW.endsWith('.tar')) {
+          const cachedAddr = tnsResolutionCache.get(rawW)?.address?.toLowerCase();
+          if (cachedAddr && (cachedAddr === wallet || cachedAddr === rawQueryWallet)) {
+            matches = true;
+          }
+        }
+        if (matches) {
           const workerHashrate = minerHashrate(miner);
           hashrate += workerHashrate;
           difficulty = miner.difficulty;
@@ -1630,8 +1673,15 @@ cron.schedule('0 * * * *', processPayouts);
       if (redis) {
         const blocksData = await redis.lRange('pool:blocks', 0, 49);
         blocksFound = blocksData.map(b => JSON.parse(b)).filter(b => {
-          const w = (b.worker || '').split('.')[0].toLowerCase();
-          return w === wallet;
+          const rawW = parseMinerWorker(b.worker || '').wallet.toLowerCase();
+          let matches = (rawW === wallet || rawW === rawQueryWallet);
+          if (!matches && rawW.endsWith('.tar')) {
+            const cachedAddr = tnsResolutionCache.get(rawW)?.address?.toLowerCase();
+            if (cachedAddr && (cachedAddr === wallet || cachedAddr === rawQueryWallet)) {
+              matches = true;
+            }
+          }
+          return matches;
         });
       }
 
@@ -1646,6 +1696,7 @@ cron.schedule('0 * * * *', processPayouts);
 
       res.json({
         wallet: req.params.wallet,
+        resolvedAddress: wallet,
         found: walletShares > 0 || workers.length > 0,
         shares: walletShares,
         totalPoolShares: totalShares,
@@ -1658,7 +1709,6 @@ cron.schedule('0 * * * *', processPayouts);
         blocksFound,
         hashrateHistory,
       });
-
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -1667,7 +1717,8 @@ cron.schedule('0 * * * *', processPayouts);
   // ====== Per-Wallet Stats API (Solo Pool) ======
   app.get('/api/solo/miner/:wallet', async (req, res) => {
     try {
-      let wallet = req.params.wallet.toLowerCase();
+      const rawQueryWallet = parseMinerWorker(req.params.wallet.trim()).wallet.toLowerCase();
+      let wallet = rawQueryWallet;
       if (wallet.endsWith('.tar')) {
         wallet = (await resolveTnsToAddress(wallet)).toLowerCase();
       }
@@ -1680,8 +1731,18 @@ cron.schedule('0 * * * *', processPayouts);
       let workers = [];
 
       for (const [name, miner] of soloState.miners.entries()) {
-        const w = name.split('.')[0].toLowerCase();
-        if (w === wallet) {
+        const rawW = parseMinerWorker(name).wallet.toLowerCase();
+        let matches = (rawW === wallet || rawW === rawQueryWallet);
+        if (!matches && miner.resolvedAddress) {
+          matches = (miner.resolvedAddress === wallet || miner.resolvedAddress === rawQueryWallet);
+        }
+        if (!matches && rawW.endsWith('.tar')) {
+          const cachedAddr = tnsResolutionCache.get(rawW)?.address?.toLowerCase();
+          if (cachedAddr && (cachedAddr === wallet || cachedAddr === rawQueryWallet)) {
+            matches = true;
+          }
+        }
+        if (matches) {
           const workerHashrate = minerHashrate(miner);
           hashrate += workerHashrate;
           shares += miner.validShares || 0;
@@ -1702,8 +1763,15 @@ cron.schedule('0 * * * *', processPayouts);
       if (redis) {
         const blocksData = await redis.lRange('solo:blocks', 0, 49);
         blocksFound = blocksData.map(b => JSON.parse(b)).filter(b => {
-          const w = (b.worker || '').split('.')[0].toLowerCase();
-          return w === wallet;
+          const rawW = parseMinerWorker(b.worker || '').wallet.toLowerCase();
+          let matches = (rawW === wallet || rawW === rawQueryWallet);
+          if (!matches && rawW.endsWith('.tar')) {
+            const cachedAddr = tnsResolutionCache.get(rawW)?.address?.toLowerCase();
+            if (cachedAddr && (cachedAddr === wallet || cachedAddr === rawQueryWallet)) {
+              matches = true;
+            }
+          }
+          return matches;
         });
       }
 
@@ -1717,6 +1785,7 @@ cron.schedule('0 * * * *', processPayouts);
 
       res.json({
         wallet: req.params.wallet,
+        resolvedAddress: wallet,
         found: shares > 0 || workers.length > 0,
         shares,
         hashrate,
@@ -1727,7 +1796,6 @@ cron.schedule('0 * * * *', processPayouts);
         hashrateHistory,
         blockReward: 49500,
       });
-
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
     }
