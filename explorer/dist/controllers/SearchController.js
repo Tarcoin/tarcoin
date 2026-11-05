@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchController = void 0;
+const axios_1 = __importDefault(require("axios"));
 const GENESIS_HASH = '0000e37ee7aa8a88d1254ee3fe7c497c8fdaff36b29747eb64d8da68fbd9939e';
 class SearchController {
     constructor(rpc, cache) {
@@ -11,6 +15,25 @@ class SearchController {
         try {
             const query = (req.query.q || '').trim();
             if (!query) {
+                // TNS (.tar domain) search
+                if (query.toLowerCase().endsWith('.tar')) {
+                    const domain = query.toLowerCase().trim();
+                    try {
+                        const tnsRes = await axios_1.default.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(domain)}`, { timeout: 4000 });
+                        if (tnsRes.data && tnsRes.data.success && tnsRes.data.targetAddress) {
+                            const resolvedAddr = tnsRes.data.targetAddress;
+                            return res.json({
+                                type: 'address',
+                                data: { address: resolvedAddr, domain, isValid: true },
+                                redirect: `/address/${resolvedAddr}`,
+                            });
+                        }
+                        return res.status(404).json({ error: `TNS domain '${domain}' not found or unassigned` });
+                    }
+                    catch {
+                        return res.status(404).json({ error: `TNS domain '${domain}' could not be resolved` });
+                    }
+                }
                 return res.status(400).json({ error: 'Query parameter q is required' });
             }
             // Block height (numeric)
