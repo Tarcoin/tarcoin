@@ -12,6 +12,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QTimer>
+#include <QPointer>
 #include <QUrl>
 
 #ifdef Q_OS_WIN
