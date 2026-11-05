@@ -70,7 +70,6 @@ $(package)_config_opts += -no-libproxy
 $(package)_config_opts += -no-libudev
 $(package)_config_opts += -no-mtdev
 $(package)_config_opts += -no-opengl
-$(package)_config_opts += -no-openssl
 $(package)_config_opts += -no-openvg
 $(package)_config_opts += -no-reduce-relocations
 $(package)_config_opts += -no-sctp
@@ -144,6 +143,7 @@ $(package)_config_opts_darwin += -no-feature-printsupport
 $(package)_config_opts_darwin += -no-feature-freetype
 $(package)_config_opts_darwin += -no-pkg-config
 $(package)_config_opts_darwin += -no-schannel
+$(package)_config_opts_darwin += -no-openssl
 
 $(package)_config_opts_linux := -fontconfig
 $(package)_config_opts_linux += -no-feature-process
@@ -164,6 +164,7 @@ $(package)_config_opts_mingw32 := -no-dbus
 $(package)_config_opts_mingw32 += -no-feature-freetype
 $(package)_config_opts_mingw32 += -no-pkg-config
 $(package)_config_opts_mingw32 += -no-securetransport
+$(package)_config_opts_mingw32 += -no-openssl
 
 # CMake build options.
 $(package)_config_env := CC="$$($(package)_cc)"
