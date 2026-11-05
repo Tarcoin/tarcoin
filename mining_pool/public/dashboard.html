@@ -424,7 +424,18 @@ const TH_LABELS = { addr:"Address", shares:"Shares", diff:"Difficulty", rate:"Ha
 const session = { start: Date.now(), startShares: null, startAddr: null };
 let wasIdle = null;
 
-const $ = id => document.getElementById(id);
+function splitMinerWorker(raw) {
+    if (!raw) return { addr: "", name: "(unnamed)" };
+    const s = String(raw).trim();
+    const tar = s.match(/^([a-z0-9_-]+\.tar)(?:\.(.+))?$/i);
+    if (tar) {
+      return { addr: tar[1].toLowerCase(), name: tar[2] || "default" };
+    }
+    const parts = s.split(".");
+    return { addr: parts[0] || "", name: parts.slice(1).join(".") || "(unnamed)" };
+  }
+
+  const $ = id => document.getElementById(id);
 function loadJSON(k, d){ try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e){ return d; } }
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 
@@ -543,7 +554,9 @@ function accrueLuck(){
     const L = luck[k] || (luck[k] = { since: now, expected: 0, secs: 0, blocks: {}, last: now });
     // blocks the pool credits to this address, remembered with their heights
     (d.blocksFound||[]).forEach(b => {
-      if(String(b.worker).split(".")[0] === wallet && b.time >= L.since) L.blocks[b.height] = b.time;
+      const { addr: bAddr } = splitMinerWorker(b.worker);
+      const bMine = (bAddr === wallet || (validity && (bAddr === validity.domain || bAddr === validity.resolved)));
+      if(bMine && b.time >= L.since) L.blocks[b.height] = b.time;
     });
     const live = w && !isIdle(w) ? measure(m, wallet) : null;
     const dt = Math.min((now - (L.last || now))/1000, 120);   // ignore gaps from a closed tab
@@ -654,8 +667,7 @@ function blocksByMiner(d){
   if(map) return map;
   map = {};
   for(const b of (d.blocksFound||[])){
-    const parts = String(b.worker).split(".");
-    const addr = parts.shift(), name = parts.join(".") || "(unnamed)";
+    const { addr, name } = splitMinerWorker(b.worker);
     const e = map[addr] || (map[addr] = { count:0, workers:{}, list:[] });
     e.count++; e.workers[name] = (e.workers[name]||0) + 1; e.list.push(b);
   }
@@ -777,7 +789,12 @@ async function validate(addr){
       if (match) {
         const domain = match[1].toLowerCase();
         try {
-          const tnsRes = await getJSON("https://tarcoin.org/api/tns/resolve/" + encodeURIComponent(domain), 8000);
+          let tnsRes = null;
+          try {
+            tnsRes = await getJSON("/api/tns/resolve/" + encodeURIComponent(domain), 5000);
+          } catch(e) {
+            tnsRes = await getJSON("https://tarcoin.org/api/tns/resolve/" + encodeURIComponent(domain), 8000);
+          }
           if (tnsRes && tnsRes.targetAddress) {
             checkAddr = tnsRes.targetAddress;
             validity = { valid: true, addr: addr, resolved: checkAddr, domain: domain };
@@ -787,6 +804,11 @@ async function validate(addr){
             return;
           }
         } catch(e) {}
+        if (checkAddr.toLowerCase().endsWith('.tar')) {
+          validity = { valid: false, addr: addr, resolved: null, domain: domain };
+          render();
+          return;
+        }
       }
     }
     const d = await getJSON(API_BASE + "/api/v1/wallet/validate/" + encodeURIComponent(checkAddr), 8000);
@@ -839,7 +861,9 @@ function checkAlerts(){
     const dd = data[m];
     if(!dd) return;
     (dd.blocksFound||[]).forEach(b => {
-      if(String(b.worker).split(".")[0] !== wallet) return;
+      const { addr: bAddr } = splitMinerWorker(b.worker);
+      const bMine = (bAddr === wallet || (validity && (bAddr === validity.domain || bAddr === validity.resolved)));
+      if(!bMine) return;
       if(seen.indexOf(b.height) !== -1) return;
       seen.push(b.height);
       if(seen.length > 200) seen.shift();
@@ -946,7 +970,9 @@ function poolRecentBlocks(){
     (d.blocksFound||[]).forEach(b => {
       if(b.height >= floor){
         heights.add(b.height);
-        if(String(b.worker).split(".")[0] === wallet) mine.add(b.height);
+        const { addr: bAddr } = splitMinerWorker(b.worker);
+        const bMine = (bAddr === wallet || (validity && (bAddr === validity.domain || bAddr === validity.resolved)));
+        if(bMine) mine.add(b.height);
       }
     });
   });
@@ -1332,12 +1358,13 @@ function render(){
   if(blockSig !== sig.blocks){
     sig.blocks = blockSig;
     $("blocksBody").innerHTML = (d.blocksFound||[]).map(b => {
-      const parts = String(b.worker).split("."), addr = parts.shift(), name = parts.join(".") || "(unnamed)";
+      const { addr, name } = splitMinerWorker(b.worker);
+      const isMine = (addr === wallet || (validity && (addr === validity.domain || addr === validity.resolved)));
       const conf = tip != null ? tip - b.height + 1 : null, mature = conf != null && conf >= COINBASE_MATURITY;
-      return '<tr class="' + (addr === wallet ? "mine" : "") + '">' +
+      return '<tr class="' + (isMine ? "mine" : "") + '">' +
         '<td class="num">#' + b.height + "</td>" +
         '<td><span class="addr">' + esc(shortAddr(addr)) + "</span>" +
-          (addr === wallet ? ' <span class="badge me">you</span>' : "") + "</td>" +
+          (isMine ? ' <span class="badge me">you</span>' : "") + "</td>" +
         "<td>" + esc(name) + "</td>" +
         '<td class="num">' + agoCell(b.time) + "</td>" +
         '<td class="num">' + (conf == null ? '<span class="muted">—</span>'
