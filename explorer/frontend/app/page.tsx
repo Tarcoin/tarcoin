@@ -705,6 +705,7 @@ export default function HomePage() {
     if (/^[0-9a-fA-F]{64}$/.test(query)) { router.push(`/block/${query}`); return; }
     if (/^\d+$/.test(query)) { router.push(`/block/${query}`); return; }
     if (/^(1|3|bc1|tar1|T)[a-zA-Z0-9]{10,}$/.test(query)) { router.push(`/address/${query}`); return; }
+    if (query.toLowerCase().endsWith('.tar')) { router.push(`/address/${query}`); return; }
     router.push(`/block/${query}`);
   }
 

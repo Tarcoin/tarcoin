@@ -244,7 +244,15 @@ export class AddressController {
 
   async getUtxo(req: Request, res: Response) {
     try {
-      const { address } = req.params;
+      let { address } = req.params;
+      if (address.toLowerCase().endsWith('.tar')) {
+        try {
+          const tnsRes = await axios.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(address.toLowerCase().trim())}`, { timeout: 4000 });
+          if (tnsRes.data?.success && tnsRes.data?.targetAddress) {
+            address = tnsRes.data.targetAddress;
+          }
+        } catch {}
+      }
       const cached = await this.cache.get(this.cache.addressUtxoKey(address));
       if (cached) return res.json(cached);
 
