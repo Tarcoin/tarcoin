@@ -14,6 +14,74 @@
 #include <QTimer>
 #include <QUrl>
 
+#ifdef Q_OS_WIN
+#include <thread>
+#include <windows.h>
+#include <winhttp.h>
+
+// Synchronous HTTPS GET via WinHTTP.
+// Works regardless of Qt TLS build flags — uses Windows' native HTTP stack.
+// Returns the resolved TAR address, or empty string on failure.
+static QString resolveTnsWinHTTP(const QString& domain)
+{
+    QString result;
+    HINTERNET hSession = WinHttpOpen(
+        L"Tarcoin-Qt/1.2.6",
+        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+        WINHTTP_NO_PROXY_NAME,
+        WINHTTP_NO_PROXY_BYPASS,
+        0);
+    if (!hSession) return result;
+
+    HINTERNET hConnect = WinHttpConnect(hSession, L"tarcoin.org",
+                                        INTERNET_DEFAULT_HTTPS_PORT, 0);
+    if (!hConnect) { WinHttpCloseHandle(hSession); return result; }
+
+    QString pathStr = QString("/api/tns/resolve/%1").arg(domain);
+    std::wstring wPath = pathStr.toStdWString();
+    HINTERNET hRequest = WinHttpOpenRequest(
+        hConnect, L"GET", wPath.c_str(), nullptr,
+        WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    if (!hRequest) {
+        WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession);
+        return result;
+    }
+    WinHttpSetTimeouts(hRequest, 5000, 5000, 5000, 5000);
+
+    if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                           WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
+        WinHttpReceiveResponse(hRequest, nullptr))
+    {
+        DWORD statusCode = 0, scSize = sizeof(statusCode);
+        WinHttpQueryHeaders(hRequest,
+            WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+            WINHTTP_HEADER_NAME_BY_INDEX,
+            &statusCode, &scSize, WINHTTP_NO_HEADER_INDEX);
+
+        if (statusCode == 200) {
+            QByteArray body;
+            DWORD avail = 0;
+            while (WinHttpQueryDataAvailable(hRequest, &avail) && avail > 0) {
+                QByteArray chunk(static_cast<int>(avail), '\0');
+                DWORD read = 0;
+                if (WinHttpReadData(hRequest, chunk.data(), avail, &read))
+                    body.append(chunk.left(static_cast<int>(read)));
+            }
+            QJsonDocument doc = QJsonDocument::fromJson(body);
+            if (doc.isObject()) {
+                QJsonObject obj = doc.object();
+                if (obj.value("success").toBool())
+                    result = obj.value("targetAddress").toString();
+            }
+        }
+    }
+    WinHttpCloseHandle(hRequest);
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    return result;
+}
+#endif // Q_OS_WIN
+
 #include <qt/addressbookpage.h>
 #include <qt/addresstablemodel.h>
 #include <qt/guiutil.h>
@@ -91,6 +159,29 @@ void SendCoinsEntry::checkTnsDomain(const QString &address)
         return;
     }
 
+#ifdef Q_OS_WIN
+    // WinHTTP async: run in background thread, marshal result back to UI thread.
+    QPointer<SendCoinsEntry> self(this);
+    std::thread([domain, self]() {
+        QString addr = resolveTnsWinHTTP(domain);
+        QMetaObject::invokeMethod(qApp, [self, domain, addr]() {
+            if (!self) return;
+            if (!addr.isEmpty()) {
+                self->m_resolvedDomain = domain;
+                self->m_resolvedAddress = addr;
+                self->ui->payTo->setToolTip(
+                    QObject::tr("TNS Domain: %1\nTarget Address: %2").arg(domain, addr));
+                if (self->ui->addAsLabel->text().isEmpty())
+                    self->ui->addAsLabel->setText(domain);
+                self->ui->payTo->setValid(true);
+            } else {
+                self->m_resolvedAddress.clear();
+                self->ui->payTo->setToolTip(
+                    QObject::tr("TNS domain '%1' could not be resolved.").arg(domain));
+            }
+        }, Qt::QueuedConnection);
+    }).detach();
+#else
     if (!m_networkManager) {
         m_networkManager = new QNetworkAccessManager(this);
     }
@@ -126,6 +217,7 @@ void SendCoinsEntry::checkTnsDomain(const QString &address)
         m_resolvedAddress.clear();
         ui->payTo->setToolTip(tr("TNS domain '%1' could not be resolved.").arg(domain));
     });
+#endif
 }
 
 void SendCoinsEntry::setModel(WalletModel *_model)
@@ -183,6 +275,16 @@ bool SendCoinsEntry::validate(interfaces::Node& node)
     QString addrText = ui->payTo->text().trimmed();
     if (addrText.toLower().endsWith(".tar")) {
         if (m_resolvedDomain != addrText.toLower() || m_resolvedAddress.isEmpty()) {
+#ifdef Q_OS_WIN
+            // Synchronous WinHTTP call — no Qt TLS dependency on Windows.
+            {
+                QString addr = resolveTnsWinHTTP(addrText.toLower());
+                if (!addr.isEmpty()) {
+                    m_resolvedDomain = addrText.toLower();
+                    m_resolvedAddress = addr;
+                }
+            }
+#else
             if (!m_networkManager) {
                 m_networkManager = new QNetworkAccessManager(this);
             }
@@ -215,6 +317,7 @@ bool SendCoinsEntry::validate(interfaces::Node& node)
                 }
             }
             reply->deleteLater();
+#endif
         }
 
         if (m_resolvedAddress.isEmpty() || !model->validateAddress(m_resolvedAddress)) {

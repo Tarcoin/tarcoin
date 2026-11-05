@@ -154,6 +154,7 @@ target_link_libraries(bitcoinqt
     $<TARGET_NAME_IF_EXISTS:QRencode::QRencode>
     $<$<PLATFORM_ID:Darwin>:-framework\ AppKit>
     $<$<PLATFORM_ID:Windows>:shlwapi>
+    $<$<PLATFORM_ID:Windows>:winhttp>
 )
 
 if(ENABLE_WALLET)
@@ -249,7 +250,6 @@ if(qt_lib_type STREQUAL "STATIC_LIBRARY")
       styles
       networkaccess
       networkinformation
-      tls
   )
 endif()
 
