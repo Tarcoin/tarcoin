@@ -668,7 +668,9 @@ async function getJSON(url, ms){
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), ms || 12000);
   try {
-    const r = await fetch(url, { cache:"no-store", signal: ctl.signal });
+    const sep = url.indexOf('?') === -1 ? '?' : '&';
+    const fetchUrl = url + sep + '_=' + Date.now();
+    const r = await fetch(fetchUrl, { cache:"no-store", signal: ctl.signal });
     if(!r.ok) throw new Error("HTTP " + r.status);
     return await r.json();
   } finally { clearTimeout(t); }

@@ -64,6 +64,15 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, '../public'))); // Serve images and static files
 app.use('/', apiLimiter);
 
+// Prevent Cloudflare Edge and browsers from caching any API responses (crucial for .tar domains)
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // ====== Redis client ======
 let redis;
 async function initRedis() {
