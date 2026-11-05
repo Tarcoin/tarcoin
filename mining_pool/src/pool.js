@@ -1401,7 +1401,21 @@ cron.schedule('0 * * * *', processPayouts);
       const currentHeight = poolState.blockTemplate?.height || (combinedBlocks[0]?.height || 0);
       const lastBlockFound = combinedBlocks[0] || null;
 
-      // 4. Output Generic standard JSON
+      const safePplnsHashrate = (!isNaN(poolHashrate) && poolHashrate >= 0 ? poolHashrate : 0);
+      const safeSoloHashrate = (!isNaN(soloHashrate) && soloHashrate >= 0 ? soloHashrate : 0);
+      const combinedHashrate = safePplnsHashrate + safeSoloHashrate;
+      const totalMiners = activeMiners + soloActiveMiners;
+      const totalWorkers = activeWorkers + soloActiveWorkers;
+
+      const rawLastTime = lastBlockFound ? lastBlockFound.time : Date.now();
+      const lastBlockTimeSeconds = Math.floor(rawLastTime > 1e11 ? rawLastTime / 1000 : rawLastTime);
+
+      const normalizedBlocks = combinedBlocks.slice(0, 10).map(b => ({
+        ...b,
+        time: Math.floor((b.time && b.time > 1e11) ? b.time / 1000 : (b.time || Math.floor(Date.now() / 1000)))
+      }));
+
+      // 4. Output Generic standard JSON (compatible with MiningPoolStats, Yiimp, MiningCore)
       res.json({
         pool_name: "TARCOIN Official Pool",
         coin: "TARCOIN",
@@ -1410,27 +1424,32 @@ cron.schedule('0 * * * *', processPayouts);
         fee: 1.0, // 1% pool fee
         stratum_port: 3333,
         stratum_host: "stratum.tarcoin.org",
+        hashrate: combinedHashrate,
+        pool_hashrate: combinedHashrate,
+        total_hashrate: combinedHashrate,
+        miners: totalMiners,
+        total_miners: totalMiners,
+        workers: totalWorkers,
+        total_workers: totalWorkers,
         height: currentHeight,
         current_block: currentHeight,
         block_height: currentHeight,
+        network_height: currentHeight,
         last_block: lastBlockFound ? lastBlockFound.height : currentHeight,
-        last_block_time: lastBlockFound ? lastBlockFound.time : Date.now(),
+        last_block_time: lastBlockTimeSeconds,
         pplns: {
-          hashrate: (!isNaN(poolHashrate) && poolHashrate >= 0 ? poolHashrate : 0),
+          hashrate: safePplnsHashrate,
           miners: activeMiners,
           workers: activeWorkers
         },
         solo: {
-          hashrate: (!isNaN(soloHashrate) && soloHashrate >= 0 ? soloHashrate : 0),
+          hashrate: safeSoloHashrate,
           miners: soloActiveMiners,
           workers: soloActiveWorkers
         },
-        total_hashrate: ((!isNaN(poolHashrate) && poolHashrate >= 0 ? poolHashrate : 0) + (!isNaN(soloHashrate) && soloHashrate >= 0 ? soloHashrate : 0)),
-        total_miners: activeMiners + soloActiveMiners,
-        total_workers: activeWorkers + soloActiveWorkers,
         network_hashrate: networkHashrate,
         network_difficulty: networkDifficulty,
-        blocks_found: combinedBlocks.slice(0, 10)
+        blocks_found: normalizedBlocks
       });
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
