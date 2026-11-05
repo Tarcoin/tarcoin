@@ -676,7 +676,7 @@ async function getJSON(url, ms){
 async function fetchPool(m){
   try {
     const jobs = [getJSON(POOL_BASE + ENDPOINTS[m].path)];
-    const queryTarget = (validity && validity.resolved) ? validity.resolved : wallet;
+    const queryTarget = wallet;
     if(queryTarget) jobs.push(getJSON(POOL_BASE + "/api/" + m + "/miner/" + encodeURIComponent(queryTarget)).catch(()=>null));
     const res = await Promise.all(jobs);
     const d = res[0];
@@ -1075,12 +1075,16 @@ function walletCard(m, d){
       '<div class="sub">Found <b>' + blocks.count + "</b> of the recent blocks here.</div></div>";
 
   let live = measure(m, wallet);
+  if(!live && (dom || targetWallet)) live = measure(m, dom || targetWallet);
   const idle = isIdle(w);
   const apiH = data[m] && data[m].apiMiner && data[m].apiMiner.hashrate != null ? data[m].apiMiner.hashrate : null;
-  if(apiH != null && !idle) {
+  if(apiH != null && apiH > 0 && !idle) {
     if(!live) live = { rate: apiH, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0 };
     else live.rate = apiH;
     live.isApi = true;
+  } else if(apiH === 0 && !live && w && w.shares > 0 && !idle) {
+    const est = (w.shares * (w.difficulty || 12500) * 4294967296) / Math.max(10, (Date.now() - (d.startTime || Date.now() - 60000)) / 1000);
+    live = { rate: est, shares: w.shares, dt: 1, effDiff: w.difficulty, dmin: w.difficulty, dmax: w.difficulty, perMin: 0, err: 0 };
   }
   const prog = live ? null : progress(m, wallet);
   const rate = idle || !live ? 0 : live.rate;
