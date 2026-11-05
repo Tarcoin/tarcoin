@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Request, Response } from 'express';
 import { RpcClient } from '../services/RpcClient';
 import { CacheManager } from '../services/CacheManager';
@@ -58,7 +59,21 @@ export class AddressController {
 
   async getByAddress(req: Request, res: Response) {
     try {
-      const { address } = req.params;
+      let { address } = req.params;
+      let domainName: string | null = null;
+      if (address.toLowerCase().endsWith('.tar')) {
+        domainName = address.toLowerCase().trim();
+        try {
+          const tnsRes = await axios.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(domainName)}`, { timeout: 4000 });
+          if (tnsRes.data && tnsRes.data.success && tnsRes.data.targetAddress) {
+            address = tnsRes.data.targetAddress;
+          } else {
+            return res.status(404).json({ error: 'Domain not resolved', message: `TNS domain '${domainName}' not found` });
+          }
+        } catch {
+          return res.status(404).json({ error: 'Resolution failed', message: `Could not resolve domain '${domainName}'` });
+        }
+      }
       const cached = await this.cache.get(this.cache.addressKey(address));
       if (cached) return res.json(cached);
 
@@ -105,6 +120,7 @@ export class AddressController {
 
       const result = {
         address,
+        domain: domainName,
         balance,
         totalReceived,
         totalSent: 0,
@@ -124,7 +140,15 @@ export class AddressController {
 
   async getTransactions(req: Request, res: Response) {
     try {
-      const { address } = req.params;
+      let { address } = req.params;
+      if (address.toLowerCase().endsWith('.tar')) {
+        try {
+          const tnsRes = await axios.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(address.toLowerCase().trim())}`, { timeout: 4000 });
+          if (tnsRes.data && tnsRes.data.success && tnsRes.data.targetAddress) {
+            address = tnsRes.data.targetAddress;
+          }
+        } catch {}
+      }
       const count = parseInt(req.query.count as string) || 999999;
       const skip = parseInt(req.query.skip as string) || 0;
 
@@ -220,7 +244,15 @@ export class AddressController {
 
   async getUtxo(req: Request, res: Response) {
     try {
-      const { address } = req.params;
+      let { address } = req.params;
+      if (address.toLowerCase().endsWith('.tar')) {
+        try {
+          const tnsRes = await axios.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(address.toLowerCase().trim())}`, { timeout: 4000 });
+          if (tnsRes.data?.success && tnsRes.data?.targetAddress) {
+            address = tnsRes.data.targetAddress;
+          }
+        } catch {}
+      }
       const cached = await this.cache.get(this.cache.addressUtxoKey(address));
       if (cached) return res.json(cached);
 

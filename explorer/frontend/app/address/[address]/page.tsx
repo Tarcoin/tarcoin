@@ -34,6 +34,7 @@ export default function AddressPage() {
   const addrType = address?.startsWith('tar1') ? 'bech32 (SegWit)'
     : address?.startsWith('T') ? 'P2PKH (Base58)'
     : address?.startsWith('3') ? 'P2SH'
+    : address?.toLowerCase().endsWith('.tar') ? 'TNS Domain (.tar)'
     : 'Unknown';
 
   useEffect(() => {

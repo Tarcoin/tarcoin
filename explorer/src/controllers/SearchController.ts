@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Request, Response } from 'express';
 import { RpcClient } from '../services/RpcClient';
 import { CacheManager } from '../services/CacheManager';
@@ -15,7 +16,26 @@ export class SearchController {
       const query = (req.query.q as string || '').trim();
 
       if (!query) {
-        return res.status(400).json({ error: 'Query parameter q is required' });
+        // TNS (.tar domain) search
+      if (query.toLowerCase().endsWith('.tar')) {
+        const domain = query.toLowerCase().trim();
+        try {
+          const tnsRes = await axios.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(domain)}`, { timeout: 4000 });
+          if (tnsRes.data && tnsRes.data.success && tnsRes.data.targetAddress) {
+            const resolvedAddr = tnsRes.data.targetAddress;
+            return res.json({
+              type: 'address',
+              data: { address: resolvedAddr, domain, isValid: true },
+              redirect: `/address/${resolvedAddr}`,
+            });
+          }
+          return res.status(404).json({ error: `TNS domain '${domain}' not found or unassigned` });
+        } catch {
+          return res.status(404).json({ error: `TNS domain '${domain}' could not be resolved` });
+        }
+      }
+
+      return res.status(400).json({ error: 'Query parameter q is required' });
       }
 
       // Block height (numeric)

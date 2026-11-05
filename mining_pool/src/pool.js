@@ -1367,7 +1367,21 @@ cron.schedule('0 * * * *', processPayouts);
   const STATS_CACHE_TTL = 30000; // 30 seconds
 
   // ====== Standard Aggregator API (MiningPoolStats Format) ======
-  app.get('/api/stats', async (req, res) => {
+  // ====== Local TNS Resolution Proxy (same-origin for dashboard) ======
+    app.get('/api/tns/resolve/:domain', async (req, res) => {
+      try {
+        const rawDomain = (req.params.domain || '').trim().toLowerCase();
+        const addr = await resolveTnsToAddress(rawDomain);
+        if (addr && addr !== rawDomain) {
+          return res.json({ success: true, domain: rawDomain, targetAddress: addr });
+        }
+        return res.status(404).json({ success: false, error: 'Domain not resolved' });
+      } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+      }
+    });
+
+    app.get('/api/stats', async (req, res) => {
     try {
       // 1. Calculate Shared Pool Hashrate (count unique wallets AND total workers)
       let poolHashrate = 0;

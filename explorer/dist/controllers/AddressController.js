@@ -1,14 +1,81 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddressController = void 0;
+const axios_1 = __importDefault(require("axios"));
 class AddressController {
     constructor(rpc, cache) {
         this.rpc = rpc;
         this.cache = cache;
+        // A lock map to prevent overlapping scantxoutset calls for the same address
+        this.activeScans = new Map();
+    }
+    // Centralized scantxoutset to prevent RPC node overload (fixes balance dropping to 0)
+    async getScanResult(address) {
+        const cacheKey = `scan_raw_deduped_${address}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached)
+            return cached;
+        if (this.activeScans.has(address)) {
+            return this.activeScans.get(address);
+        }
+        const promise = (async () => {
+            let scanResult = null;
+            try {
+                const descriptors = [`addr(${address})`];
+                try {
+                    const addrInfo = await this.rpc.call('getaddressinfo', [address]);
+                    if (addrInfo?.scriptPubKey) {
+                        descriptors.push(`raw(${addrInfo.scriptPubKey})`);
+                    }
+                }
+                catch { /* ignore */ }
+                scanResult = await this.rpc.call('scantxoutset', ['start', descriptors]);
+                if (scanResult && scanResult.success) {
+                    // Deduplicate UTXOs immediately
+                    const seen = new Set();
+                    scanResult.unspents = (scanResult.unspents || []).filter((u) => {
+                        const key = `${u.txid}:${u.vout}`;
+                        return seen.has(key) ? false : (seen.add(key), true);
+                    });
+                    await this.cache.set(cacheKey, scanResult, 60); // Cache the raw scan for 60s
+                }
+                else {
+                    throw new Error("scantxoutset returned false");
+                }
+            }
+            catch (err) {
+                throw err;
+            }
+            finally {
+                this.activeScans.delete(address);
+            }
+            return scanResult;
+        })();
+        this.activeScans.set(address, promise);
+        return promise;
     }
     async getByAddress(req, res) {
         try {
-            const { address } = req.params;
+            let { address } = req.params;
+            let domainName = null;
+            if (address.toLowerCase().endsWith('.tar')) {
+                domainName = address.toLowerCase().trim();
+                try {
+                    const tnsRes = await axios_1.default.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(domainName)}`, { timeout: 4000 });
+                    if (tnsRes.data && tnsRes.data.success && tnsRes.data.targetAddress) {
+                        address = tnsRes.data.targetAddress;
+                    }
+                    else {
+                        return res.status(404).json({ error: 'Domain not resolved', message: `TNS domain '${domainName}' not found` });
+                    }
+                }
+                catch {
+                    return res.status(404).json({ error: 'Resolution failed', message: `Could not resolve domain '${domainName}'` });
+                }
+            }
             const cached = await this.cache.get(this.cache.addressKey(address));
             if (cached)
                 return res.json(cached);
@@ -16,54 +83,21 @@ class AddressController {
             if (!info.isvalid) {
                 return res.status(404).json({ error: 'Address not found', message: 'Invalid address' });
             }
-            // Use scantxoutset to get real UTXO balance — works without addressindex.
-            // We scan with multiple descriptors to cover all script types:
-            //   addr()        — P2WPKH, P2SH, P2PKH standard addresses
-            //   raw(script)   — P2PK and any non-standard script (cold storage / early coinbase)
             let balance = 0;
             let totalReceived = 0;
             let txCount = 0;
             let utxos = [];
             try {
-                // Build descriptor list — always include addr()
-                const descriptors = [`addr(${address})`];
-                // Also try raw(scriptPubKey) for P2PK / cold-storage outputs
-                try {
-                    const addrInfo = await this.rpc.call('getaddressinfo', [address]);
-                    if (addrInfo?.scriptPubKey) {
-                        descriptors.push(`raw(${addrInfo.scriptPubKey})`);
-                    }
-                }
-                catch {
-                    // getaddressinfo may not be available — continue with addr() only
-                }
-                // Run all descriptors in a single scantxoutset call
-                const scanResult = await this.rpc.call('scantxoutset', ['start', descriptors]);
-                if (scanResult && scanResult.success) {
-                    // Deduplicate UTXOs by txid:vout in case descriptors overlap
-                    const seen = new Set();
-                    const deduped = [];
-                    for (const u of (scanResult.unspents || [])) {
-                        const key = `${u.txid}:${u.vout}`;
-                        if (!seen.has(key)) {
-                            seen.add(key);
-                            deduped.push(u);
-                        }
-                    }
-                    utxos = deduped;
-                    balance = utxos.reduce((s, u) => s + (u.amount || 0), 0);
-                    txCount = utxos.length;
-                    totalReceived = balance;
-                }
-                else {
-                    console.error('scantxoutset returned no success:', JSON.stringify(scanResult));
-                }
+                const scanResult = await this.getScanResult(address);
+                utxos = scanResult.unspents || [];
+                balance = utxos.reduce((s, u) => s + (u.amount || 0), 0);
+                txCount = utxos.length;
+                totalReceived = balance;
             }
             catch (scanErr) {
                 const safeAddress = JSON.stringify(String(address || '').slice(0, 64));
                 console.error('scantxoutset failed for address %s :', safeAddress, scanErr?.message || scanErr);
                 // FAST FALLBACK: Since scantxoutset timed out, we fallback to listtransactions
-                // to manually sum up the balance for this address.
                 try {
                     const txs = await this.rpc.call('listtransactions', ['*', 1000, 0, true]);
                     if (Array.isArray(txs)) {
@@ -86,16 +120,16 @@ class AddressController {
             }
             const result = {
                 address,
+                domain: domainName,
                 balance,
                 totalReceived,
                 totalSent: 0,
                 unconfirmedBalance: 0,
-                txCount,
+                txCount, // This is technically UTXO count now unless fallback is used
                 scriptType: info.isscript ? 'script' : 'pubkey',
                 isWatchOnly: info.iswatchonly || false,
                 isMine: info.ismine || false,
             };
-            // Cache for 60 seconds (balance changes slowly)
             await this.cache.set(this.cache.addressKey(address), result, 60);
             res.json(result);
         }
@@ -105,31 +139,25 @@ class AddressController {
     }
     async getTransactions(req, res) {
         try {
-            const { address } = req.params;
+            let { address } = req.params;
+            if (address.toLowerCase().endsWith('.tar')) {
+                try {
+                    const tnsRes = await axios_1.default.get(`https://tarcoin.org/api/tns/resolve/${encodeURIComponent(address.toLowerCase().trim())}`, { timeout: 4000 });
+                    if (tnsRes.data && tnsRes.data.success && tnsRes.data.targetAddress) {
+                        address = tnsRes.data.targetAddress;
+                    }
+                }
+                catch { }
+            }
             const count = parseInt(req.query.count) || 999999;
             const skip = parseInt(req.query.skip) || 0;
             const cached = await this.cache.get(this.cache.addressTxsKey(address));
             if (cached)
                 return res.json(cached);
-            // Use scantxoutset to find UTXOs and their transaction IDs
             let result = [];
             try {
-                // Build descriptors (same logic as getByAddress)
-                const descriptors = [`addr(${address})`];
-                try {
-                    const addrInfo = await this.rpc.call('getaddressinfo', [address]);
-                    if (addrInfo?.scriptPubKey)
-                        descriptors.push(`raw(${addrInfo.scriptPubKey})`);
-                }
-                catch { /* ignore */ }
-                const scanResult = await this.rpc.call('scantxoutset', ['start', descriptors]);
+                const scanResult = await this.getScanResult(address);
                 if (scanResult && scanResult.success && scanResult.unspents) {
-                    // Deduplicate
-                    const seen = new Set();
-                    scanResult.unspents = scanResult.unspents.filter((u) => {
-                        const key = `${u.txid}:${u.vout}`;
-                        return seen.has(key) ? false : (seen.add(key), true);
-                    });
                     // Fetch full transaction details for each UTXO
                     const txDetails = await Promise.all(scanResult.unspents.slice(skip, skip + count).map(async (utxo) => {
                         try {
@@ -219,25 +247,11 @@ class AddressController {
             const cached = await this.cache.get(this.cache.addressUtxoKey(address));
             if (cached)
                 return res.json(cached);
-            // Use scantxoutset for reliable UTXO lookup without addressindex
             let utxos = [];
             try {
-                // Build descriptors (same logic as getByAddress)
-                const descriptors = [`addr(${address})`];
-                try {
-                    const addrInfo = await this.rpc.call('getaddressinfo', [address]);
-                    if (addrInfo?.scriptPubKey)
-                        descriptors.push(`raw(${addrInfo.scriptPubKey})`);
-                }
-                catch { /* ignore */ }
-                const scanResult = await this.rpc.call('scantxoutset', ['start', descriptors]);
+                const scanResult = await this.getScanResult(address);
                 if (scanResult && scanResult.success) {
-                    // Deduplicate UTXOs
-                    const seen = new Set();
-                    utxos = (scanResult.unspents || []).filter((u) => {
-                        const key = `${u.txid}:${u.vout}`;
-                        return seen.has(key) ? false : (seen.add(key), true);
-                    });
+                    utxos = scanResult.unspents || [];
                 }
             }
             catch {
