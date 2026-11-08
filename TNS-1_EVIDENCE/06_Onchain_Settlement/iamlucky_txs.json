@@ -1,0 +1,506 @@
+﻿[
+    {
+        "txid":  "c3dd51ee05f013097433192e5e631a4c36d2897f027733f8c10ada3d599e853d",
+        "amount":  5675.77851567,
+        "height":  11277,
+        "confirmations":  504,
+        "coinbase":  false,
+        "blockhash":  "0000000000000004b5334932632bd5514bb3af0ae575e2d4b5d22d3fbf967f9b",
+        "time":  1793661951
+    },
+    {
+        "txid":  "47ff11f740cda417c788ae581d87aa3081f9d24b398f95096dafe9063ec7055c",
+        "amount":  100,
+        "height":  11583,
+        "confirmations":  198,
+        "coinbase":  false,
+        "blockhash":  "0000000000000009a6c4d180c9f57d7e4f5db20de398492baf91d2258194e7e5",
+        "time":  1793868611
+    },
+    {
+        "txid":  "dd813f612b42230c0df133f29b167ab3215cfcc44f049ed3abe836ff2e4c1e9c",
+        "amount":  250,
+        "height":  11590,
+        "confirmations":  191,
+        "coinbase":  false,
+        "blockhash":  "000000000000000f607b9945fe13bc329d1fd6579f696500de0932f625b3b9b6",
+        "time":  1793873359
+    },
+    {
+        "txid":  "a38ffc67219ace1dbfa79a1d78560bc4f284c2c67dee02ee01c1b3e8849c8bd5",
+        "amount":  100,
+        "height":  11402,
+        "confirmations":  379,
+        "coinbase":  false,
+        "blockhash":  "00000000000000032e44b88c5ed804d4d773f8d8dfd850de7c7524d75163bbb6",
+        "time":  1793746171
+    },
+    {
+        "txid":  "eaf3647b7cc1be75124bb4f76a4daf70f157fb09e45178613d4cec42656180ef",
+        "amount":  1771.43019177,
+        "height":  2256,
+        "confirmations":  9525,
+        "coinbase":  false,
+        "blockhash":  "000000000000006e455a0ca28e060382faf42258db5370c0ce88567290507e3d",
+        "time":  1787896471
+    },
+    {
+        "txid":  "455abcace5e8c64ca7810b489854ca9685c2c9386f9f860aa49a5da9705fa1ef",
+        "amount":  12979.6885257,
+        "height":  2923,
+        "confirmations":  8858,
+        "coinbase":  false,
+        "blockhash":  "0000000000000086eb6b544417bbe75ae8a3426e4a54b5522897d0dbeffd4548",
+        "time":  1788333170
+    },
+    {
+        "txid":  "c68af81f60d7cef567ae43313c6f9ef1c6bf17dd24fe2e7601223d54125acdef",
+        "amount":  1319.99912,
+        "height":  1783,
+        "confirmations":  9998,
+        "coinbase":  false,
+        "blockhash":  "00000000000000d426dc6fc676fe67101e3fded1faad4dc89631765952af2993",
+        "time":  1787602577
+    },
+    {
+        "txid":  "33f5412800df1c07516ef9cc6a205bb5ab02b84be04eaabde5248470611323f0",
+        "amount":  1425.59928721,
+        "height":  2294,
+        "confirmations":  9487,
+        "coinbase":  false,
+        "blockhash":  "000000000000003ddb90f3d9d0077f8e10d9ff4f4bff001387dd3a13f4caa108",
+        "time":  1787923509
+    },
+    {
+        "txid":  "b9b585d3a96ed8135aeea7c43a75d3e05a825bc1024112b4e25326fc40746bf0",
+        "amount":  559.3488813,
+        "height":  2384,
+        "confirmations":  9397,
+        "coinbase":  false,
+        "blockhash":  "0000000000000020c7a9c5389d1f65f68dc0ebaad556aa2d1ac2bd66780ac5a0",
+        "time":  1787976401
+    },
+    {
+        "txid":  "5b3562b6f3c69c2884f41158010360836ca0847b07395bddb68d9df704a29df0",
+        "amount":  49500,
+        "height":  6705,
+        "confirmations":  5076,
+        "coinbase":  true,
+        "blockhash":  "00000000000000291ea1e65c09d433f1e0ae9508352b36a2a5c87f863a810490",
+        "time":  1790756801
+    },
+    {
+        "txid":  "3364305bcbd10fc81078aa88c56a38339e1ef5e46c6715307effc6e3d874a1f0",
+        "amount":  1000,
+        "height":  1822,
+        "confirmations":  9959,
+        "coinbase":  false,
+        "blockhash":  "0000000000000082a2f938f214493648e5ba5b0e15984fa07c95d543b7f8204b",
+        "time":  1787624138
+    },
+    {
+        "txid":  "38089d3f3806aa35f635320da996aa1e42adeb64b5598f0157a9109b8c10b2f0",
+        "amount":  2592.42760154,
+        "height":  5222,
+        "confirmations":  6559,
+        "coinbase":  false,
+        "blockhash":  "000000000000001398ce5c71518e2b11ebd56ca740f52a5ef09206fd31621b9e",
+        "time":  1789790953
+    },
+    {
+        "txid":  "12f1918556fd1987f059388d4183d48d6b41cac8099f9431804238a26a23d8f0",
+        "amount":  727.84927175,
+        "height":  7115,
+        "confirmations":  4666,
+        "coinbase":  false,
+        "blockhash":  "000000000000001d6e17b63667b319d1dab8a1f44a87ea2db42bf5214ebb30b2",
+        "time":  1791020901
+    },
+    {
+        "txid":  "5b4002178a494c0690cd8afc28c959d2e89757484e87d19c4287f6a1bf25fdf0",
+        "amount":  6128.26807688,
+        "height":  3280,
+        "confirmations":  8501,
+        "coinbase":  false,
+        "blockhash":  "00000000000000fbfb2c67ef8f21d1a0287a63cbd7f3d11eed444b27e829759c",
+        "time":  1788564777
+    },
+    {
+        "txid":  "11e12ac2521a484d8e6ba8c7509a101843009773017097541fb843d9423e20f1",
+        "amount":  5249.36812593,
+        "height":  3535,
+        "confirmations":  8246,
+        "coinbase":  false,
+        "blockhash":  "000000000000015cf679f99d69c83cba456d70b1445ad10b321ba18921e33e17",
+        "time":  1788728474
+    },
+    {
+        "txid":  "1773b70a4410210bb98a3534214cd6214f4215ac599d5c087876233e373c53f1",
+        "amount":  1658.2493368,
+        "height":  2246,
+        "confirmations":  9535,
+        "coinbase":  false,
+        "blockhash":  "000000000000000d728507e2ca5acfd57fb0971a5f9c2b9fd6a8357c0c5958ba",
+        "time":  1787886758
+    },
+    {
+        "txid":  "a58a4652c712e8c035f3d44aaa08898beb022927944d80c8db7d6c5bd81e6ff1",
+        "amount":  49500,
+        "height":  6764,
+        "confirmations":  5017,
+        "coinbase":  true,
+        "blockhash":  "00000000000000095499ee1ff3c74901f20fb39b0553a7ac7ab1dc72d2216aa2",
+        "time":  1790793083
+    },
+    {
+        "txid":  "00990eb8fa6877642a751f92a4d5231827eee78f7ffd12eedd769d39fdcb56f2",
+        "amount":  1208.0474558,
+        "height":  7438,
+        "confirmations":  4343,
+        "coinbase":  false,
+        "blockhash":  "0000000000000131312dbe48ea8793e7753c8507f7d715fb6857930de0289de8",
+        "time":  1791241824
+    },
+    {
+        "txid":  "90f5785a80847051d2dee6fd973347d8ec6f70164c33db6f8b343ecd68d180f2",
+        "amount":  6290.90510974,
+        "height":  3285,
+        "confirmations":  8496,
+        "coinbase":  false,
+        "blockhash":  "000000000000005fea675e14e2c87d68e6fa45dd88bd47c464613991a035b6ad",
+        "time":  1788570747
+    },
+    {
+        "txid":  "3f601686035671b5576074a53f1fd8b432804a78ea114d2cca6994c52f61c9f2",
+        "amount":  49500.00025808,
+        "height":  6704,
+        "confirmations":  5077,
+        "coinbase":  true,
+        "blockhash":  "0000000000000051254d77cd5f29130a74932980f17daf10d021737d08e730bd",
+        "time":  1790755700
+    },
+    {
+        "txid":  "4b350242c45d26e71809e15f9fb77b683aa7dbdeaaa319a07326f1b4066391f3",
+        "amount":  11716.98241396,
+        "height":  4009,
+        "confirmations":  7772,
+        "coinbase":  false,
+        "blockhash":  "0000000000000127a4c832cfa7066fff3808f4be1964a3a9c72b152954d58643",
+        "time":  1789028792
+    },
+    {
+        "txid":  "7790d1f3ee4d574c72c0d09337d3a842abc004f20b8fb253114ebae384849df3",
+        "amount":  702.01827512,
+        "height":  3119,
+        "confirmations":  8662,
+        "coinbase":  false,
+        "blockhash":  "00000000000000fcbb1fb5acccb65578fd76eb254d0ba3dd2f3ce7a752548af2",
+        "time":  1788458745
+    },
+    {
+        "txid":  "11ef6c8a11e1bc10ed51a3d0b32fb55dfee16b5b9e37776d4530ebc2f410d2f3",
+        "amount":  9291.32244936,
+        "height":  3072,
+        "confirmations":  8709,
+        "coinbase":  false,
+        "blockhash":  "000000000000013db2baceeea0f72c4a6c032e2cd69536e91a841d23819a92c4",
+        "time":  1788437895
+    },
+    {
+        "txid":  "9484598c557cf163ab338388bb563c8004c6833dc986ff59247feced485636f4",
+        "amount":  49500,
+        "height":  6733,
+        "confirmations":  5048,
+        "coinbase":  true,
+        "blockhash":  "00000000000000182d2bf3418e02d3d6775dd9f897574a2a398b20ad34d35864",
+        "time":  1790772147
+    },
+    {
+        "txid":  "ec26ee517d1cce10e2ef23a8ed8c3876d13f0c992e3eeae04395e9f6548a3ef4",
+        "amount":  4600.96572002,
+        "height":  4109,
+        "confirmations":  7672,
+        "coinbase":  false,
+        "blockhash":  "00000000000000bf57b0c78181b5a63132eab8e0cbdc875f8f34d73423fac0af",
+        "time":  1789093293
+    },
+    {
+        "txid":  "a2c563841d74dac2bbbdf08cdbc4be4bbd11d3d5cef61dac31c4e4e593f665f4",
+        "amount":  49500.00007128,
+        "height":  6834,
+        "confirmations":  4947,
+        "coinbase":  true,
+        "blockhash":  "000000000000000096e112f580dc1e892ec6f0c4543380a5908158a2fed10d3b",
+        "time":  1790827803
+    },
+    {
+        "txid":  "437f00a7a18b3bf0fa75b21077f6e2b6efd858607ba6d6e496387da0d1be79f4",
+        "amount":  49500,
+        "height":  6699,
+        "confirmations":  5082,
+        "coinbase":  true,
+        "blockhash":  "00000000000001acaec2131e3581103b0b594caf0c995c92ea35e7e45e955553",
+        "time":  1790749796
+    },
+    {
+        "txid":  "fd27e6294e9a4e60876a277b1163b5542699520c03f19a9067ca584c550fc4f4",
+        "amount":  49500.0000495,
+        "height":  6761,
+        "confirmations":  5020,
+        "coinbase":  true,
+        "blockhash":  "00000000000000365c9a5be77f514f0df6bd6ba81583fe56382fac9dd83c2f2a",
+        "time":  1790789566
+    },
+    {
+        "txid":  "9f627bbc471235c9c408a1e350555181fe05bdefb4f255e0a3a730c368e094f5",
+        "amount":  2465.48311962,
+        "height":  5306,
+        "confirmations":  6475,
+        "coinbase":  false,
+        "blockhash":  "0000000000000056edb359131fae664fa85581a0c2b2b91d9f0a261179ce0748",
+        "time":  1789857126
+    },
+    {
+        "txid":  "1db35427fcb882d6b3fb3e05646202788664cf95bc317301d1117b6c84eca3f5",
+        "amount":  19412.7162165,
+        "height":  2817,
+        "confirmations":  8964,
+        "coinbase":  false,
+        "blockhash":  "000000000000022ca80d952a972ae4181c739d24472d622515754a5697bfc446",
+        "time":  1788268921
+    },
+    {
+        "txid":  "0bafb43afb38a97ce86a66cc65cc100a53031e8aa47257e65fbd8308d877a4f5",
+        "amount":  4036.54350498,
+        "height":  2755,
+        "confirmations":  9026,
+        "coinbase":  false,
+        "blockhash":  "00000000000000856264d772759e76d81d78e80c70ab18eb6710fda02cc3ef90",
+        "time":  1788218189
+    },
+    {
+        "txid":  "1d6cdeabe620d3a897f415337fc5238c44a7a8c4fe3072ef0ca90666ed53cef5",
+        "amount":  10721.6928522,
+        "height":  3704,
+        "confirmations":  8077,
+        "coinbase":  false,
+        "blockhash":  "00000000000000c9e9b637eaf8097189b8ce6c773a69f7b28a57504d09918bb1",
+        "time":  1788836425
+    },
+    {
+        "txid":  "3f541cea22c75422427e8923f26657f68cbe509a9f73a847485d7b5e3374d9f5",
+        "amount":  2409.12427072,
+        "height":  1764,
+        "confirmations":  10017,
+        "coinbase":  false,
+        "blockhash":  "00000000000000f082d83a6e77dfea07ac56726d784c52abc60b6bb4ae353ac9",
+        "time":  1787587724
+    },
+    {
+        "txid":  "9aabddaf50794e759d575d138f322cd32e4e9569a5440882a8bb922fd20b13f6",
+        "amount":  11045.78606933,
+        "height":  3993,
+        "confirmations":  7788,
+        "coinbase":  false,
+        "blockhash":  "000000000000003a1eb925a654cebc260ad7e47b34b76e9a5014a0e82cd90ea3",
+        "time":  1789020455
+    },
+    {
+        "txid":  "96bd3b18c34849271d9a763faaa760e4c531d36bf84383faa0a13ec1ea8350f6",
+        "amount":  757.34949512,
+        "height":  2142,
+        "confirmations":  9639,
+        "coinbase":  false,
+        "blockhash":  "000000000000005402a7928603e30b4db6e5f702f8093795994a37dae67ec28b",
+        "time":  1787821508
+    },
+    {
+        "txid":  "99052d579ff06fcc13010c72eca18efc6de24a6ef2f7aedf8e83c4cd3a0881f6",
+        "amount":  15884.91118226,
+        "height":  3396,
+        "confirmations":  8385,
+        "coinbase":  false,
+        "blockhash":  "0000000000000118d78a7e7d9c571640ecbef9bc7c1d618f7f76647dfd741457",
+        "time":  1788635541
+    },
+    {
+        "txid":  "a1e6a86d52a143abefabb41ddc7b22b7483b9a1c5f95a5a45a7dc682a50088f6",
+        "amount":  3639.24023445,
+        "height":  6784,
+        "confirmations":  4997,
+        "coinbase":  false,
+        "blockhash":  "00000000000000970f657d6456ce3261853e7102b65e341d73d3a2858fd6cfbc",
+        "time":  1790803791
+    },
+    {
+        "txid":  "e70e75b56a66431ea43fad76360882dee11bf8e9287de8f674f2c19782c989f6",
+        "amount":  2366.83507031,
+        "height":  5118,
+        "confirmations":  6663,
+        "coinbase":  false,
+        "blockhash":  "000000000000000a9040815c48658531f4d2a4c3dfe1e40bfa4d37b3f8706dcd",
+        "time":  1789733153
+    },
+    {
+        "txid":  "d82619461b0717018983d4a25a02fced525f2fcdb19cf1e485285125c7ffc2f6",
+        "amount":  328.87793773,
+        "height":  7497,
+        "confirmations":  4284,
+        "coinbase":  false,
+        "blockhash":  "0000000000000045960eee861c9a2d32e12432d7e0b2aeb7d6f5c58934956193",
+        "time":  1791274417
+    },
+    {
+        "txid":  "1a765ff096e8d2f2f4d76cafbf31470d046aa1e7ece8281df2831a8cce73ebf6",
+        "amount":  727.84691922,
+        "height":  6856,
+        "confirmations":  4925,
+        "coinbase":  false,
+        "blockhash":  "000000000000002ea5be64efc688b1bb8bb7c1dfbc393d9c679b8c759bef182b",
+        "time":  1790855660
+    },
+    {
+        "txid":  "7f8b6a629bd8f682dcdbf6b6807876a3ac1cf2c521b97f0c1fae8b18071e07f7",
+        "amount":  3196.70419378,
+        "height":  1801,
+        "confirmations":  9980,
+        "coinbase":  false,
+        "blockhash":  "0000000000000098a9d81670d3b8e1b239ed8667e70de93424bb8bad9d3a9d61",
+        "time":  1787612445
+    },
+    {
+        "txid":  "5c2967ae0043ae01281da0ed42c41f84b8bb881f9daaf49fcef44f0bbf9836f7",
+        "amount":  3555.09637467,
+        "height":  3732,
+        "confirmations":  8049,
+        "coinbase":  false,
+        "blockhash":  "00000000000000b336f160f1df301c2bf7765563cd70a19a28845b74144b55c3",
+        "time":  1788854554
+    },
+    {
+        "txid":  "308a4fe4a56b71093352452ce2d336fa70fefda3a7fed68b15c30dc790440af8",
+        "amount":  49500,
+        "height":  6786,
+        "confirmations":  4995,
+        "coinbase":  true,
+        "blockhash":  "00000000000000670db34885f9176c78ba7325999c4260f126f9a90652222ffd",
+        "time":  1790804943
+    },
+    {
+        "txid":  "70cdddd09cbae80ef2db2fa7472577d2592171da1343fd9e00cd86d041ae21f9",
+        "amount":  1455.69623499,
+        "height":  6810,
+        "confirmations":  4971,
+        "coinbase":  false,
+        "blockhash":  "0000000000000113ea8b38e6866807929dde078999c7903e6332ef3cf492d26d",
+        "time":  1790821118
+    },
+    {
+        "txid":  "484c365723316d43b5a9c3802eaad14a99b6c3ec321606c8229418c8700c52fa",
+        "amount":  1796.8488021,
+        "height":  2070,
+        "confirmations":  9711,
+        "coinbase":  false,
+        "blockhash":  "000000000000004d36235bd3da3b17ce1275048d59d48037eeeb890f06093836",
+        "time":  1787778981
+    },
+    {
+        "txid":  "d4a52d8e0845b2609eb774900868f0cd53477851e54872e77b74070d186c76fa",
+        "amount":  395.85145655,
+        "height":  7446,
+        "confirmations":  4335,
+        "coinbase":  false,
+        "blockhash":  "00000000000001219c6e0f0ec3cb133e4faddbee07301d37fa1a9b6876fa671a",
+        "time":  1791244884
+    },
+    {
+        "txid":  "273629d1500cbc770b0413e7f57d024cf54173d47a7ffed52779987c7a6694fa",
+        "amount":  7393.51635897,
+        "height":  6642,
+        "confirmations":  5139,
+        "coinbase":  false,
+        "blockhash":  "000000000000008fecc1088f244eb7e4ab89b5a9259f4b80540f86933eb5d6c1",
+        "time":  1790712805
+    },
+    {
+        "txid":  "6791d70e475dc7d50df7bc0a746f9c8de4af6b5e979a1037004999edc241b3fa",
+        "amount":  249.3315312,
+        "height":  7547,
+        "confirmations":  4234,
+        "coinbase":  false,
+        "blockhash":  "00000000000000eba0cdab0af4f839e922110584ffa5b1a8b03095e9339319b3",
+        "time":  1791313290
+    },
+    {
+        "txid":  "228af3acdb656cf9b5892b1fcb42f5bb6c400db7ed5bdfb0058cf418275cfffa",
+        "amount":  5373.12358209,
+        "height":  3419,
+        "confirmations":  8362,
+        "coinbase":  false,
+        "blockhash":  "0000000000000098ca7adef53a6d89b19bf655012e685eeeeccf4b7a9ce33f40",
+        "time":  1788649415
+    },
+    {
+        "txid":  "edef54a173eb6914cf2d80ea920e811b1bd59f6f23962c50b3553e4fdbd0b1fb",
+        "amount":  49500,
+        "height":  6741,
+        "confirmations":  5040,
+        "coinbase":  true,
+        "blockhash":  "00000000000000f1c06d9efafab28b8368db66bdd4981e5226c4a5dbe95d8a87",
+        "time":  1790775358
+    },
+    {
+        "txid":  "123b29a8d193fb4565328f5f1e832e36698e97af06f5fcb19e01cc228b6034fd",
+        "amount":  2523.42206226,
+        "height":  5206,
+        "confirmations":  6575,
+        "coinbase":  false,
+        "blockhash":  "00000000000000311cf4d778abdaa1963326eeef36bf249ea231247d834a0146",
+        "time":  1789780080
+    },
+    {
+        "txid":  "169b57eb62810f631986a5dfe1add3c766a59f2edd05aacd0e50fdf6ed1bdbfd",
+        "amount":  8131.91470566,
+        "height":  2974,
+        "confirmations":  8807,
+        "coinbase":  false,
+        "blockhash":  "000000000000001c3e84ee5679044fa03cff5cf07f148ec96f399810f8943b17",
+        "time":  1788357803
+    },
+    {
+        "txid":  "cea1d3533b3efeaeb9197677e88322ee81a68b5f8f6bd90b19d371d176a94afe",
+        "amount":  822.24446637,
+        "height":  6523,
+        "confirmations":  5258,
+        "coinbase":  false,
+        "blockhash":  "000000000000000665a2418fbc13131bed6344292515a7036e7dc337c58a0b6d",
+        "time":  1790635038
+    },
+    {
+        "txid":  "c2ee71d8eec40ccd32a55d2774da8094c8654d935082865104653b40ae32ddfe",
+        "amount":  3699.06076581,
+        "height":  2865,
+        "confirmations":  8916,
+        "coinbase":  false,
+        "blockhash":  "0000000000000000df1836e978f81d7af59b4ff341a9c27cc764fa4b0eff10fd",
+        "time":  1788293621
+    },
+    {
+        "txid":  "35fea448341d9fd6b84316113798d1fa4acfdfee4e4ec0a69fad767f39fd41ff",
+        "amount":  1633.49947187,
+        "height":  2579,
+        "confirmations":  9202,
+        "coinbase":  false,
+        "blockhash":  "00000000000000b1c14da37ab84784a5013d81f5600d826b750b135e3b026895",
+        "time":  1788107051
+    },
+    {
+        "txid":  "1882380a90d55f1eec9ab8a13597fb4319fc384081ae6b8bdc2bc03927f7c4ff",
+        "amount":  14067.70484314,
+        "height":  2928,
+        "confirmations":  8853,
+        "coinbase":  false,
+        "blockhash":  "00000000000000546f09b9b01da5fa7aa87b2601b28607c43f1bd2a2382511a9",
+        "time":  1788339170
+    }
+]

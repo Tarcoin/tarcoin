@@ -1,0 +1,9 @@
+﻿TARCOIN MASTER REPO GIT STATUS & COMMIT HASH:
+85f90e3ebd3cff8d0012b3671fa5ad9988644c09
+commit 85f90e3ebd3cff8d0012b3671fa5ad9988644c09
+Author:     Tarcoin Dev <289306337+Tarcoin@users.noreply.github.com>
+AuthorDate: Thu Nov 5 13:55:23 2026 -0700
+Commit:     Tarcoin Dev <289306337+Tarcoin@users.noreply.github.com>
+CommitDate: Thu Nov 5 13:55:23 2026 -0700
+
+    fix(ci): restore desktop wallet qt config and ignore ts build errors in explorer frontend

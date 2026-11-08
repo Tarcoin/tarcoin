@@ -1,0 +1,20 @@
+﻿[
+    {
+        "txid":  "c2c195f208516213af3f8d46f4dce6915bdda2b2f73d118de9c0a70ab5c6031e",
+        "amount":  50000.00012523,
+        "height":  11700,
+        "confirmations":  81,
+        "coinbase":  true,
+        "blockhash":  "0000000000000009f9c32ed42c3c0979e46bccdd7c3abeeb7d0f3f18c8bb7cb5",
+        "time":  1793946827
+    },
+    {
+        "txid":  "144f52df58f7bc5acb43eb0e001a9a6092ecbb9c244d9ca78d1561732e00edac",
+        "amount":  50000,
+        "height":  11714,
+        "confirmations":  67,
+        "coinbase":  true,
+        "blockhash":  "000000000000000fda620196946719a2b10d4ea1a923dd11d0968d2da87f27e7",
+        "time":  1793949469
+    }
+]

@@ -1,0 +1,401 @@
+﻿{
+    "status":  "Online",
+    "stratum":  "stratum+tcp://stratum.tarcoin.org:3333",
+    "algorithm":  "SHA256d",
+    "activeMiners":  4,
+    "totalShares":  1000000,
+    "workers":  {
+                    "tar1qv09p2c59rz8dzpheh86vcm2wupwkukyur3s2sg":  {
+                                                                        "shares":  12101,
+                                                                        "lastSeen":  1793987618594,
+                                                                        "difficulty":  5000
+                                                                    },
+                    "iamlucky.tar":  {
+                                         "shares":  19203,
+                                         "lastSeen":  1793987617092,
+                                         "difficulty":  22958
+                                     },
+                    "tar1qlfjmz9r573wu4jdgvn0quvcn3fdc7v5mykzz9u":  {
+                                                                        "shares":  41166,
+                                                                        "lastSeen":  1793987610491,
+                                                                        "difficulty":  5000
+                                                                    },
+                    "tar1qn4zw72paz0swx7dxg83shnpcam4knsrjyq58l6":  {
+                                                                        "shares":  116080,
+                                                                        "lastSeen":  1793987604374,
+                                                                        "difficulty":  5000
+                                                                    },
+                    "tar1qnjtxwsqxy8xedhqjtxgpm808gpjpa4ptvn5hrw":  {
+                                                                        "shares":  197,
+                                                                        "lastSeen":  1793920505481,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q3f9pkv9yjjyzlm7sh2rtcp2vvtr8yzrejy5apn":  {
+                                                                        "shares":  2,
+                                                                        "lastSeen":  1793899209128,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q5ktd733yynfncaz0vqruwe00x97ymenfr4ggl9":  {
+                                                                        "shares":  78,
+                                                                        "lastSeen":  1793856773492,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya":  {
+                                                                        "shares":  42119,
+                                                                        "lastSeen":  1793847292445,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qatcgeajms6x8h8ddaq630tj9hjt0007432etdh":  {
+                                                                        "shares":  3,
+                                                                        "lastSeen":  1793684584687,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q2lgnxlaxx9k0dxc4tg4er09mypsr0arzu8pkam":  {
+                                                                        "shares":  388,
+                                                                        "lastSeen":  1793625154763,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qy7hphl4hgqe5788x829tsjk5wnadyex36tm6hd":  {
+                                                                        "shares":  78330,
+                                                                        "lastSeen":  1793573832919,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q0nu3pmz3kuuwsd2kmh6d528ru2qgnsuqksdrs9":  {
+                                                                        "shares":  401,
+                                                                        "lastSeen":  1793555632352,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q5dwzxg3etutufgx8knxagkdkd330zdnzn43wgq":  {
+                                                                        "shares":  10964,
+                                                                        "lastSeen":  1793555542944,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q7nxc76v5pvyfw80yrvqkyyxc0n8k4lu2n4munl":  {
+                                                                        "shares":  245,
+                                                                        "lastSeen":  1793517911935,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qhqdnjxneyrlh2gl2trcag0hq3gga7nwpytkh5p":  {
+                                                                        "shares":  1,
+                                                                        "lastSeen":  1793489572686,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qky5mc3wu02pt82g5xp86rzt05hdx0xx2hvs2vv":  {
+                                                                        "shares":  65724,
+                                                                        "lastSeen":  1793469211397,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qj0h3jtrazhk7cd56kdqnpq38ej8cx54hpqplct":  {
+                                                                        "shares":  205,
+                                                                        "lastSeen":  1793424845670,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qy8tzu5gmlnk5ckd0e64y37w4jt9c9vlhqarxel":  {
+                                                                        "shares":  5,
+                                                                        "lastSeen":  1793361268549,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qjyrt8qq8ny2gclhaa6xquksu3k8cnzg75gwgae":  {
+                                                                        "shares":  189,
+                                                                        "lastSeen":  1793343435829,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qh79geefxj7uap7cre8ue8u3avavmtlwmj82dx4":  {
+                                                                        "shares":  143,
+                                                                        "lastSeen":  1793266999845,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qjftrfykp3esklwu2py7a7ck22a9wav5h9wjnhj":  {
+                                                                        "shares":  3824,
+                                                                        "lastSeen":  1793172485120,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qzaj6sdp3h8q22jufl4903d5z00zgzrehtfe4m5":  {
+                                                                        "shares":  2803,
+                                                                        "lastSeen":  1792963369680,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qkpavvkca08uu76y3tla9qrg5s43vcge6nqjhdc":  {
+                                                                        "shares":  694,
+                                                                        "lastSeen":  1792886773987,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qslrg62lhug7kjqp7x9tm7neullr6mv34uqd8cw":  {
+                                                                        "shares":  38,
+                                                                        "lastSeen":  1792883793927,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qs5nxunwj7c4658e90qga06w2utqyr6tcs7ymsr":  {
+                                                                        "shares":  24,
+                                                                        "lastSeen":  1792713614288,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qmea84rhssxwtza49647ctl2jyx5yy4n36enqp7":  {
+                                                                        "shares":  11,
+                                                                        "lastSeen":  1792688891053,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qtx7m5ptgumct6x0fxwmasp6wclgejexaa5p3sc":  {
+                                                                        "shares":  32650,
+                                                                        "lastSeen":  1792610263283,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qt5xh5svlz4nj9q5uyyqv807vfl4n5u5jux3gqz":  {
+                                                                        "shares":  63,
+                                                                        "lastSeen":  1792330165698,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qdjvv7g76tjx8djspvr2agul3gyhxfcm98js6km":  {
+                                                                        "shares":  48578,
+                                                                        "lastSeen":  1792261078687,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q7zsaskflkk6pgh3y4azktqfqx57567q80xjyh5":  {
+                                                                        "shares":  15361,
+                                                                        "lastSeen":  1792215741926,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q64rgwh7xhkma2tg0gz8umfc7t26sppd6w3rxwc":  {
+                                                                        "shares":  13164,
+                                                                        "lastSeen":  1792001599727,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q6n2uzgjn0rxe9gqytpsysrmqu8rgmkyt8srefm":  {
+                                                                        "shares":  99,
+                                                                        "lastSeen":  1791969593516,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qcftfhvg9zc20pwk2n7k67hetjvlmdsewzy7c6w":  {
+                                                                        "shares":  1504,
+                                                                        "lastSeen":  1791907582031,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q0qg3964j26pfvvkxv6cedfyx9ypfn5s7utwatg":  {
+                                                                        "shares":  457,
+                                                                        "lastSeen":  1791894614513,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q72gf4px4f8al07ghur8sew3m75hjtgg3trqnrm":  {
+                                                                        "shares":  187,
+                                                                        "lastSeen":  1791847856777,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q52tzj9hh96vdtc7wsy6xztw0tj68hc7aa9ywsl":  {
+                                                                        "shares":  610,
+                                                                        "lastSeen":  1791839857993,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1p46xgj67mnjq3z7gul2rekpp6lrauv2ggp8jn496daks98hqax3esn3llk0":  {
+                                                                                            "shares":  2074,
+                                                                                            "lastSeen":  1791832713056,
+                                                                                            "difficulty":  0
+                                                                                        },
+                    "bc1pzjlj6avqqj8q7nzed2g6k8q06zcgtyrsmpw9r5deqeyz4kmj2cvspc20k6":  {
+                                                                                           "shares":  5,
+                                                                                           "lastSeen":  1791789316662,
+                                                                                           "difficulty":  0
+                                                                                       },
+                    "tar1qc5e6td20u55kdgf62hxvn5er53yzffhckv9quq":  {
+                                                                        "shares":  133666,
+                                                                        "lastSeen":  1791789149681,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qnf3nv5gwqq4v83x4fjrntfknnam4e4l5sxpg97":  {
+                                                                        "shares":  328,
+                                                                        "lastSeen":  1791780003938,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q44pdxvccdc0umgxf6cufclfxgqu6spe6d36ky4":  {
+                                                                        "shares":  4302,
+                                                                        "lastSeen":  1791689378124,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qhv8y5970wdx8vm6zhw070xcd6qmv50sskc2eg5":  {
+                                                                        "shares":  5,
+                                                                        "lastSeen":  1791539177273,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q4n42zpdyerrvavhj5u7r5tzh09r93208mczquv":  {
+                                                                        "shares":  1008,
+                                                                        "lastSeen":  1791376113575,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q8jel0llqjvw84m4vj033hqn96lr5gf7k7k3sq6":  {
+                                                                        "shares":  1788,
+                                                                        "lastSeen":  1791336641252,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qkqwjqyf5k0a8f8q2gfx7c8mfg2p4gewmvscdg6":  {
+                                                                        "shares":  110,
+                                                                        "lastSeen":  1791310522544,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qs8xkh88jnz9fhrqj7mlk3xc3tvgkt9mjz5zgxz":  {
+                                                                        "shares":  364,
+                                                                        "lastSeen":  1791247642113,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1quepleq03m848ljkqz9gjsmg85g9jsq0eqqnj0t":  {
+                                                                        "shares":  29388,
+                                                                        "lastSeen":  1791185893982,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q587ku62fxmxgc24lq6l43dkyjn8euy3jq092an":  {
+                                                                        "shares":  65,
+                                                                        "lastSeen":  1791058144922,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qzy4qnveeyjm74z73gx6t3ax4w6yhl0zfnfka96":  {
+                                                                        "shares":  166,
+                                                                        "lastSeen":  1790871865045,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q73s5kn3x9wnyy83q74dry4tyy84uh5mqkwgcmu":  {
+                                                                        "shares":  264304,
+                                                                        "lastSeen":  1790867206395,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qu0umprdxv304c4tfu05afq5l6gjth9j3kxcjvm":  {
+                                                                        "shares":  16243,
+                                                                        "lastSeen":  1790844792595,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q8sqppyc82r5t4386lta82c05hj04jzwr2pw406":  {
+                                                                        "shares":  3074,
+                                                                        "lastSeen":  1790826560791,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1qnhrjphw4xnlx589ytuh03dtva3tc53tgwaqvk5":  {
+                                                                        "shares":  35465,
+                                                                        "lastSeen":  1790641208327,
+                                                                        "difficulty":  0
+                                                                    },
+                    "tar1q8lx09ydvlrujgx8p8ry2zce8cf4f9hh5hvenqq":  {
+                                                                        "shares":  34,
+                                                                        "lastSeen":  1790569931834,
+                                                                        "difficulty":  0
+                                                                    }
+                },
+    "blocksFound":  [
+                        {
+                            "worker":  "tVVUs3mQ5PJbWTcgEbMWBGi4ZWSLrpMVtx",
+                            "height":  11780,
+                            "time":  1793987535468,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qnjtxwsqxy8xedhqjtxgpm808gpjpa4ptvn5hrw.s9",
+                            "height":  11768,
+                            "time":  1793981833605,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qvq6fxwp893hxq5q3nr29xq6jlyx7n335ddpaur.Gamma2",
+                            "height":  11767,
+                            "time":  1793979596508,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qnjtxwsqxy8xedhqjtxgpm808gpjpa4ptvn5hrw.s9",
+                            "height":  11746,
+                            "time":  1793967347938,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qnjtxwsqxy8xedhqjtxgpm808gpjpa4ptvn5hrw.602",
+                            "height":  11722,
+                            "time":  1793965083873,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "iamlucky.tar.bitaxe1",
+                            "height":  11714,
+                            "time":  1793949474038
+                        },
+                        {
+                            "worker":  "tar1qn4zw72paz0swx7dxg83shnpcam4knsrjyq58l6.bitaxe",
+                            "height":  11700,
+                            "time":  1793946848576
+                        },
+                        {
+                            "worker":  "tar1qjlahvd2sw8galv5h7rk25slgan9nqp5npde6rn.legend7",
+                            "height":  11696,
+                            "time":  1793937099098,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qp3ndnls7hc9yxmfma3kurccjn6a4lf8vaxd7qu.NerdQaxeParasite",
+                            "height":  11695,
+                            "time":  1793936590754,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qrwx0rnpppklnx9reqd3s4gawjwpllxqsdk4sny.1",
+                            "height":  11658,
+                            "time":  1793912706816,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qrwx0rnpppklnx9reqd3s4gawjwpllxqsdk4sny.1",
+                            "height":  11654,
+                            "time":  1793912150398,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tVVUs3mQ5PJbWTcgEbMWBGi4ZWSLrpMVtx",
+                            "height":  11647,
+                            "time":  1793906384368,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tVVUs3mQ5PJbWTcgEbMWBGi4ZWSLrpMVtx",
+                            "height":  11638,
+                            "time":  1793903240855,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "iamlucky.tar.nerd1",
+                            "height":  11631,
+                            "time":  1793898867171
+                        },
+                        {
+                            "worker":  "tar1qrwx0rnpppklnx9reqd3s4gawjwpllxqsdk4sny.SilverSluice2",
+                            "height":  11621,
+                            "time":  1793889340193,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qv09p2c59rz8dzpheh86vcm2wupwkukyur3s2sg",
+                            "height":  11585,
+                            "time":  1793868764033
+                        },
+                        {
+                            "worker":  "tar1qnlnr8c4hg5ulwhey2eqhpxyd8q6kwfhuxrhx9v",
+                            "height":  11535,
+                            "time":  1793838746648,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qjlahvd2sw8galv5h7rk25slgan9nqp5npde6rn.legend7",
+                            "height":  11411,
+                            "time":  1793752963457,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1q0nu3pmz3kuuwsd2kmh6d528ru2qgnsuqksdrs9.NERDoctaxe",
+                            "height":  11329,
+                            "time":  1793700744477,
+                            "solo":  true
+                        },
+                        {
+                            "worker":  "tar1qrwx0rnpppklnx9reqd3s4gawjwpllxqsdk4sny.1",
+                            "height":  11280,
+                            "time":  1793670051228,
+                            "solo":  true
+                        }
+                    ],
+    "height":  11781,
+    "blockHeight":  11781,
+    "currentBlock":  11781,
+    "poolHashrate":  11751963858746.012
+}

@@ -102,6 +102,43 @@ export default function TransparencyPage() {
           <div className="p-6">
             <div className="relative border-l-2 border-gray-800 ml-3 md:ml-4 space-y-12">
               
+              {/* Ledger Item: November 7th, 2026 - Annual Infrastructure Runway */}
+              <div className="relative pl-8 md:pl-10">
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-cyan-400 border-4 border-[#11141A]" />
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest text-cyan-400 uppercase">November 7, 2026 &middot; 12-Month Runway</span>
+                    <h3 className="text-xl font-bold text-white mt-1">Annual Infrastructure &amp; Node Operations Runway</h3>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-3 py-1.5 rounded-lg font-mono font-bold">
+                    - 212,500,000 TAR
+                  </div>
+                </div>
+
+                <div className="bg-[#1A1E26] rounded-xl p-5 border border-gray-800/50 mb-6">
+                  <h4 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Purpose of Funds</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    12-month operational runway (June 2026 - May 2027) funding global server infrastructure, mining pool nodes, and official network hosting.
+                  </p>
+                  
+                  <div className="space-y-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">TxID Proof:</span>
+                      <a href="https://explorer.tarcoin.org/tx/6a8649506dc4ac9fc74c053f880522377ff2d6f042bf865bbfc3ca9b88a77f9c" target="_blank" rel="noreferrer" className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        6a8649506dc4ac9fc74c053f880522377ff2d6f042bf865bbfc3ca9b88a77f9c <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Recipient:</span>
+                      <span className="text-xs text-gray-300 font-mono break-all">
+                        Infrastructure &amp; Server Operations Provider (12-Month Expense Settlement)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Ledger Item: October 13th, 2026 - CryptoJar Tipbot Milestone 2 */}
               <div className="relative pl-8 md:pl-10">
                 <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-purple-400 border-4 border-[#11141A]" />
