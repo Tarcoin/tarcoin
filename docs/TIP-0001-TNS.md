@@ -1,6 +1,6 @@
 # TIP-0001: TARCOIN Name System (TNS-1)
 
-**Status:** Proposed Technical Improvement  
+**Status:** Active (Implemented & Live on Mainnet)  
 **Protocol:** TARCOIN Name System  
 **Protocol Identifier:** TNS-1  
 **Network:** TARCOIN  
