@@ -1,0 +1,26 @@
+[PM2 Process: mining-pool (pid: 4)]
+Server: VPS 1 (Ubuntu 22.04 LTS)
+Timestamp: 2026-11-07 22:03:49 UTC
+Target Block: #11861 (Coinbase Reward: 50,000.00000000 TAR)
+Status: 104 Confirmations (Matured)
+
+=== LOG SNIPPET: MINING POOL ENGINE ===
+Submitting block height 11861 to network...
+Executing sendmany: {
+Payout successful! TXID: 445100d34304ce2099932c2d4eca995685bf3645094f1e5be8f01ecdddf280f2
+
+=== PPLNS SHARE DISTRIBUTION BREAKDOWN (7-DAY WINDOW) ===
+Total Active Shares: ~5,250 clean shares
+Active Miners: 4 primary + Bitaxe workers
+Fee: 0.00012890 TAR (Included in TX)
+Total Distributed: 49,999.99987110 TAR
+
+Recipients:
+1. tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya (iamlucky.tar): 21,625.23358911 TAR (~43.25%)
+2. tar1qv09p2c59rz8dzpheh86vcm2wupwkukyur3s2sg (adriano):     10,278.50464640 TAR (~20.55%)
+3. tar1qlfjmz9r573wu4jdgvn0quvcn3fdc7v5mykzz9u:             10,404.67287037 TAR (~20.80%)
+4. tar1qjftrfykp3esklwu2py7a7ck22a9wav5h9wjnhj:              6,400.93456294 TAR (~12.80%)
+5. tar1qn4zw72paz0swx7dxg83shnpcam4knsrjyq58l6 (Bitaxe):        765.42055877 TAR
+6. tar1quz3hv...:                                              499.99999872 TAR
+7. tar1qy7hph...:                                               16.82242986 TAR
+8. tar1q5ktd7...:                                                8.41121493 TAR

@@ -1,0 +1,71 @@
+﻿{
+    "hash":  "000000000000000165bc65c07919cf0c428dda5316e67f21dd144a7761b8937e",
+    "confirmations":  150,
+    "height":  11631,
+    "version":  603103232,
+    "versionHex":  "23f2a000",
+    "merkleroot":  "f7f0068b52311792155d6f8676daf00869a3f7221eed80c2ca0af116f3db75f8",
+    "time":  1793898846,
+    "mediantime":  1793893582,
+    "nonce":  2435416234,
+    "bits":  "191a699a",
+    "target":  "000000000000001a699a00000000000000000000000000000000000000000000",
+    "difficulty":  162608642.4047557,
+    "chainwork":  "00000000000000000000000000000000000000000000007d719363e08378fc58",
+    "nTx":  2,
+    "previousblockhash":  "000000000000000ad27e8b02da5032e528c9c6633ad42d020d4416fa5c08595e",
+    "nextblockhash":  "0000000000000006694431e984ca46890ef83ca7d82a96d1e0a2d5b247c30587",
+    "strippedsize":  752,
+    "size":  899,
+    "weight":  3155,
+    "coinbase_tx":  {
+                        "version":  1,
+                        "locktime":  0,
+                        "sequence":  4294967295,
+                        "coinbase":  "026f2ddf1091b60000c3e5",
+                        "witness":  "0000000000000000000000000000000000000000000000000000000000000000"
+                    },
+    "tx":  [
+               {
+                   "txid":  "cd17c2133bb4fb58669ee034882c8e74c1ec6f21699e928b37b16e3dd6673ac7",
+                   "hash":  "279688efb017ddfef7fcbc46993078e620605fc0c6c4a47a73ece1d5def2c060",
+                   "version":  1,
+                   "size":  176,
+                   "vsize":  149,
+                   "weight":  596,
+                   "locktime":  0,
+                   "vin":  [
+                               "@{coinbase=026f2ddf1091b60000c3e5; txinwitness=System.Object[]; sequence=4294967295}"
+                           ],
+                   "vout":  [
+                                "@{value=50000.00019828; n=0; scriptPubKey=}",
+                                "@{value=0; n=1; scriptPubKey=}"
+                            ],
+                   "hex":  "010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0b026f2ddf1091b60000c3e5ffffffff02749d39278c0400001600140de17bfae2199542aefe26f3dc8d0bd475475e310000000000000000266a24aa21a9ed1f1ab297bc9e81a65131813af6378924b53f5adafbabde847af7f7641312e52a0120000000000000000000000000000000000000000000000000000000000000000000000000"
+               },
+               {
+                   "txid":  "48a3452099987ada5e0723c17f60101f21ed33178dd395cb7d6bc35fc6951c09",
+                   "hash":  "e10bc98264b7a185ef8c9ad59acfa8d6f34d8c12f4040dabf668b8a4214132ee",
+                   "version":  2,
+                   "size":  642,
+                   "vsize":  559,
+                   "weight":  2235,
+                   "locktime":  11630,
+                   "vin":  [
+                               "@{txid=09b3ccd32093a875a3a5b4719642d643ff714104ae456a1e5d65e3c65df3e3a4; vout=1; scriptSig=; sequence=4294967293}",
+                               "@{txid=e4b003fe7a0419a2fcd1dc3ba5086df97e2d11eccd605802404aaf3c8671cdbd; vout=2; scriptSig=; txinwitness=System.Object[]; sequence=4294967293}",
+                               "@{txid=7572726dc7e20ea9eb2f1aeac18dea643b02e5a419bd9f83139b61c8b60d68b9; vout=1; scriptSig=; sequence=4294967293}"
+                           ],
+                   "vout":  [
+                                "@{value=460.6525; n=0; scriptPubKey=}",
+                                "@{value=1000; n=1; scriptPubKey=}",
+                                "@{value=4494.4976; n=2; scriptPubKey=}",
+                                "@{value=93693.2249; n=3; scriptPubKey=}",
+                                "@{value=351.6251; n=4; scriptPubKey=}",
+                                "@{value=24545.30270408; n=5; scriptPubKey=}"
+                            ],
+                   "fee":  0.00019828,
+                   "hex":  "02000000000103a4e3f35dc6e3655d1e6a45ae044171ff43d6429671b4a5a375a89320d3ccb309010000006a4730440220766b7b942d67ba04ac037b5cc3224f6b1df98ae35e273f84ca49006e193a0f4702206b0c3c605db672bed7bebfc15a33422deb39377c2b3cbcb87b6a2cfd8b2364bf012102d9a938ffc5b8d4a0cb3e8428d68c35a3a073f42016c9b0399ba43c4871b04f7bfdffffffbdcd71863caf4a40025860cdec112d7ef96d08a53bdcd1fca219047afe03b0e40200000000fdffffffb9680db6c8619b13839fbd19a4e5023b64ea8dc1ea1a2feba90ee2c76d727275010000006a473044022006b30edc4f36fe533b8683505568709f15afa80f932849227d1c4dd22b18a61f02202c5246c25cc52bd68c0d579fa2c03be042916bb41174b62715f47751dc57ed2e012102d9a938ffc5b8d4a0cb3e8428d68c35a3a073f42016c9b0399ba43c4871b04f7bfdffffff06d0eeb3b90a000000160014b11984ed9ff27476b05cc11963a9a2dff13f071300e87648170000001600145a23575da01118080ed38dd268cff3f53643020600154ba568000000160014675b6dc45c1a50af6accb4ac52c3d495bafb46bc9088237785080000160014d4ca5c672c51e35b63b26829b7f7bffadac35a08b052d92f080000001600146752174307d1171aaefbfac04ae601f5fa31ff47c8a4677d3b020000160014fa610c96bae418cb6c4fde1b8e8ea231223f94dc000247304402202820a824683ea97b5b296040af457646b96db460c2c750aee3379aeebbc339b902200ffd79f841273f2b4ec78b5c0530e9809815b5868ce7e110340edd9bbc023187012103960493be598c643c61f3e709b3521a847996683d8d5151be20851a1d3a811414006e2d0000"
+               }
+           ]
+}

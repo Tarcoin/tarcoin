@@ -1,0 +1,47 @@
+﻿{
+    "hash":  "000000000000000fda620196946719a2b10d4ea1a923dd11d0968d2da87f27e7",
+    "confirmations":  67,
+    "height":  11714,
+    "version":  537255936,
+    "versionHex":  "2005e000",
+    "merkleroot":  "144f52df58f7bc5acb43eb0e001a9a6092ecbb9c244d9ca78d1561732e00edac",
+    "time":  1793949469,
+    "mediantime":  1793948075,
+    "nonce":  2994344797,
+    "bits":  "191e9707",
+    "target":  "000000000000001e970700000000000000000000000000000000000000000000",
+    "difficulty":  140402376.6354889,
+    "chainwork":  "0000000000000000000000000000000000000000000000808af5e0487fd9f82b",
+    "nTx":  1,
+    "previousblockhash":  "0000000000000008d23e6cdf80cb7cec851839749177850a74a2f585739e72cb",
+    "nextblockhash":  "000000000000000d14934f33681dcb34e1c46b43ebe37682b7ffede7733ed617",
+    "strippedsize":  221,
+    "size":  257,
+    "weight":  920,
+    "coinbase_tx":  {
+                        "version":  1,
+                        "locktime":  0,
+                        "sequence":  4294967295,
+                        "coinbase":  "02c22dba603ff807000000",
+                        "witness":  "0000000000000000000000000000000000000000000000000000000000000000"
+                    },
+    "tx":  [
+               {
+                   "txid":  "144f52df58f7bc5acb43eb0e001a9a6092ecbb9c244d9ca78d1561732e00edac",
+                   "hash":  "f519f8635eb42ae4d6f28541fff5a856cd255180324a0295f4aee81ae79aa957",
+                   "version":  1,
+                   "size":  176,
+                   "vsize":  149,
+                   "weight":  596,
+                   "locktime":  0,
+                   "vin":  [
+                               "@{coinbase=02c22dba603ff807000000; txinwitness=System.Object[]; sequence=4294967295}"
+                           ],
+                   "vout":  [
+                                "@{value=50000; n=0; scriptPubKey=}",
+                                "@{value=0; n=1; scriptPubKey=}"
+                            ],
+                   "hex":  "010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0b02c22dba603ff807000000ffffffff02005039278c0400001600140de17bfae2199542aefe26f3dc8d0bd475475e310000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000"
+               }
+           ]
+}
