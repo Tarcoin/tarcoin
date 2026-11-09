@@ -76,6 +76,22 @@ Mining pools can use registered names as worker identities and consolidate share
 
 TNS-1 is designed to operate without changing TARCOIN consensus rules. Its application-level validation and state transitions are performed by the TNS indexing service.
 
+## 2.7 Historical Comparison and Architectural Innovation
+
+TARCOIN is the world's first Proof-of-Work blockchain to unify native Layer-1 domain resolution directly into Stratum mining identities (both PPLNS and Solo), automated coinbase reward distribution, and decentralized IPFS website resolution on a pure Bitcoin UTXO architecture.
+
+| Feature / Capability | Namecoin (.bit, 2011) | Handshake (HNS, 2020) | ENS (.eth, 2017) | TARCOIN (.tar, 2026) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Consensus Architecture** | PoW (Merged-mined) | PoW (ASIC) | PoS (EVM Token) | **PoW (SHA-256d UTXO)** |
+| **Native L1 Domain Registry** | Yes (
+ame_new) | Yes (Root Zone) | No (Smart Contract) | **Yes (OP_RETURN / UTXO)** |
+| **Decentralized IPFS Resolution** | No (Predates IPFS) | No (DNS Delegation) | Yes (contenthash) | **Yes (ipfs / ipfs_cid)** |
+| **Stratum Mining with Domain Identity** | No (Raw address only) | No (Raw address only) | No (N/A) | **Yes (PPLNS & Solo)** |
+| **Automated Name-Resolved PPLNS Payouts** | No | No | No | **Yes (pool:shares 7-day)** |
+| **Direct Solo Coinbase Block Minting** | No | No | No | **Yes (uildSoloCoinbase)** |
+
+**Historical Priority Statement:** While Namecoin and Handshake established early blockchain naming systems, neither integrated domain resolution into Stratum mining protocols or automated coinbase reward routing. While ENS supports IPFS resolution, it operates as an EVM smart contract rather than a native Layer-1 PoW blockchain. TARCOIN is the first Proof-of-Work blockchain to unify native L1 naming, decentralized IPFS website hosting, and Stratum mining identity into a single Bitcoin-architecture protocol.
+
 ---
 
 # 3. Terminology and Definitions
@@ -653,6 +669,18 @@ tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya
 Their shares are combined into one wallet-level reward calculation.
 
 The worker suffix identifies the mining worker; it does not independently establish domain ownership or authorize a different payout address.
+
+## 7.6 Solo Mining Coinbase Generation
+
+In addition to shared PPLNS pooling, TNS-1 integrates directly with the Solo Stratum engine (TCP port 3334).
+
+When a solo miner connects with a .tar domain identity:
+1. The Stratum daemon resolves the domain to its canonical Layer-1 address using 
+esolveTnsToAddress().
+2. The daemon builds a custom block template via uildSoloCoinbase(minerAddress, template), writing the miner's resolved address directly into the block's coinbase output script (scriptPubKey).
+3. When the solo miner finds a valid block, the blockchain protocol mints the full 50,000 TAR coinbase reward directly to the resolved .tar domain address on-chain.
+
+This ensures zero pool custody and zero intermediate payout transactions—the newly mined block on the blockchain ledger is minted directly to the owner of the .tar domain.
 
 ---
 
