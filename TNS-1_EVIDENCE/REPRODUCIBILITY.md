@@ -110,6 +110,7 @@ The pre-compiled audit logs and explorer records are located in this directory:
 - `04_Mining_Worker_Identity/`: Clean PPLNS active miner share table.
 - `06_Onchain_Settlement/`: Wallet app inspection and block explorer multi-output receipts.
 - `08_Technical_Documentation/TIP-0001.md`: Full specification text.
+- `08_Technical_Documentation/TNS_WHITEPAPER.md`: Official Technical Whitepaper v2.0 (Unified Layer-1 Identity Protocol).
 
 ---
 
