@@ -101,7 +101,37 @@ Retrieve the decoded payout transaction:
 
 ---
 
-## 5. Reviewing Immutable Evidence Files
+## 5. Auditing Solo Block #12215 & Solo Mining Coinbase Settlement
+
+In addition to shared PPLNS distribution, TNS-1 natively supports direct Solo Mining via TCP port 3334 (`buildSoloCoinbase`).
+
+### Step 5.1: Verify Solo Block #12215 on Mainnet
+Query the block header and coinbase via `tarcoin-cli`:
+```bash
+./tarcoin-cli getblock $(./tarcoin-cli getblockhash 12215) 2
+```
+Verify:
+- Block Height: `12215`
+- Miner Domain: `iamlucky.tar` (Worker: `nerd2`)
+- Confirmations: `>= 100` (`matured`)
+
+### Step 5.2: Verify Solo Settlement Transaction `a6af464f...`
+Retrieve the decoded settlement transaction:
+```bash
+./tarcoin-cli getrawtransaction "a6af464ff48f2e28cfb12cb09a5b6347e393e1e27b4f793db78e8858a3edec08" 1
+```
+
+**Auditing the Output Breakdown:**
+- Confirm solo mining reward: **`49,500.0000495 TAR`** paid directly to:
+  ```text
+  tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya
+  ```
+  *(Matches the TNS resolution of `iamlucky.tar`)*.
+- Status: Confirmed (118 Confirmations / Matured).
+
+---
+
+## 6. Reviewing Immutable Evidence Files
 
 The pre-compiled audit logs and explorer records are located in this directory:
 - `01_PPLNS/block_11861_payout_log.txt`: Raw server PM2 logs linking `sendmany` to TXID `445100d3...`.
@@ -111,10 +141,11 @@ The pre-compiled audit logs and explorer records are located in this directory:
 - `06_Onchain_Settlement/`: Wallet app inspection and block explorer multi-output receipts.
 - `08_Technical_Documentation/TIP-0001.md`: Full specification text.
 - `08_Technical_Documentation/TNS_WHITEPAPER.md`: Official Technical Whitepaper v2.0 (Unified Layer-1 Identity Protocol).
+- `09_Solo_Mining_Settlement/`: Solo pool dashboard, active solo miners table, block #12215 maturation record (118 confirmations), and wallet application transaction modal verifying TXID `a6af464f...` (+49,500.0000495 TAR).
 
 ---
 
-## 6. Deterministic SQLite Replay from Genesis
+## 7. Deterministic SQLite Replay from Genesis
 
 To verify that the TNS state database is 100% reproducible:
 1. Stop the daemon: `pm2 stop tns-service` (or Ctrl+C).
