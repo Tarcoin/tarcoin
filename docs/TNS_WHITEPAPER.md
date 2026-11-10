@@ -238,6 +238,9 @@ When a solo miner connects with a `.tar` domain:
 
 This ensures zero pool custody and zero intermediate payout transactions—the newly mined block on the blockchain ledger is minted directly to the owner of the `.tar` domain at the consensus level.
 
+*Empirical Mainnet Verification (Block #12215):*
+Production solo mining block `#12215` was discovered on mainnet port 3334 by worker `nerd2` using domain identity `iamlucky.tar`. The solo engine dynamically resolved the domain to canonical address `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya`, with full block maturation and direct reward receipt verified at TXID `a6af464ff48f2e28cfb12cb09a5b6347e393e1e27b4f793db78e8858a3edec08` (+49,500.0000495 TAR at 118 confirmations).
+
 ---
 
 # 6. Decentralized Website Hosting Through IPFS

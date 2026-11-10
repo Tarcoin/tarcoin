@@ -663,7 +663,7 @@ iamlucky.tar.bitaxe1
 Both workers resolve to:
 
 ```text
-tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya
+tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya
 ```
 
 Their shares are combined into one wallet-level reward calculation.
@@ -1229,7 +1229,7 @@ This suite documents an observed production payout through the TNS-aware mining-
 | Block height | `11861` |
 | TNS domain | `iamlucky.tar` |
 | Worker identifiers | `nerd1`, `bitaxe1` |
-| Resolved address | `tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya` |
+| Resolved address | `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya` |
 | Maturity observed | 104 confirmations |
 
 Both worker identities resolve to the same TARCOIN address and are aggregated for wallet-level reward calculation.
@@ -1280,7 +1280,7 @@ The recorded payment was:
 Destination:
 
 ```text
-tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya
+tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya
 ```
 
 ### Production Evidence
@@ -1320,7 +1320,58 @@ The evidence documents:
 
 This production record demonstrates an operational TNS-to-PPLNS settlement path.
 
-## 11.6 Reproducibility
+## 11.6 Suite F — Production Settlement Audit: Solo Mining Block #12215
+
+This suite documents an observed production solo mining block discovery and direct coinbase reward settlement through the TNS-aware solo mining stratum engine (port 3334).
+
+### Block and Solo Miner Identification
+
+| Item | Production Record |
+|---|---|
+| Block Height | `12215` |
+| Stratum Engine | Solo Stratum (TCP port 3334, ASICBoost enabled) |
+| TNS Domain | `iamlucky.tar` |
+| Worker Identifier | `nerd2` |
+| Resolved Address | `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya` |
+| Maturity Observed | 118 confirmations (`matured`) |
+| Mining Hashrate / Luck | 4.07 TH/s (Difficulty 5,000, Luck 8,289%) |
+
+### Solo Coinbase Generation & Reward Settlement
+
+In solo stratum mode, the template generator dynamically constructs the block coinbase paying directly to the address resolved from the `.tar` domain identity via `buildSoloCoinbase(minerAddress, template)`.
+
+When block #12215 was discovered by worker `nerd2` using domain identity `iamlucky.tar`:
+1. The pool recognized the registered `.tar` domain on port 3334.
+2. The domain was resolved to canonical mainnet address `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya`.
+3. The block was submitted and accepted on the TARCOIN mainnet network.
+4. After passing 100 on-chain confirmations, the mature block reward was settled to the resolved wallet.
+
+### Solo Settlement Transaction
+
+| Item | Value |
+|---|---|
+| Transaction Hash (TXID) | `a6af464ff48f2e28cfb12cb09a5b6347e393e1e27b4f793db78e8858a3edec08` |
+| Net Reward Received | `49,500.0000495 TAR` (50,000 TAR coinbase minus 1% pool fee + tx fees) |
+| Recipient Address | `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya` |
+| Status | Confirmed (118 Confirmations) |
+| Timestamp | `11/9/2026, 5:33:13 PM` |
+| Node Note | `Synced from TARCOIN Mainnet Node` |
+
+### Production Solo Evidence
+
+The solo audit evidence is cataloged under:
+
+```text
+TNS-1_EVIDENCE/09_Solo_Mining_Settlement/
+    ├── solo_pool_dashboard_iamlucky.jpg   # Solo pool dashboard showing iamlucky.tar active on port 3334
+    ├── solo_miners_iamlucky.png           # Active solo miners table tracking iamlucky.tar (1 block found)
+    ├── solo_block_12215_matured.png       # Solo blocks found table showing block #12215 at 118 confirmations
+    └── wallet_solo_reward_tx_a6af464f.png # Tarcoin node wallet receipt of +49,500.0000495 TAR to resolved address
+```
+
+This production record provides end-to-end mainnet verification that TNS-1 domain identities operate natively with direct solo mining coinbase block generation and settlement.
+
+## 11.7 Reproducibility
 
 Test evidence should identify:
 
@@ -1831,7 +1882,7 @@ iamlucky.tar.bitaxe1
 Both resolve to:
 
 ```text
-tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya
+tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya
 ```
 
 Their eligible shares are aggregated under that address.
@@ -1899,7 +1950,7 @@ After a payout is broadcast, the wallet's spendable balance is reduced by the co
 | Block height | `11861` |
 | Domain | `iamlucky.tar` |
 | Workers | `nerd1`, `bitaxe1` |
-| Resolved address | `tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya` |
+| Resolved address | `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya` |
 | Coinbase maturity observed | 104 confirmations |
 
 ### PPLNS Execution
@@ -1948,7 +1999,7 @@ The recorded payment was:
 to:
 
 ```text
-tar1qka69hjnlx736nxf3y67lc49y9ym2xlrthrcgya
+tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya
 ```
 
 ### Evidence Directory
@@ -1984,6 +2035,48 @@ The block #11861 production record demonstrates the integrated workflow:
 8. The resolved address received 21,625.23358911 TAR.
 
 This provides production evidence of an operational TNS-to-PPLNS mining-pool settlement path.
+
+## C.13 Production Settlement Audit — Solo Mining Block #12215
+
+### Block and Solo Miner Details
+
+| Item | Record |
+|---|---|
+| Block height | `12215` |
+| Stratum Engine | Solo Stratum (Port 3334, ASICBoost enabled) |
+| Domain | `iamlucky.tar` |
+| Worker | `nerd2` |
+| Resolved address | `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya` |
+| Maturity observed | 118 confirmations (`matured`) |
+
+### Transaction Submission & Settlement
+
+| Item | Value |
+|---|---|
+| Settlement TXID | `a6af464ff48f2e28cfb12cb09a5b6347e393e1e27b4f793db78e8858a3edec08` |
+| Amount | `49,500.0000495 TAR` |
+| Recipient | `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya` |
+| Timestamp | `11/9/2026, 5:33:13 PM` |
+
+### Solo Evidence Files
+
+```text
+TNS-1_EVIDENCE/09_Solo_Mining_Settlement/
+    ├── solo_pool_dashboard_iamlucky.jpg
+    ├── solo_miners_iamlucky.png
+    ├── solo_block_12215_matured.png
+    └── wallet_solo_reward_tx_a6af464f.png
+```
+
+### Production Solo Audit Conclusion
+
+The block #12215 production record confirms:
+1. Stratum connection over port 3334 with identity `iamlucky.tar.nerd2`.
+2. Automatic resolution of `iamlucky.tar` to `tar1qka69hjlnx736nxf3y67lc49y9ym2xlrthrcgya`.
+3. Solo block template minting through `buildSoloCoinbase`.
+4. Block maturation and on-chain receipt of 49,500.0000495 TAR at the resolved domain address.
+
+This provides definitive proof that TNS Layer-1 domain identity operates seamlessly across both shared pool (PPLNS) and solo mining architectures.
 
 ---
 
