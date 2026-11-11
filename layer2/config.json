@@ -1,0 +1,12 @@
+{
+  "network": "mainnet",
+  "p2pPort": 19333,
+  "rpcPort": 19332,
+  "rpcHost": "127.0.0.1",
+  "l2Port": 19735,
+  "magicBytes": "fbb2c3d4",
+  "bech32Hrp": "tar",
+  "lightningHrp": "lntar",
+  "minChannelFunding": 1000,
+  "defaultSettlementBlocks": 144
+}
