@@ -1068,11 +1068,15 @@ function parsePoolFromCoinbase(hex, isOurPool){
   }
   const s = str.toLowerCase();
   if(s.includes("zpool.ca")) return { name: "zpool.ca", isOfficial: false, color: "#ef4444" };
+  if(s.includes("rt-pool")) return { name: "RT-Pool", isOfficial: false, color: "#38bdf8" };
+  if(s.includes("amkira")) return { name: "Amkira.Network", isOfficial: false, color: "#ec4899", tag: "SOLO" };
   if(s.includes("argfamining")) return { name: "ArgfaMining", isOfficial: false, color: "#10b981", tag: "SOLO" };
   if(s.includes("xppool")) return { name: "XP Pool", isOfficial: false, color: "#38bdf8", tag: "SOLO" };
   if(s.includes("bitaxermt")) return { name: "BitaxeRMT", isOfficial: false, color: "#a855f7" };
   if(s.includes("cryptopickaxe")) return { name: "CryptoPickaxe", isOfficial: false, color: "#f59e0b" };
   if(s.includes("fewbit")) return { name: "FewBit", isOfficial: false, color: "#3b82f6" };
+  if(s.includes("miningcore")) return { name: "Miningcore", isOfficial: false, color: "#6366f1", tag: "SOLO" };
+  if(s.includes("yiimp")) return { name: "Yiimp Pool", isOfficial: false, color: "#f97316" };
   if(s.includes("tarcoin")) return { name: "Tarcoin Pool", isOfficial: true, color: "#F2C02B" };
   return { name: "Solo Miner", isOfficial: false, color: "#9ca3af" };
 }

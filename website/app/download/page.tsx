@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 
-const VERSION = "v1.2.6";
+const VERSION = "v1.3.0";
 const GITHUB_REPO        = `https://github.com/Tarcoin/tarcoin`;
 const GITHUB_RELEASE     = `https://github.com/Tarcoin/tarcoin/releases/tag/${VERSION}`;
 const GITHUB_RELEASE_DL  = `https://github.com/Tarcoin/tarcoin/releases/download/${VERSION}`;

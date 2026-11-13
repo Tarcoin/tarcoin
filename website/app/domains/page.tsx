@@ -100,7 +100,7 @@ const TIERS: Record<string, TierInfo> = {
 
 export default function DomainsPage() {
   const [search, setSearch] = useState("");
-  const [years, setYears] = useState<1 | 4>(4);
+  const [years, setYears] = useState<2 | 5>(2);
   const [paymentMethod, setPaymentMethod] = useState<"TAR" | "USDT">("TAR");
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -138,6 +138,18 @@ export default function DomainsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedOrder, setSubmittedOrder] = useState<any | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Tab Switcher & Domain Management State
+  const [activeTab, setActiveTab] = useState<"register" | "manage">("register");
+  const [manageDomainInput, setManageDomainInput] = useState("");
+  const [manageSecretKey, setManageSecretKey] = useState("");
+  const [isVerifyingManage, setIsVerifyingManage] = useState(false);
+  const [manageDomainData, setManageDomainData] = useState<any | null>(null);
+  const [manageTarAddress, setManageTarAddress] = useState("");
+  const [manageIpfsCid, setManageIpfsCid] = useState("");
+  const [isSavingManage, setIsSavingManage] = useState(false);
+  const [manageSuccessMsg, setManageSuccessMsg] = useState<string | null>(null);
+  const [manageError, setManageError] = useState<string | null>(null);
 
   const cleanName = useMemo(() => {
     let clean = search.trim().toLowerCase();
@@ -263,8 +275,8 @@ export default function DomainsPage() {
     return baseTier.priceTarUsd * (premiumInfo.isPremium ? 2 : 1);
   }, [baseTier, premiumInfo.isPremium]);
 
-  // Duration Promo: 4-Year promo pays for 3 years (1 year FREE)
-  const durationMultiplier = years === 4 ? 3 : 1;
+  // Duration Promo: 2-Year promo pays for 1 year (1 yr FREE), 5-Year promo pays for 3 years (2 yrs FREE)
+  const durationMultiplier = years === 5 ? 3 : 1;
   const usdtTotal = effectiveBaseUsdt * durationMultiplier;
   const tarTotalUsd = effectiveBaseTarUsd * durationMultiplier;
 
@@ -278,6 +290,67 @@ export default function DomainsPage() {
     navigator.clipboard.writeText(text);
     setCopied(text);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleTarSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+
+    const cleanTx = txHash.trim();
+    if (!cleanTx || cleanTx.length < 20) {
+      setSubmitError("Please enter a valid Tarcoin Transaction Hash (TXID).");
+      return;
+    }
+
+    if (!enableTarAddress && !enableIpfs) {
+      setSubmitError("Please select at least one record option (Tarcoin Address or IPFS Website).");
+      return;
+    }
+
+    if (enableTarAddress && !tarAddressInput.trim()) {
+      setSubmitError("Please enter your Tarcoin receiving address (tar1...).");
+      return;
+    }
+
+    if (enableIpfs && !ipfsCidInput.trim()) {
+      setSubmitError("Please enter your IPFS Website CID (bafy... or Qm...).");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/domains/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: `${cleanName}.tar`,
+          years,
+          paymentMethod: "TAR",
+          txHash: cleanTx,
+          tarAddress: enableTarAddress ? tarAddressInput.trim() : null,
+          ipfsCid: enableIpfs ? ipfsCidInput.trim() : null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit domain registration");
+      }
+
+      setSubmittedOrder({
+        domain: `${cleanName}.tar`,
+        years,
+        txHash: cleanTx,
+        tarAddress: enableTarAddress ? tarAddressInput.trim() : null,
+        ipfsCid: enableIpfs ? ipfsCidInput.trim() : null,
+        amountUsdt: tarTotalUsd,
+        secretKey: data.secretKey || null,
+      });
+    } catch (err: any) {
+      setSubmitError(err.message || "Failed to submit order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUsdtSubmit = async (e: React.FormEvent) => {
@@ -332,11 +405,88 @@ export default function DomainsPage() {
         tarAddress: enableTarAddress ? tarAddressInput.trim() : null,
         ipfsCid: enableIpfs ? ipfsCidInput.trim() : null,
         amountUsdt: usdtTotal,
+        secretKey: data.secretKey || null,
       });
     } catch (err: any) {
       setSubmitError(err.message || "Failed to submit order. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifySecret = async () => {
+    if (!manageDomainInput.trim()) {
+      setManageError("Please enter your domain name (e.g. yourname.tar).");
+      return;
+    }
+    if (!manageSecretKey.trim()) {
+      setManageError("Please enter your secret management key.");
+      return;
+    }
+
+    setIsVerifyingManage(true);
+    setManageError(null);
+    setManageSuccessMsg(null);
+    try {
+      const res = await fetch("/api/domains/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: manageDomainInput.trim(),
+          secretKey: manageSecretKey.trim(),
+          action: "verify",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to verify domain credentials");
+      }
+      setManageDomainData(data);
+      setManageTarAddress(data.targetAddress || "");
+      setManageIpfsCid(data.ipfsCid || "");
+    } catch (err: any) {
+      setManageError(err.message || "Failed to verify domain credentials");
+    } finally {
+      setIsVerifyingManage(false);
+    }
+  };
+
+  const handleSaveManage = async () => {
+    if (!manageDomainInput.trim() || !manageSecretKey.trim()) {
+      setManageError("Domain name and secret key are required.");
+      return;
+    }
+
+    setIsSavingManage(true);
+    setManageError(null);
+    setManageSuccessMsg(null);
+    try {
+      const res = await fetch("/api/domains/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: manageDomainInput.trim(),
+          secretKey: manageSecretKey.trim(),
+          update: true,
+          tarAddress: manageTarAddress.trim() || null,
+          ipfsCid: manageIpfsCid.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update domain records");
+      }
+      setManageDomainData((prev: any) => ({
+        ...prev,
+        targetAddress: data.targetAddress,
+        ownerAddress: data.ownerAddress,
+        ipfsCid: data.ipfsCid,
+      }));
+      setManageSuccessMsg(`Domain ${data.domain} records updated successfully!`);
+    } catch (err: any) {
+      setManageError(err.message || "Failed to update domain records");
+    } finally {
+      setIsSavingManage(false);
     }
   };
 
@@ -360,29 +510,254 @@ export default function DomainsPage() {
             Host decentralized websites on IPFS and build your censorship-resistant brand.
           </p>
 
-          {/* Search Box */}
-          <div className="relative max-w-xl mx-auto glass p-2 rounded-2xl border border-tarcoin-gold/30 shadow-2xl shadow-tarcoin-gold/10">
-            <div className="flex items-center bg-black/60 rounded-xl px-4 py-3 border border-white/5">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setSubmittedOrder(null);
+          {/* Tabs: Register vs Manage */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex p-1.5 rounded-2xl bg-black/60 border border-white/10 shadow-lg backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("register");
+                  setManageError(null);
+                  setManageSuccessMsg(null);
+                }}
+                className={`px-6 py-2.5 rounded-xl font-orbitron text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeTab === "register"
+                    ? "bg-tarcoin-gold text-black shadow-lg shadow-tarcoin-gold/25"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <span>🌐</span>
+                <span>Register Domain</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("manage");
                   setSubmitError(null);
                 }}
-                placeholder="search your favorite name (e.g. 786, 911, miner, love)"
-                className="w-full bg-transparent text-white font-mono placeholder-gray-600 focus:outline-none text-lg pr-4"
-              />
-              <span className="text-tarcoin-gold font-orbitron font-bold text-lg select-none">
-                .tar
-              </span>
+                className={`px-6 py-2.5 rounded-xl font-orbitron text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeTab === "manage"
+                    ? "bg-tarcoin-gold text-black shadow-lg shadow-tarcoin-gold/25"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <span>⚙️</span>
+                <span>Manage Domain</span>
+              </button>
             </div>
           </div>
+
+          {activeTab === "register" && (
+            /* Search Box */
+            <div className="relative max-w-xl mx-auto glass p-2 rounded-2xl border border-tarcoin-gold/30 shadow-2xl shadow-tarcoin-gold/10">
+              <div className="flex items-center bg-black/60 rounded-xl px-4 py-3 border border-white/5">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setSubmittedOrder(null);
+                    setSubmitError(null);
+                  }}
+                  placeholder="search your favorite name (e.g. 786, 911, miner, love)"
+                  className="w-full bg-transparent text-white font-mono placeholder-gray-600 focus:outline-none text-lg pr-4"
+                />
+                <span className="text-tarcoin-gold font-orbitron font-bold text-lg select-none">
+                  .tar
+                </span>
+              </div>
+            </div>
+          )}
         </section>
 
+        {/* Manage Domain Card */}
+        {activeTab === "manage" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl mx-auto glass rounded-2xl p-6 sm:p-8 border border-tarcoin-gold/30 mb-14 shadow-2xl"
+          >
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-tarcoin-gold/15 border border-tarcoin-gold/40 text-tarcoin-gold flex items-center justify-center text-lg font-bold">
+                ⚙️
+              </div>
+              <div>
+                <h2 className="text-xl font-orbitron font-bold text-white">
+                  Manage Your <span className="text-tarcoin-gold">.tar</span> Domain
+                </h2>
+                <p className="text-xs text-gray-400 font-space">
+                  Update IPFS website records or link your Tarcoin wallet address using your Secret Key.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-orbitron text-gray-300 mb-1.5 tracking-wider">
+                  DOMAIN NAME
+                </label>
+                <div className="flex items-center bg-black/60 rounded-xl px-4 py-2.5 border border-white/10 focus-within:border-tarcoin-gold/50">
+                  <input
+                    type="text"
+                    value={manageDomainInput}
+                    onChange={(e) => {
+                      setManageDomainInput(e.target.value);
+                      setManageDomainData(null);
+                      setManageError(null);
+                      setManageSuccessMsg(null);
+                    }}
+                    placeholder="e.g. yourname.tar or yourname"
+                    className="w-full bg-transparent text-white font-mono placeholder-gray-600 focus:outline-none text-sm"
+                  />
+                  <span className="text-tarcoin-gold font-orbitron font-bold text-xs select-none">
+                    .tar
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-orbitron text-gray-300 mb-1.5 tracking-wider">
+                  MANAGEMENT SECRET KEY
+                </label>
+                <input
+                  type="text"
+                  value={manageSecretKey}
+                  onChange={(e) => {
+                    setManageSecretKey(e.target.value);
+                    setManageDomainData(null);
+                    setManageError(null);
+                    setManageSuccessMsg(null);
+                  }}
+                  placeholder="tns_sec_xxxxxxxxxxxxxxxxxxxxxxxx"
+                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono text-xs placeholder-gray-600 focus:border-tarcoin-gold/50 focus:outline-none"
+                />
+              </div>
+
+              {!manageDomainData ? (
+                <button
+                  type="button"
+                  onClick={handleVerifySecret}
+                  disabled={isVerifyingManage}
+                  className="w-full py-3 rounded-xl bg-tarcoin-gold text-black font-orbitron font-bold text-xs hover:bg-yellow-400 transition-all shadow-lg shadow-tarcoin-gold/10 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isVerifyingManage ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Verifying Credentials...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔑</span>
+                      <span>Verify & Load Domain Records</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="pt-4 border-t border-white/10 space-y-4">
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-orbitron font-bold text-emerald-400 block">
+                        ✓ {manageDomainData.domain} Verified
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-mono">
+                        Expires Block: #{manageDomainData.expiresBlock || "Active"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setManageDomainData(null)}
+                      className="text-[10px] text-gray-400 hover:text-white font-mono underline"
+                    >
+                      Change Key / Domain
+                    </button>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-orbitron text-gray-300 tracking-wider">
+                        IPFS WEBSITE CID
+                      </label>
+                      {manageIpfsCid && (
+                        <a
+                          href={`https://dweb.link/ipfs/${manageIpfsCid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-cyan-400 hover:underline flex items-center gap-1 font-mono"
+                        >
+                          <span>Preview on IPFS</span>
+                          <span>↗</span>
+                        </a>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={manageIpfsCid}
+                      onChange={(e) => setManageIpfsCid(e.target.value)}
+                      placeholder="e.g. bafybeib... or Qm..."
+                      className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono text-xs placeholder-gray-600 focus:border-cyan-400/50 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1 font-space">
+                      Decentralized IPFS folder CID hash. Resolves automatically when visited in browser with Tarcoin extension.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-orbitron text-gray-300 mb-1.5 tracking-wider">
+                      TARCOIN WALLET ADDRESS (OPTIONAL)
+                    </label>
+                    <input
+                      type="text"
+                      value={manageTarAddress}
+                      onChange={(e) => setManageTarAddress(e.target.value)}
+                      placeholder="e.g. tar1q..."
+                      className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono text-xs placeholder-gray-600 focus:border-tarcoin-gold/50 focus:outline-none"
+                    />
+                    <div className="mt-2 p-2.5 rounded-lg bg-tarcoin-gold/5 border border-tarcoin-gold/20 text-[11px] text-gray-300 font-space leading-relaxed">
+                      💡 <strong>Wallet Integration:</strong> Linking your Tarcoin address (`tar1...`) sets on-chain ownership to your wallet. You can then manage and edit this domain directly inside <strong>My-Wallet (Web & Android App)</strong> under &ldquo;My Domains&rdquo;!
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveManage}
+                    disabled={isSavingManage}
+                    className="w-full py-3 rounded-xl bg-tarcoin-gold text-black font-orbitron font-bold text-xs hover:bg-yellow-400 transition-all shadow-lg shadow-tarcoin-gold/15 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isSavingManage ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        <span>Saving Changes...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>💾</span>
+                        <span>Save & Update Domain Records</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {manageError && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 font-mono">
+                  ❌ {manageError}
+                </div>
+              )}
+
+              {manageSuccessMsg && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 font-mono space-y-1">
+                  <div>✓ {manageSuccessMsg}</div>
+                  <div className="text-[10px] text-emerald-400/80">
+                    Changes are active on-chain and live across all TNS resolvers.
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Pricing & Checkout Card */}
-        {cleanName && baseTier && (
+        {activeTab === "register" && cleanName && baseTier && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -507,6 +882,34 @@ export default function DomainsPage() {
                   )}
                 </div>
 
+                {submittedOrder.secretKey && (
+                  <div className="bg-amber-500/10 border border-tarcoin-gold/40 rounded-xl p-4 max-w-md mx-auto text-left space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] uppercase font-orbitron font-bold text-tarcoin-gold flex items-center gap-1.5">
+                        <span>🔑</span>
+                        <span>Management Secret Key</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(submittedOrder.secretKey);
+                          setCopied("secretKey");
+                          setTimeout(() => setCopied(null), 2000);
+                        }}
+                        className="px-2.5 py-1 rounded-md bg-tarcoin-gold text-black font-orbitron text-[10px] font-bold hover:bg-yellow-400 transition-all flex items-center gap-1"
+                      >
+                        {copied === "secretKey" ? "✓ Copied" : "Copy Key"}
+                      </button>
+                    </div>
+                    <div className="p-2.5 bg-black/80 rounded-lg border border-tarcoin-gold/30 font-mono text-xs text-tarcoin-gold break-all select-all font-bold">
+                      {submittedOrder.secretKey}
+                    </div>
+                    <p className="text-[11px] text-amber-200/90 font-space leading-relaxed">
+                      ⚠️ <strong>Save this key safely!</strong> You can use this key on the <em>Manage Domain</em> tab anytime to update your IPFS Website CID or linked Tarcoin Wallet Address without needing any wallet.
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-[11px] text-gray-400 font-space max-w-md mx-auto">
                   The TNS Registry indexer verifies your Polygon transaction block confirmations and activates the on-chain mapping automatically.
                 </p>
@@ -571,30 +974,43 @@ export default function DomainsPage() {
 
                 {/* Duration Pills */}
                 <div className="space-y-2">
-                  <label className="text-xs font-orbitron text-gray-300 tracking-wider">
-                    REGISTRATION DURATION
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-orbitron text-gray-300 tracking-wider">
+                      REGISTRATION DURATION
+                    </label>
+                    <span className="text-[11px] font-mono text-tarcoin-gold animate-pulse">
+                      Special Promo Active 🎁
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => setYears(1)}
-                      className={`p-3.5 rounded-xl border text-left transition-all ${
-                        years === 1
+                      onClick={() => setYears(2)}
+                      className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden ${
+                        years === 2
                           ? paymentMethod === "USDT"
                             ? "bg-emerald-500/15 border-emerald-500 text-white shadow-lg shadow-emerald-500/10"
-                            : "bg-tarcoin-gold/15 border-tarcoin-gold text-white"
+                            : "bg-tarcoin-gold/15 border-tarcoin-gold text-white shadow-lg shadow-tarcoin-gold/10"
                           : "bg-black/40 border-white/10 text-gray-400 hover:border-white/20"
                       }`}
                     >
-                      <div className="text-xs font-semibold">1 Year</div>
+                      <span
+                        className={`absolute top-0 right-0 text-black text-[9px] font-orbitron font-black px-2 py-0.5 rounded-bl-lg ${
+                          paymentMethod === "USDT" ? "bg-emerald-400" : "bg-tarcoin-gold"
+                        }`}
+                      >
+                        1 YR FREE 🎁
+                      </span>
+                      <div className="text-xs font-semibold">2 Years (1+1 Promo)</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Pay 1 Year (Save 50%)</div>
                       {paymentMethod === "USDT" ? (
                         <>
                           <div className="text-base font-orbitron font-bold text-emerald-400 mt-1">
                             ${effectiveBaseUsdt.toFixed(2)}{" "}
                             <span className="text-xs text-gray-400 font-normal">USDT</span>
                           </div>
-                          <div className="text-[10px] text-gray-500">
-                            Standard Retail
+                          <div className="text-[10px] text-gray-500 line-through">
+                            ${(effectiveBaseUsdt * 2).toFixed(2)} USDT
                           </div>
                         </>
                       ) : (
@@ -604,7 +1020,7 @@ export default function DomainsPage() {
                             <span className="text-xs text-gray-400 font-normal">in TAR</span>
                           </div>
                           <div className="text-[10px] text-gray-500 line-through">
-                            ${effectiveBaseUsdt.toFixed(2)} USDT
+                            ${(effectiveBaseUsdt * 2).toFixed(2)} USDT
                           </div>
                         </>
                       )}
@@ -612,9 +1028,9 @@ export default function DomainsPage() {
 
                     <button
                       type="button"
-                      onClick={() => setYears(4)}
+                      onClick={() => setYears(5)}
                       className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden ${
-                        years === 4
+                        years === 5
                           ? paymentMethod === "USDT"
                             ? "bg-emerald-500/20 border-emerald-500 text-white shadow-lg shadow-emerald-500/10"
                             : "bg-tarcoin-gold/20 border-tarcoin-gold text-white shadow-lg shadow-tarcoin-gold/10"
@@ -626,9 +1042,10 @@ export default function DomainsPage() {
                           paymentMethod === "USDT" ? "bg-emerald-400" : "bg-tarcoin-gold"
                         }`}
                       >
-                        1 YR FREE 🔥
+                        2 YRS FREE 🔥
                       </span>
-                      <div className="text-xs font-semibold">4 Years (Best Deal)</div>
+                      <div className="text-xs font-semibold">5 Years (Best Deal)</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Pay 3 Years (Save 40%)</div>
                       {paymentMethod === "USDT" ? (
                         <>
                           <div className="text-base font-orbitron font-bold text-emerald-400 mt-1">
@@ -636,7 +1053,7 @@ export default function DomainsPage() {
                             <span className="text-xs text-gray-400 font-normal">USDT</span>
                           </div>
                           <div className="text-[10px] text-gray-500 line-through">
-                            ${(effectiveBaseUsdt * 4).toFixed(2)} USDT
+                            ${(effectiveBaseUsdt * 5).toFixed(2)} USDT
                           </div>
                         </>
                       ) : (
@@ -646,7 +1063,7 @@ export default function DomainsPage() {
                             <span className="text-xs text-gray-400 font-normal">in TAR</span>
                           </div>
                           <div className="text-[10px] text-gray-500 line-through">
-                            ${(effectiveBaseUsdt * 3).toFixed(2)} USDT
+                            ${(effectiveBaseUsdt * 5).toFixed(2)} USDT
                           </div>
                         </>
                       )}
@@ -705,61 +1122,180 @@ export default function DomainsPage() {
                   </div>
 
                   {paymentMethod === "TAR" ? (
-                    /* TAR Payment Flow */
-                    <div className="space-y-3 pt-2 border-t border-white/5">
-                      {/* Exact TAR Amount Box */}
-                      <div className="space-y-1 text-xs font-mono break-all text-gray-400">
+                    /* TAR Payment Flow - Both 1-Click My-Wallet AND Core QT / External TXID Verification */
+                    <div className="space-y-5 pt-3 border-t border-white/5">
+                      {/* Option A: 1-Click in My-Wallet */}
+                      <div className="p-3.5 bg-tarcoin-gold/10 border border-tarcoin-gold/30 rounded-xl space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-orbitron">
-                            Exact TAR Amount To Send:
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(String(tarAmount))}
-                            className="text-tarcoin-gold hover:text-white font-sans text-xs underline"
-                          >
-                            {copied === String(tarAmount) ? "Copied ✓" : "Copy Amount"}
-                          </button>
+                          <div className="flex items-center gap-2 text-tarcoin-gold font-orbitron font-bold text-xs uppercase tracking-wider">
+                            <span>⚡</span>
+                            <span>Option A: Instant 1-Click in My-Wallet</span>
+                          </div>
+                          <span className="text-[10px] text-green-400 font-mono">Recommended</span>
                         </div>
-                        <div className="text-white bg-black/80 p-2.5 rounded-lg border border-tarcoin-gold/30 flex items-center justify-between">
-                          <span className="text-base font-bold text-tarcoin-gold font-mono">
-                            {tarAmount.toLocaleString()} TAR
-                          </span>
-                          <span className="text-xs text-gray-400 font-mono">
-                            ≈ ${tarTotalUsd.toFixed(2)} USD
-                          </span>
+                        <p className="text-xs text-gray-300 font-space leading-relaxed">
+                          Registers and cryptographically links <strong className="text-white">{cleanName}.tar</strong> directly to your wallet in a single automated transaction.
+                        </p>
+                        <div className="pt-1">
+                          <a
+                            href={`https://my-wallet.tarcoin.org?domain=${cleanName}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full py-3 text-center bg-gradient-to-r from-tarcoin-gold to-yellow-500 hover:from-yellow-400 hover:to-tarcoin-gold text-black font-orbitron font-bold rounded-xl text-xs transition-all shadow-lg shadow-tarcoin-gold/15"
+                          >
+                            Launch 1-Click Register in My-Wallet →
+                          </a>
                         </div>
                       </div>
 
-                      {/* Registry Address Box */}
-                      <div className="space-y-1 text-xs font-mono break-all text-gray-400">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-orbitron">
-                          Send Payment To TNS Domain Registry Wallet (TAR):
+                      {/* Divider */}
+                      <div className="relative flex py-1 items-center">
+                        <div className="flex-grow border-t border-white/10"></div>
+                        <span className="flex-shrink mx-3 text-gray-400 text-[10px] font-orbitron uppercase tracking-widest">
+                          OR PAY FROM TARCOIN CORE QT / EXTERNAL WALLET
                         </span>
-                        <div className="text-white bg-black/80 p-2.5 rounded-lg border border-white/10 flex items-center justify-between">
-                          <span className="truncate pr-2 font-mono text-[11px]">
-                            {TNS_TREASURY_TAR}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(TNS_TREASURY_TAR)}
-                            className="text-tarcoin-gold hover:text-white shrink-0 font-sans text-xs underline"
-                          >
-                            {copied === TNS_TREASURY_TAR ? "Copied ✓" : "Copy Address"}
-                          </button>
-                        </div>
+                        <div className="flex-grow border-t border-white/10"></div>
                       </div>
 
-                      <div className="pt-2">
-                        <a
-                          href={`https://my-wallet.tarcoin.org?domain=${cleanName}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block w-full py-3 text-center bg-gradient-to-r from-tarcoin-gold to-yellow-600 hover:from-yellow-400 hover:to-tarcoin-gold text-black font-orbitron font-bold rounded-xl text-sm transition-all shadow-lg shadow-tarcoin-gold/10"
+                      {/* Option B: Core QT / External Wallet Direct Flow */}
+                      <form onSubmit={handleTarSubmit} className="space-y-4">
+                        {/* Exact Amount */}
+                        <div className="space-y-1 text-xs font-mono break-all text-gray-400">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-orbitron">
+                              Exact TAR Amount To Send:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(String(tarAmount))}
+                              className="text-tarcoin-gold hover:text-white font-sans text-xs underline"
+                            >
+                              {copied === String(tarAmount) ? "Copied ✓" : "Copy Amount"}
+                            </button>
+                          </div>
+                          <div className="text-white bg-black/80 p-2.5 rounded-lg border border-tarcoin-gold/30 flex items-center justify-between">
+                            <span className="text-base font-bold text-tarcoin-gold font-mono">
+                              {tarAmount.toLocaleString()} TAR
+                            </span>
+                            <span className="text-xs text-gray-400 font-mono">
+                              ≈ ${tarTotalUsd.toFixed(2)} USD
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Send Payment Box */}
+                        <div className="space-y-1 text-xs font-mono break-all text-gray-400">
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-orbitron">
+                            SEND PAYMENT TO TNS DOMAIN REGISTRY WALLET (TAR):
+                          </span>
+                          <div className="text-white bg-black/80 p-2.5 rounded-lg border border-white/10 flex items-center justify-between">
+                            <span className="truncate pr-2 font-mono text-[11px]">
+                              {TNS_TREASURY_TAR}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(TNS_TREASURY_TAR)}
+                              className="text-tarcoin-gold hover:text-white shrink-0 font-sans text-xs underline"
+                            >
+                              {copied === TNS_TREASURY_TAR ? "Copied ✓" : "Copy Address"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Step 1: TXID Input */}
+                        <div className="space-y-1.5 pt-1">
+                          <label className="text-xs font-orbitron text-gray-200 tracking-wider flex items-center justify-between">
+                            <span>1. Tarcoin Transaction Hash (TXID)</span>
+                            <span className="text-[10px] text-tarcoin-gold font-mono">Required</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={txHash}
+                            onChange={(e) => setTxHash(e.target.value)}
+                            placeholder="paste your Tarcoin transfer TXID (e.g. 7981b5ca...)"
+                            className="w-full bg-black/80 border border-white/15 focus:border-tarcoin-gold rounded-xl px-3.5 py-2.5 text-xs text-white font-mono placeholder-gray-600 focus:outline-none transition-all"
+                          />
+                        </div>
+
+                        {/* Step 2: Choose Destination Options */}
+                        <div className="space-y-2.5 pt-1">
+                          <label className="text-xs font-orbitron text-gray-200 tracking-wider block">
+                            2. Configure Domain Destination (Select 1 or Both)
+                          </label>
+
+                          {/* Option A: Link Tarcoin Address */}
+                          <div className="p-3 bg-black/40 rounded-xl border border-white/10 space-y-2">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={enableTarAddress}
+                                onChange={(e) => setEnableTarAddress(e.target.checked)}
+                                className="rounded border-gray-700 text-tarcoin-gold focus:ring-tarcoin-gold bg-black/80 w-4 h-4"
+                              />
+                              <span className="text-xs font-semibold text-white">
+                                Link Tarcoin Wallet Address (for receiving payments)
+                              </span>
+                            </label>
+
+                            {enableTarAddress && (
+                              <input
+                                type="text"
+                                value={tarAddressInput}
+                                onChange={(e) => setTarAddressInput(e.target.value)}
+                                placeholder="tar1q... recipient Tarcoin address"
+                                className="w-full bg-black/90 border border-white/15 focus:border-tarcoin-gold rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-gray-600 focus:outline-none"
+                              />
+                            )}
+                          </div>
+
+                          {/* Option B: Link IPFS Website */}
+                          <div className="p-3 bg-black/40 rounded-xl border border-white/10 space-y-2">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={enableIpfs}
+                                onChange={(e) => setEnableIpfs(e.target.checked)}
+                                className="rounded border-gray-700 text-cyan-400 focus:ring-cyan-400 bg-black/80 w-4 h-4"
+                              />
+                              <span className="text-xs font-semibold text-white">
+                                Link Decentralized Website (IPFS CID)
+                              </span>
+                            </label>
+
+                            {enableIpfs && (
+                              <input
+                                type="text"
+                                value={ipfsCidInput}
+                                onChange={(e) => setIpfsCidInput(e.target.value)}
+                                placeholder="bafybeic... or Qm... IPFS CID hash"
+                                className="w-full bg-black/90 border border-white/15 focus:border-cyan-400 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-gray-600 focus:outline-none"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        {submitError && (
+                          <div className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2.5 font-mono">
+                            {submitError}
+                          </div>
+                        )}
+
+                        {/* Submit Button */}
+                        <button
+                          type="submit"
+                          disabled={isSubmitting || !txHash.trim()}
+                          className="w-full py-3 bg-gradient-to-r from-tarcoin-gold via-yellow-400 to-tarcoin-gold hover:from-yellow-400 hover:to-tarcoin-gold text-black font-orbitron font-bold rounded-xl text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-tarcoin-gold/15 flex items-center justify-center gap-2"
                         >
-                          Instant 1-Click Register in My-Wallet →
-                        </a>
-                      </div>
+                          {isSubmitting ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                              <span>Verifying & Submitting Order...</span>
+                            </>
+                          ) : (
+                            <span>Submit TAR Registration →</span>
+                          )}
+                        </button>
+                      </form>
                     </div>
                   ) : (
                     /* USDT (Polygon) Direct Flow */
@@ -897,10 +1433,10 @@ export default function DomainsPage() {
         <section className="mb-16">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-orbitron font-bold mb-2">
-              Official TNS-1 Pricing Tiers
+              Official TNS-1 Pricing Tiers & Launch Promos
             </h2>
             <p className="text-gray-400 text-sm font-space">
-              Enjoy 25% discount when paying with native $TAR + 1 Year Free on 4-year registrations!
+              Enjoy 25% discount when paying with native $TAR + Promo Deals: 1 Year Free on 2-Year registration & 2 Years Free on 5-Year registration!
             </p>
           </div>
 
@@ -910,9 +1446,9 @@ export default function DomainsPage() {
                 <tr>
                   <th className="py-4 px-6">Length / Category</th>
                   <th className="py-4 px-6">Examples</th>
-                  <th className="py-4 px-6">Retail (USDT)</th>
-                  <th className="py-4 px-6">With TAR (25% OFF)</th>
-                  <th className="py-4 px-6">4-Year Promo</th>
+                  <th className="py-4 px-6">1-Yr Retail (USDT)</th>
+                  <th className="py-4 px-6">2-Yr Promo (1 Yr FREE)</th>
+                  <th className="py-4 px-6">5-Yr Promo (2 Yrs FREE)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 font-mono text-xs">
@@ -927,36 +1463,36 @@ export default function DomainsPage() {
                   <td className="py-3.5 px-6 font-bold text-white">3 Characters</td>
                   <td className="py-3.5 px-6 text-gray-400">xyz.tar, 5k9.tar</td>
                   <td className="py-3.5 px-6 text-gray-400 line-through">$500.00</td>
-                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$375.00</td>
-                  <td className="py-3.5 px-6 text-green-400 font-bold">$1,125.00 (Save $375)</td>
+                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$375.00 in TAR <span className="text-[10px] text-green-400 block font-normal">(Pay 1 Yr, Get 2 Yrs)</span></td>
+                  <td className="py-3.5 px-6 text-green-400 font-bold">$1,125.00 in TAR <span className="text-[10px] text-gray-400 block font-normal">(Pay 3 Yrs, Get 5 Yrs)</span></td>
                 </tr>
                 <tr className="bg-white/[0.02]">
                   <td className="py-3.5 px-6 font-bold text-white">4 Characters</td>
                   <td className="py-3.5 px-6 text-gray-400">zone.tar, byte.tar</td>
                   <td className="py-3.5 px-6 text-gray-400 line-through">$200.00</td>
-                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$150.00</td>
-                  <td className="py-3.5 px-6 text-green-400 font-bold">$450.00 (Save $150)</td>
+                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$150.00 in TAR <span className="text-[10px] text-green-400 block font-normal">(Pay 1 Yr, Get 2 Yrs)</span></td>
+                  <td className="py-3.5 px-6 text-green-400 font-bold">$450.00 in TAR <span className="text-[10px] text-gray-400 block font-normal">(Pay 3 Yrs, Get 5 Yrs)</span></td>
                 </tr>
                 <tr>
                   <td className="py-3.5 px-6 font-bold text-white">5 Characters</td>
                   <td className="py-3.5 px-6 text-gray-400">token.tar, cloud.tar</td>
                   <td className="py-3.5 px-6 text-gray-400 line-through">$50.00</td>
-                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$37.50</td>
-                  <td className="py-3.5 px-6 text-green-400 font-bold">$112.50 (Save $37.50)</td>
+                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$37.50 in TAR <span className="text-[10px] text-green-400 block font-normal">(Pay 1 Yr, Get 2 Yrs)</span></td>
+                  <td className="py-3.5 px-6 text-green-400 font-bold">$112.50 in TAR <span className="text-[10px] text-gray-400 block font-normal">(Pay 3 Yrs, Get 5 Yrs)</span></td>
                 </tr>
                 <tr className="bg-white/[0.02]">
                   <td className="py-3.5 px-6 font-bold text-white">6 to 8 Characters</td>
                   <td className="py-3.5 px-6 text-gray-400">myname.tar, wallet.tar</td>
                   <td className="py-3.5 px-6 text-gray-400 line-through">$20.00</td>
-                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$15.00</td>
-                  <td className="py-3.5 px-6 text-green-400 font-bold">$45.00 (Save $15.00)</td>
+                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$15.00 in TAR <span className="text-[10px] text-green-400 block font-normal">(Pay 1 Yr, Get 2 Yrs)</span></td>
+                  <td className="py-3.5 px-6 text-green-400 font-bold">$45.00 in TAR <span className="text-[10px] text-gray-400 block font-normal">(Pay 3 Yrs, Get 5 Yrs)</span></td>
                 </tr>
                 <tr>
                   <td className="py-3.5 px-6 font-bold text-white">9+ Characters</td>
                   <td className="py-3.5 px-6 text-gray-400">satoshicoin.tar, cryptowallet.tar</td>
                   <td className="py-3.5 px-6 text-gray-400 line-through">$10.00</td>
-                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$7.50</td>
-                  <td className="py-3.5 px-6 text-green-400 font-bold">$22.50 (Save $7.50)</td>
+                  <td className="py-3.5 px-6 text-tarcoin-gold font-bold">$7.50 in TAR <span className="text-[10px] text-green-400 block font-normal">(Pay 1 Yr, Get 2 Yrs)</span></td>
+                  <td className="py-3.5 px-6 text-green-400 font-bold">$22.50 in TAR <span className="text-[10px] text-gray-400 block font-normal">(Pay 3 Yrs, Get 5 Yrs)</span></td>
                 </tr>
               </tbody>
             </table>

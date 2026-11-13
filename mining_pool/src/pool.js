@@ -1,4 +1,4 @@
-﻿// TARCOIN Mining Pool - Stratum Protocol Server
+// TARCOIN Mining Pool - Stratum Protocol Server
 // Implements proper SHA256d block verification for TARCOIN mainnet
 'use strict';
 
@@ -51,7 +51,7 @@ const RPC_HOST = process.env.RPC_HOST || '127.0.0.1';
 const RPC_PORT = process.env.RPC_PORT || 19332;
 const RPC_USER = process.env.RPC_USER || 'tarcoin';
 const RPC_PASS = process.env.RPC_PASS || 'tarcoin';
-const RPC_WALLET = process.env.RPC_WALLET || ''; // e.g. "mining_pool"
+const RPC_WALLET = process.env.RPC_WALLET || 'mining_pool'; // default to mining_pool wallet
 
 // ====== TARCOIN constants ======
 const TARCOIN_NBITS = '1f00ffff';
@@ -89,7 +89,7 @@ async function initRedis() {
 // ====== RPC helper ======
 async function rpcCall(method, params = [], walletOverride = null) {
   // Wallet commands like getbalance, sendmany, sendtoaddress need the /wallet/ path if a named wallet is used
-  const isWalletCommand = ['getbalance', 'sendmany', 'sendtoaddress', 'validateaddress', 'getnewaddress'].includes(method);
+  const isWalletCommand = ['getbalance', 'sendmany', 'sendtoaddress', 'getnewaddress', 'listtransactions', 'listwallets'].includes(method);
   const activeWallet = walletOverride || RPC_WALLET;
   const urlPath = (isWalletCommand && activeWallet) ? `/wallet/${activeWallet}` : '/';
   
@@ -820,14 +820,22 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
 
     // Track in Redis
     if (redis) {
-      await redis.lPush('pool:shares', JSON.stringify({ worker: workerName, time: Date.now() }));
-      // PPLNS: Increase the rolling window to 1,000,000 shares (approx. 24+ hours of shares)
-      await redis.lTrim('pool:shares', 0, 999999);
-
-      // Save hashrate snapshot using REAL share-rate-based hashrate
+      // FIX 1: Store the already-resolved tar1... address and difficulty in the share record.
+      // resolveTnsToAddress() must NOT be called per-share inside processPayouts() —
+      // doing so causes timeouts that trigger the safety check to delete .tar miner rewards.
       const rawWallet = parseMinerWorker(workerName).wallet;
       const wallet = await resolveTnsToAddress(rawWallet);
       if (worker && wallet) worker.resolvedAddress = wallet.toLowerCase();
+      const effectiveWallet = worker.resolvedAddress || rawWallet;
+
+      await redis.lPush('pool:shares', JSON.stringify({
+        worker: workerName,
+        wallet: effectiveWallet,                       // resolved tar1... address stored here
+        difficulty: Number(worker.difficulty) || 5000, // FIX 3: store difficulty for weighted PPLNS
+        time: Date.now(),
+      }));
+      // PPLNS: rolling window of 1,000,000 shares (approx. 24+ hours)
+      await redis.lTrim('pool:shares', 0, 999999);
       const hashSnapshot = Math.round(minerHashrate(worker));
       const histKey = `miner:hashrate_history:${wallet}`;
       await redis.lPush(histKey, JSON.stringify({ time: Date.now(), hashrate: hashSnapshot }));
@@ -1162,23 +1170,75 @@ async function processPayouts() {
     }
 
     // 2. Fetch shares
-    const shares = await redis.lRange('pool:shares', 0, -1);
-    if (shares.length === 0) {
+    const allShares = await redis.lRange('pool:shares', 0, -1);
+    if (allShares.length === 0) {
       console.log('No shares found to payout.');
       return;
     }
 
+    // PPLNS: Only count shares from miners active within last 7 days
+    // Miners idle for 7+ days are excluded so active small miners get fair rewards
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - SEVEN_DAYS_MS;
+    const shares = allShares.filter(s => {
+      try { return JSON.parse(s).time > cutoffTime; } catch { return false; }
+    });
+    console.log(`[PPLNS] Active shares (7d window): ${shares.length} / ${allShares.length} total`);
+
+    if (shares.length === 0) {
+      console.log('[PPLNS] No shares in 7-day window. Skipping payout.');
+      return;
+    }
+
+    // FIX 2: Collect all unique raw wallets from shares first,
+    // then resolve .tar domains ONCE in parallel — never per-share.
+    // This prevents the timeout cascade that caused .tar miners to lose their rewards.
+    const rawWalletSet = new Set();
+    for (const s of shares) {
+      try {
+        const data = JSON.parse(s);
+        // New shares have data.wallet (resolved tar1...); old shares only have data.worker
+        const w = data.wallet || parseMinerWorker(data.worker).wallet;
+        rawWalletSet.add(w);
+      } catch (e) {}
+    }
+
+    // Resolve all unique .tar domains in parallel (one HTTP call per unique domain, not per share)
+    const resolvedMap = {};
+    await Promise.all([...rawWalletSet].map(async (w) => {
+      if (w.endsWith('.tar')) {
+        try {
+          const r = await resolveTnsToAddress(w);
+          resolvedMap[w] = (r && r.startsWith('tar1')) ? r : null; // null = unresolvable this run
+        } catch (e) {
+          resolvedMap[w] = null;
+        }
+      } else {
+        resolvedMap[w] = w; // already a tar1... address, no resolution needed
+      }
+    }));
+
+    // FIX 3: Aggregate shares weighted by difficulty (not flat +1 per share)
     const workerShares = {};
     let totalShares = 0;
     for (const s of shares) {
-      const { worker } = JSON.parse(s);
-      const rawW = parseMinerWorker(worker).wallet;
-      const walletAddress = await resolveTnsToAddress(rawW);
-      workerShares[walletAddress] = (workerShares[walletAddress] || 0) + 1;
-      totalShares++;
+      try {
+        const data = JSON.parse(s);
+        const rawW = data.wallet || parseMinerWorker(data.worker).wallet;
+        const finalWallet = resolvedMap[rawW];
+        if (!finalWallet) continue; // unresolvable this run: skip (not counted, not donated)
+        const diff = Number(data.difficulty) || 5000; // weight by difficulty for true PPLNS
+        workerShares[finalWallet] = (workerShares[finalWallet] || 0) + diff;
+        totalShares += diff;
+      } catch (e) {}
     }
 
-    console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers.`);
+    if (totalShares === 0) {
+      console.log('[PPLNS] All shares unresolvable this run. Skipping payout — will retry next hour.');
+      return;
+    }
+
+    console.log(`[PPLNS] Calculating payouts for ${totalShares} difficulty-weighted shares across ${Object.keys(workerShares).length} workers.`);
 
     // Reserve 0.1 TAR for network transaction fees
     const sendableBalance = balance - 0.1;
@@ -1187,22 +1247,21 @@ async function processPayouts() {
     const feeWallet = process.env.FEE_WALLET || poolState.poolWallet;
     const feePercentage = poolState.fee / 100;
     const amountToDistribute = sendableBalance * (1 - feePercentage);
-    const feeAmount = sendableBalance * feePercentage;
-    
+
     const payouts = {};
     let totalAssigned = 0;
 
-    for (const [worker, shareCount] of Object.entries(workerShares)) {
-      const proportion = shareCount / totalShares;
+    for (const [worker, shareWeight] of Object.entries(workerShares)) {
+      const proportion = shareWeight / totalShares;
       const workerReward = parseFloat((amountToDistribute * proportion).toFixed(8));
-      
+
       if (workerReward >= 1) { // Minimum payout 1 TAR to avoid dust
         payouts[worker] = workerReward;
         totalAssigned += workerReward;
       }
     }
 
-    // Assign any dust remainder and the 1% fee to the fee wallet
+    // Assign dust remainder and the 1% fee to the fee wallet
     const finalFee = parseFloat((sendableBalance - totalAssigned).toFixed(8));
     if (finalFee > 0 && feeWallet) {
       if (payouts[feeWallet]) {
@@ -1214,20 +1273,18 @@ async function processPayouts() {
 
     if (Object.keys(payouts).length === 0) return;
 
-    // 3.5 Address Validation & Safety Check (Donation Approach)
+    // 3.5 Address Validation — FIX 2: SKIP unresolvable addresses, NEVER donate to fee wallet.
+    // Donating invalid rewards to the fee wallet was the root cause of .tar miners losing funds.
     for (const address of Object.keys(payouts)) {
       if (address === feeWallet) continue;
-      
+
       try {
         const validation = await rpcCall('validateaddress', [address]);
         if (!validation.isvalid) {
-          console.warn(`[SAFETY] Invalid address detected: ${address}. Reassigning their reward to the pool fee wallet!`);
-          const invalidReward = payouts[address];
+          // Hold this miner's reward — it will be retried in the next payout run
+          console.warn(`[PPLNS] Skipping unresolvable address ${address} (${payouts[address]} TAR held for next run). NOT donated to fee wallet.`);
           delete payouts[address];
-          
-          if (feeWallet) {
-            payouts[feeWallet] = parseFloat(((payouts[feeWallet] || 0) + invalidReward).toFixed(8));
-          }
+          // DO NOT add to feeWallet — that was the bug
         }
       } catch (err) {
         console.error(`Failed to validate address ${address}:`, err.message);
@@ -1247,23 +1304,9 @@ async function processPayouts() {
     try {
       txid = await rpcCall('sendmany', ['', payouts, 101]);
     } catch (sendErr) {
-      // sendmany threw — but the tx may have still been broadcast.
-      // Check listtransactions for a recent matching tx before giving up.
       console.error('[PAYOUT] sendmany threw error:', sendErr.message);
-      try {
-        const recent = await rpcCall('listtransactions', ['*', 10, 0, true]);
-        const match = (recent || []).find(tx => tx.category === 'send' && (Date.now() / 1000 - tx.time) < 120);
-        if (match) {
-          txid = match.txid;
-          console.warn('[PAYOUT] sendmany errored but tx found in listtransactions! TXID:', txid);
-        } else {
-          if (redis) await redis.del('pool:payout:pending');
-          throw sendErr; // genuinely failed — re-throw so outer catch handles it
-        }
-      } catch (listErr) {
-        if (redis) await redis.del('pool:payout:pending');
-        throw sendErr;
-      }
+      if (redis) await redis.del('pool:payout:pending');
+      throw sendErr;
     }
 
     // Mark payout as complete
@@ -1359,6 +1402,31 @@ async function processPayouts() {
 
 cron.schedule('0 * * * *', processPayouts);
 
+// Daily cleanup: remove shares older than 7 days from Redis to keep window fair
+cron.schedule('30 0 * * *', async () => {
+  if (!redis) return;
+  try {
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - SEVEN_DAYS_MS;
+    const all = await redis.lRange('pool:shares', 0, -1);
+    const fresh = all.filter(s => {
+      try { return JSON.parse(s).time > cutoff; } catch { return false; }
+    });
+    if (fresh.length < all.length) {
+      await redis.del('pool:shares');
+      const BATCH = 5000;
+      for (let i = 0; i < fresh.length; i += BATCH) {
+        await redis.rPush('pool:shares', ...fresh.slice(i, i + BATCH));
+      }
+      console.log(`[PPLNS Cleanup] Removed ${all.length - fresh.length} expired shares (>7d). Kept ${fresh.length}.`);
+    } else {
+      console.log('[PPLNS Cleanup] No expired shares to remove.');
+    }
+  } catch (e) {
+    console.error('[PPLNS Cleanup] Error:', e.message);
+  }
+});
+
     // ====== HTTP API ======
 
   // ====== 30-Second Stats Cache (prevents recalculating on every page refresh) ======
@@ -1371,9 +1439,21 @@ cron.schedule('0 * * * *', processPayouts);
     app.get('/api/tns/resolve/:domain', async (req, res) => {
       try {
         const rawDomain = (req.params.domain || '').trim().toLowerCase();
+        // First try querying local TNS engine on port 3005
+        try {
+          const localTns = await axios.get(`http://127.0.0.1:3005/api/tns/resolve/${encodeURIComponent(rawDomain)}`, { timeout: 2000 });
+          if (localTns.data && localTns.data.success) {
+            return res.json(localTns.data);
+          }
+        } catch (_) {}
+
         const addr = await resolveTnsToAddress(rawDomain);
         if (addr && addr !== rawDomain) {
-          return res.json({ success: true, domain: rawDomain, targetAddress: addr });
+          const resp = { success: true, domain: rawDomain, targetAddress: addr };
+          if (rawDomain === 'tarcoin.tar') {
+            resp.ipfsCid = 'bafybeicwjnjylokyieqkyiksuqorop6emgouvtapma7ygo4ntfkzl2cfxi';
+          }
+          return res.json(resp);
         }
         return res.status(404).json({ success: false, error: 'Domain not resolved' });
       } catch (err) {
@@ -1524,14 +1604,12 @@ cron.schedule('0 * * * *', processPayouts);
         } catch(e) {}
       });
 
-      // 2. Fetch recent blocks (combined PPLNS + SOLO)
+      // 2. Fetch recent PPLNS blocks (only true shared pool blocks)
       const pplnsBlocksData = await redis.lRange('pool:blocks', 0, 19);
-      let soloBlocksData = [];
-      try { soloBlocksData = await redis.lRange('solo:blocks', 0, 19); } catch (err) {}
-      const blocksFound = [
-        ...pplnsBlocksData.map(b => { try { return JSON.parse(b); } catch (e) { return null; } }).filter(Boolean),
-        ...soloBlocksData.map(b => { try { return { ...JSON.parse(b), solo: true }; } catch (e) { return null; } }).filter(Boolean)
-      ].sort((a, b) => (b.height || 0) - (a.height || 0)).slice(0, 20);
+      const blocksFound = pplnsBlocksData
+        .map(b => { try { return JSON.parse(b); } catch (e) { return null; } })
+        .filter(Boolean)
+        .sort((a, b) => (b.height || 0) - (a.height || 0));
       const currentHeight = poolState.blockTemplate?.height || (blocksFound[0]?.height || 0);
 
       // 3. Calculate true Pool Hashrate and active miners from live state (not shares)
@@ -1546,13 +1624,25 @@ cron.schedule('0 * * * *', processPayouts);
         }
       }
 
+      // Filter: Keep only valid Tarcoin addresses with >= 2000 shares (or currently active)
+      const cleanWorkers = {};
+      let cleanTotalShares = 0;
+      for (const [w, data] of Object.entries(workers)) {
+        const isValidTar = w.startsWith('tar1') || w.endsWith('.tar');
+        const isActive = liveWallets.has(w);
+        if (isValidTar && (data.shares >= 2000 || isActive)) {
+          cleanWorkers[w] = data;
+          cleanTotalShares += data.shares;
+        }
+      }
+
       const poolStatsResponse = {
         status: 'Online',
         stratum: 'stratum+tcp://stratum.tarcoin.org:3333',
         algorithm: 'SHA256d',
         activeMiners: liveWallets.size,
-        totalShares,
-        workers,
+        totalShares: cleanTotalShares,
+        workers: cleanWorkers,
         blocksFound,
         height: currentHeight,
         blockHeight: currentHeight,
