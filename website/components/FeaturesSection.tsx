@@ -9,6 +9,11 @@ import { TbHexagon3D, TbServer } from "react-icons/tb";
 
 const features = [
   {
+    icon: BsGlobe,
+    title: "Native L1 Naming & Stratum Mining (TNS-1)",
+    description: "World's first PoW blockchain to unify human-readable .tar domains across wallets and Stratum mining rigs. Point your ASIC or Qt wallet directly to name.tar with zero smart-contract fees or third-party custody.",
+  },
+  {
     icon: BsShieldCheck,
     title: "Bitcoin-Grade Security",
     description: "Built on a battle-tested UTXO blockchain architecture using SHA256d proof-of-work. Fully auditable, immutable, and decentralized network with no central point of failure.",

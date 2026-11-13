@@ -1,0 +1,10 @@
+# Layer-2 Data, Credentials and Binaries
+data/
+*.exe
+*.macaroon
+*.db
+*.cert
+*.key
+*.log
+unlock.json
+tarcoin-lnd/

@@ -82,4 +82,18 @@ website/public/downloads/*.apk
 website/public/downloads/*.bin
 website/tsconfig.tsbuildinfo
 
+# Release binaries and secrets
+release-windows/
+*.key
+.bridge_key
+website/public/downloads/temp-linux-full/
+*.bak
+
+# Internal VPS and bridge server daemons (Keep private)
+vps-deploy/
+layer2/gateway/
+mining_pool/src/pool-working.js
+
+
+
 

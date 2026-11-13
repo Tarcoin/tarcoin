@@ -34,7 +34,7 @@ export default function HeroSection() {
         >
           <span className="w-2 h-2 rounded-full bg-tarcoin-neon animate-pulse mr-2" />
           <span className="text-xs font-orbitron text-tarcoin-gold tracking-widest uppercase">
-            Mainnet Live — SHA256d Proof of Work
+            Mainnet Live — World&apos;s First PoW Coin with Native Layer-1 Name Resolution &amp; Stratum Mining
           </span>
         </motion.div>
 
@@ -43,11 +43,21 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-5xl font-orbitron font-black mb-4"
+          className="text-4xl md:text-5xl lg:text-6xl font-orbitron font-black mb-3"
         >
           <span className="text-white">TAR</span>
           <span className="text-tarcoin-gold ">COIN</span>
         </motion.h1>
+
+        {/* Industry Pioneer Headline */}
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="text-xl md:text-2xl lg:text-3xl font-orbitron font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-yellow-400 to-amber-500 max-w-4xl mx-auto mb-6 tracking-wide"
+        >
+          World&apos;s First PoW Coin with Native Layer-1 Name Resolution &amp; Stratum Mining
+        </motion.h2>
 
         {/* Subtitle - cinematic positioning */}
         <motion.p
@@ -91,13 +101,16 @@ export default function HeroSection() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="flex flex-wrap justify-center gap-4"
         >
-          <Link href="/download" className="btn-primary text-lg px-10 py-4">
+          <Link href="/download" className="btn-primary text-lg px-8 py-4">
             Download Wallet
           </Link>
-          <Link href="/explorer" className="btn-secondary text-lg px-10 py-4">
-            Blockchain Explorer
+          <Link href="/domains" className="btn-secondary text-lg px-8 py-4 flex items-center gap-2 border-cyan-500/30 text-cyan-400 hover:border-cyan-400">
+            Claim .tar Name
           </Link>
-          <Link href="/whitepaper" className="btn-ghost text-lg px-10 py-4">
+          <Link href="/explorer" className="btn-ghost text-lg px-8 py-4">
+            Explorer
+          </Link>
+          <Link href="/whitepaper" className="btn-ghost text-lg px-8 py-4">
             Whitepaper
           </Link>
         </motion.div>
