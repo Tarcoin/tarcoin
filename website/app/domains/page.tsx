@@ -8,6 +8,14 @@ function getSafePolygonScanUrl(txHash: string | undefined): string {
   return 'https://polygonscan.com';
 }
 
+function getSafeIpfsUrl(cid: string | undefined | null): string {
+  const safe = String(cid || '').trim();
+  if (/^[a-zA-Z0-9]{20,128}$/.test(safe)) {
+    return `https://dweb.link/ipfs/${encodeURIComponent(safe)}`;
+  }
+  return '';
+}
+
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -677,9 +685,9 @@ export default function DomainsPage() {
                       <label className="text-xs font-orbitron text-gray-300 tracking-wider">
                         IPFS WEBSITE CID
                       </label>
-                      {manageIpfsCid && (
+                      {getSafeIpfsUrl(manageIpfsCid) && (
                         <a
-                          href={`https://dweb.link/ipfs/${manageIpfsCid}`}
+                          href={getSafeIpfsUrl(manageIpfsCid)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[10px] text-cyan-400 hover:underline flex items-center gap-1 font-mono"
@@ -816,11 +824,11 @@ export default function DomainsPage() {
                       <span className="text-gray-500 block text-[10px] uppercase tracking-wider">Points to Tarcoin Wallet:</span>
                       <span className="text-white text-xs">{registeredData.targetAddress}</span>
                     </div>
-                    {registeredData.ipfsCid && (
+                    {getSafeIpfsUrl(registeredData.ipfsCid) && (
                       <div className="break-all pt-1">
                         <span className="text-gray-500 block text-[10px] uppercase tracking-wider">Decentralized IPFS Website:</span>
                         <a
-                          href={`https://dweb.link/ipfs/${registeredData.ipfsCid}`}
+                          href={getSafeIpfsUrl(registeredData.ipfsCid)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-cyan-400 hover:underline text-xs"
@@ -1138,7 +1146,7 @@ export default function DomainsPage() {
                         </p>
                         <div className="pt-1">
                           <a
-                            href={`https://my-wallet.tarcoin.org?domain=${cleanName}`}
+                            href={`https://my-wallet.tarcoin.org?domain=${encodeURIComponent(cleanName)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full py-3 text-center bg-gradient-to-r from-tarcoin-gold to-yellow-500 hover:from-yellow-400 hover:to-tarcoin-gold text-black font-orbitron font-bold rounded-xl text-xs transition-all shadow-lg shadow-tarcoin-gold/15"
