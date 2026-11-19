@@ -12,6 +12,7 @@ const navLinks = [
   { name: "Mining", href: "/mining" },
   { name: ".tar Domains", href: "/domains" },
   { name: "Wallet", href: "/wallet" },
+  { name: "wTAR", href: "/wtar" },
   { name: "API", href: "/api" },
   { name: "Whitepaper", href: "/whitepaper" },
   { name: "Transparency", href: "/transparency" },

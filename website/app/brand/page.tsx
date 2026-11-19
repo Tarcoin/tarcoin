@@ -2,92 +2,218 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { BsDownload, BsImage, BsFileEarmarkZip, BsBoxArrowUpRight } from "react-icons/bs";
 
-const GITHUB_RELEASE_DL = `https://github.com/Tarcoin/tarcoin/releases/download/v1.4.0`;
-const GITHUB_RELEASE     = `https://github.com/Tarcoin/tarcoin/releases/tag/v1.4.0`;
-
-const assets = [
+const brandAssets = [
   {
     name: "TARCOIN Logo",
     format: "PNG / SVG",
-    desc: "Primary TARCOIN logo with gold/black color scheme.",
-    file: "tarcoin-logo-pack.zip",
+    desc: "Primary official TARCOIN full logo with gold and black metallic scheme.",
+    preview: "/logo.png",
+    directFile: "/logo.png",
+    directName: "tarcoin-logo.png",
+    packFile: "/downloads/tarcoin-logo-pack.zip",
+    packName: "tarcoin-logo-pack.zip",
+    resolution: "High-Res PNG",
   },
   {
     name: "TAR Symbol",
-    format: "PNG / SVG",
-    desc: "The $TAR ticker symbol for use in badges and widgets.",
-    file: "tarcoin-symbol-pack.zip",
+    format: "PNG (Transparent)",
+    desc: "The official $TAR ticker symbol badge for exchanges, widgets, and wallet icons.",
+    preview: "/tar-symbol.png",
+    directFile: "/tar-symbol.png",
+    directName: "tar-symbol.png",
+    packFile: "/downloads/tarcoin-symbol-pack.zip",
+    packName: "tarcoin-symbol-pack.zip",
+    resolution: "256x256 & 3D Pack",
   },
   {
     name: "Icon Pack",
     format: "ICO / PNG",
-    desc: "Favicon and app icons at multiple resolutions.",
-    file: "tarcoin-icon-pack.zip",
+    desc: "Favicons, multi-resolution application icons (16x16, 32x32, 48x48, 200x200).",
+    preview: "/favicon.png",
+    directFile: "/favicon.png",
+    directName: "tarcoin-favicon.png",
+    packFile: "/downloads/tarcoin-icon-pack.zip",
+    packName: "tarcoin-icon-pack.zip",
+    resolution: "Complete Multi-Size Set",
   },
   {
     name: "Banner Pack",
     format: "PNG / JPG",
-    desc: "Social media banners, GitHub covers, and promotional graphics.",
-    file: "tarcoin-banner-pack.zip",
+    desc: "High-definition social media banners, Twitter/X headers (1250x560), and promo graphics.",
+    preview: "/tar-symbol.png",
+    directFile: "/downloads/tarcoin-banner-pack.zip",
+    directName: "tarcoin-banner-pack.zip",
+    packFile: "/downloads/tarcoin-banner-pack.zip",
+    packName: "tarcoin-banner-pack.zip",
+    resolution: "Social & DEX Banners",
   },
 ];
 
 export default function BrandPage() {
   return (
-    <main className="min-h-screen bg-tarcoin-black">
+    <main className="min-h-screen bg-tarcoin-black text-white relative overflow-hidden">
       <div className="scanlines" />
-      <div className="cyber-bg min-h-screen pt-20">
-        <section className="relative min-h-screen py-24 flex items-center justify-center">
-          <div className="absolute inset-0">
-            <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-tarcoin-gold/5 rounded-full blur-3xl animate-float" />
-            <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-tarcoin-cyan/5 rounded-full blur-3xl animate-float" style={{ animationDelay: "3s" }} />
-          </div>
-          <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-tarcoin-gold/20 bg-tarcoin-gold/5 mb-8">
-              <span className="w-2 h-2 rounded-full bg-tarcoin-gold animate-pulse" />
-              <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase">Brand Assets</span>
-            </motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-4xl md:text-5xl font-orbitron font-black mb-4">
-              <span className="text-white">Brand</span> <span className="text-tarcoin-gold ">Assets</span>
-            </motion.h1>
-            <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg text-gray-400 max-w-3xl mx-auto mb-4 font-space">
-              Official TARCOIN logos, icons, and brand guidelines for community use. All assets are released under open licensing.
-            </motion.p>
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mb-10">
-              <a href={GITHUB_RELEASE} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-tarcoin-gold transition-colors">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
-                </svg>
-                All brand assets on GitHub →
-              </a>
-            </motion.p>
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}
-              className="grid sm:grid-cols-2 gap-6 text-left mb-12">
-              {assets.map((a) => (
-                <div key={a.name} className="glass rounded-xl p-6 border border-tarcoin-gold/10 flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xs font-orbitron text-tarcoin-gold tracking-widest mb-1">{a.format}</div>
-                    <h3 className="text-lg font-orbitron font-semibold">{a.name}</h3>
-                    <p className="text-sm text-gray-400 mt-1">{a.desc}</p>
+      <div className="cyber-bg min-h-screen pt-20 pb-20">
+        
+        {/* Glow Effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-tarcoin-gold/10 rounded-full blur-[140px] animate-float" />
+          <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-tarcoin-cyan/10 rounded-full blur-[140px] animate-float" style={{ animationDelay: "3s" }} />
+        </div>
+
+        <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          
+          {/* Header Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-tarcoin-gold/25 bg-tarcoin-gold/10 mb-8 backdrop-blur-md"
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-tarcoin-gold animate-pulse" />
+            <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.2em] uppercase font-bold">
+              Official Brand Assets
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-4xl md:text-5xl font-orbitron font-black mb-4 tracking-tight"
+          >
+            Brand <span className="text-tarcoin-gold drop-shadow-[0_0_20px_rgba(212,168,67,0.35)]">Assets & Media Kit</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto mb-6 font-space font-light"
+          >
+            Official TARCOIN logos, icons, badges, and brand guidelines for community members, exchange listings, and media publications.
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mb-14"
+          >
+            <a
+              href="https://github.com/Tarcoin/tarcoin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-tarcoin-gold transition-colors"
+            >
+              <span>Verified Open Source Assets on GitHub</span>
+              <BsBoxArrowUpRight className="text-[10px]" />
+            </a>
+          </motion.p>
+
+          {/* Asset Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="grid sm:grid-cols-2 gap-6 text-left mb-16"
+          >
+            {brandAssets.map((asset, index) => (
+              <div
+                key={index}
+                className="rounded-2xl p-6 border border-tarcoin-gold/20 bg-tarcoin-black-2/80 backdrop-blur-xl shadow-xl flex flex-col justify-between hover:border-tarcoin-gold/50 transition-all group"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-orbitron text-tarcoin-gold tracking-widest uppercase font-semibold">
+                      {asset.format}
+                    </span>
+                    <span className="text-[11px] font-mono text-gray-400 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
+                      {asset.resolution}
+                    </span>
                   </div>
+
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 rounded-xl bg-tarcoin-black/90 border border-white/10 flex items-center justify-center p-2 overflow-hidden flex-shrink-0 group-hover:border-tarcoin-gold/40 transition-colors">
+                      <img
+                        src={asset.preview}
+                        alt={asset.name}
+                        className="max-w-full max-h-full object-contain filter drop-shadow-[0_2px_8px_rgba(212,168,67,0.3)]"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-orbitron font-bold text-white group-hover:text-tarcoin-gold transition-colors">
+                        {asset.name}
+                      </h3>
+                      <p className="text-xs text-gray-400 font-space mt-1 leading-relaxed">
+                        {asset.desc}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex flex-wrap items-center gap-2.5 mt-2">
                   <a
-                    href={`${GITHUB_RELEASE_DL}/${a.file}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary text-sm px-4 py-2 flex-shrink-0 inline-block"
+                    href={asset.directFile}
+                    download={asset.directName}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-orbitron font-bold text-xs bg-tarcoin-gold text-black hover:bg-tarcoin-gold-light transition-all shadow-md flex-1 justify-center"
                   >
-                    Download
+                    <BsDownload className="text-xs" />
+                    Download {asset.directName.endsWith(".zip") ? "Pack" : "File"}
                   </a>
+
+                  {asset.packFile !== asset.directFile && (
+                    <a
+                      href={asset.packFile}
+                      download={asset.packName}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-orbitron font-semibold text-xs border border-tarcoin-gold/30 bg-tarcoin-gold/10 text-tarcoin-gold hover:bg-tarcoin-gold hover:text-black transition-all"
+                      title="Download full zip archive"
+                    >
+                      <BsFileEarmarkZip className="text-xs" />
+                      .ZIP Pack
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Brand Usage Guidelines */}
+          <div className="p-8 rounded-2xl border border-white/10 bg-tarcoin-black-2/60 backdrop-blur-md text-left mb-12">
+            <h3 className="text-lg font-orbitron font-bold text-white mb-3 flex items-center gap-2">
+              <span className="text-tarcoin-gold">◈</span> Brand Color Palette & Usage
+            </h3>
+            <p className="text-xs text-gray-400 font-space mb-6">
+              Please maintain clear space around the logo and avoid altering proportions, colors, or adding unauthorized drop shadows.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { name: "Tarcoin Gold", hex: "#D4A843", rgb: "212, 168, 67", use: "Primary Brand Color" },
+                { name: "Gold Light", hex: "#F0D080", rgb: "240, 208, 128", use: "Highlights & Accents" },
+                { name: "Tarcoin Black", hex: "#0A0A0A", rgb: "10, 10, 10", use: "Primary Background" },
+                { name: "Cyber Cyan", hex: "#00D4FF", rgb: "0, 212, 255", use: "DeFi & Network Signals" },
+              ].map((c, idx) => (
+                <div key={idx} className="p-3.5 rounded-xl border border-white/5 bg-black/40">
+                  <div
+                    className="w-full h-8 rounded-lg mb-2.5 border border-white/10 shadow-inner"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                  <div className="text-xs font-orbitron font-bold text-white">{c.name}</div>
+                  <div className="text-[11px] font-mono text-tarcoin-gold mt-0.5">{c.hex}</div>
+                  <div className="text-[10px] text-gray-500 font-space mt-1">{c.use}</div>
                 </div>
               ))}
-            </motion.div>
-            <Link href="/" className="btn-ghost text-base px-8 py-3.5">Back to Home</Link>
+            </div>
           </div>
+
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-orbitron text-xs font-semibold border border-white/20 bg-white/5 text-gray-300 hover:text-white hover:border-white/40 transition-all"
+          >
+            ← Back to Home
+          </Link>
         </section>
       </div>
     </main>

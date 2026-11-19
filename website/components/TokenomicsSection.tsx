@@ -146,6 +146,56 @@ export default function TokenomicsSection() {
           </div>
         </motion.div>
 
+        {/* Wrapped TARCOIN (wTAR) Multi-Chain Bridge */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="glass rounded-2xl p-6 sm:p-8 mt-12 border border-tarcoin-gold/30 bg-gradient-to-r from-purple-950/20 via-black to-yellow-950/20"
+        >
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-orbitron bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  Polygon PoS ERC-20
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-orbitron bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Verified Contract ✓
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-orbitron font-bold text-white mb-2">
+                Wrapped TARCOIN <span className="text-tarcoin-gold">(wTAR)</span>
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-400 max-w-2xl">
+                1:1 backed decentralized bridge connecting TARCOIN Layer-1 Proof-of-Work with Polygon DeFi.
+                Zero server-side minting, fully open-source and verified on Polygonscan.
+              </p>
+              <div className="mt-4 p-3 rounded-lg bg-black/60 border border-white/10 font-mono text-xs text-tarcoin-gold break-all">
+                <span className="text-gray-500 mr-2">Official Contract:</span>
+                0x92204ea1106fb83025af2435f2a0be2effb83e80
+              </div>
+            </div>
+            <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full md:w-auto">
+              <a
+                href="https://polygonscan.com/token/0x92204ea1106fb83025af2435f2a0be2effb83e80"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost text-xs px-4 py-2.5 text-center flex-1 sm:flex-initial"
+              >
+                Polygonscan ↗
+              </a>
+              <a
+                href="https://dapp.quickswap.exchange/swap?outputCurrency=0x92204ea1106fb83025af2435f2a0be2effb83e80&chainId=137"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-gold text-xs px-4 py-2.5 text-center flex-1 sm:flex-initial"
+              >
+                Trade on QuickSwap ↗
+              </a>
+            </div>
+          </div>
+        </motion.div>
+
       </div>
     </section>
   );
