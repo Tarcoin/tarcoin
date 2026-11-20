@@ -6,7 +6,7 @@ import { ShieldCheck, ArrowDownRight, Lock, ExternalLink, History, Info, Activit
 export default function TransparencyPage() {
   const [payouts, setPayouts] = useState<any[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
-  const [coldStorageBalance, setColdStorageBalance] = useState<number>(9980000000);
+  const [coldStorageBalance, setColdStorageBalance] = useState<number>(9742439000);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(50);
 
@@ -55,12 +55,19 @@ export default function TransparencyPage() {
         </div>
 
         {/* High-Level Overview Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="bg-[#11141A] border border-gray-800 rounded-2xl p-5 relative overflow-hidden">
             <div className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-2">Genesis Reserve</div>
             <div className="text-xl font-bold text-white mb-1">10,000,000,000</div>
             <div className="text-xs text-yellow-500 font-mono">TAR</div>
             <Lock className="absolute -right-4 -bottom-4 w-20 h-20 text-white opacity-5" />
+          </div>
+
+          <div className="bg-[#11141A] border border-purple-500/30 rounded-2xl p-5 relative overflow-hidden">
+            <div className="text-xs font-bold tracking-widest text-purple-400 uppercase mb-2">Bridge &amp; DeFi Reserve</div>
+            <div className="text-xl font-bold text-white mb-1">25,000,000</div>
+            <div className="text-xs text-purple-300 font-mono">TAR (Polygon &amp; L2)</div>
+            <Activity className="absolute -right-4 -bottom-4 w-20 h-20 text-purple-400 opacity-5" />
           </div>
 
           <div className="bg-[#11141A] border border-green-500/20 rounded-2xl p-5 relative overflow-hidden">
@@ -77,11 +84,11 @@ export default function TransparencyPage() {
             <ArrowDownRight className="absolute -right-4 -bottom-4 w-20 h-20 text-cyan-500 opacity-5" />
           </div>
 
-          <div className="bg-[#11141A] border border-purple-500/20 rounded-2xl p-5 relative overflow-hidden">
-            <div className="text-xs font-bold tracking-widest text-purple-400 uppercase mb-2">CryptoJar Tipbot</div>
+          <div className="bg-[#11141A] border border-pink-500/20 rounded-2xl p-5 relative overflow-hidden">
+            <div className="text-xs font-bold tracking-widest text-pink-400 uppercase mb-2">CryptoJar Tipbot</div>
             <div className="text-xl font-bold text-white mb-1">10,000,000</div>
-            <div className="text-xs text-purple-400 font-mono">TAR (Full Integration)</div>
-            <ArrowDownRight className="absolute -right-4 -bottom-4 w-20 h-20 text-purple-500 opacity-5" />
+            <div className="text-xs text-pink-400 font-mono">TAR (Full Integration)</div>
+            <ArrowDownRight className="absolute -right-4 -bottom-4 w-20 h-20 text-pink-500 opacity-5" />
           </div>
 
           <div className="bg-yellow-500/5 border border-yellow-500/30 rounded-2xl p-5 relative overflow-hidden">
@@ -102,6 +109,60 @@ export default function TransparencyPage() {
           <div className="p-6">
             <div className="relative border-l-2 border-gray-800 ml-3 md:ml-4 space-y-12">
               
+              {/* Ledger Item: November 15th, 2026 - Polygon wTAR & Lightning L2 Bridge Reserve */}
+              <div className="relative pl-8 md:pl-10">
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-purple-400 border-4 border-[#11141A]" />
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest text-purple-400 uppercase">November 15, 2026 &middot; DeFi &amp; L2 Reserve</span>
+                    <h3 className="text-xl font-bold text-white mt-1">Polygon wTAR Multi-Chain &amp; Lightning L2 Reserve Vault</h3>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg font-mono font-bold">
+                    25,000,000 TAR
+                  </div>
+                </div>
+
+                <div className="bg-[#1A1E26] rounded-xl p-5 border border-gray-800/50 mb-6">
+                  <h4 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Purpose of Funds</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    Dedicated 1:1 backing reserve for multi-chain liquidity. Routed from the Genesis Reserve through the Web Wallet bridge management vault directly into the public Bridge Liquidity Reserve to back Wrapped TARCOIN (wTAR V2) on Polygon PoS and enable zero-fee Tarcoin Lightning Layer-2 micropayments.
+                  </p>
+                  
+                  <div className="space-y-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Route Path:</span>
+                      <span className="text-xs text-gray-300 font-mono">
+                        Genesis Reserve &rarr; Web Wallet Manager &rarr; Bridge Liquidity Vault
+                      </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Final Vault:</span>
+                      <a href="https://explorer.tarcoin.org/address/tar1q3kzf7q0qmyfwfvy2ckadzkwmdx6y78wmegt4r9" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        tar1q3kzf7q0qmyfwfvy2ckadzkwmdx6y78wmegt4r9 <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">wTAR Token:</span>
+                      <a href="https://polygonscan.com/token/0x92204ea1106fb83025af2435f2a0be2effb83e80" target="_blank" rel="noreferrer" className="text-xs text-yellow-400 hover:text-yellow-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        0x92204ea1106fb83025af2435f2a0be2effb83e80 (Polygonscan Verified ✓) <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* HD Wallet & UTXO Reserve Note */}
+                  <div className="mt-5 bg-purple-900/10 border border-purple-500/20 rounded-lg p-4 flex items-start gap-3">
+                    <Info className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h5 className="text-sm font-bold text-purple-400 mb-1">Technical Note on Bridge HD Vault &amp; UTXO Change Rotation</h5>
+                      <p className="text-xs text-purple-200/70 leading-relaxed">
+                        The Tarcoin Multi-Chain Bridge operates as an active, automated HD (Hierarchical Deterministic) liquidity vault. As incoming buy and wrap orders are fulfilled (such as customer purchases and liquidity dispatches), the vault UTXO automatically splits and rotates the remaining balance (currently 23,550,000+ TAR) into secure internal change addresses within the wallet. The primary gateway address (<code className="text-purple-300">tar1q3kzf...</code>) serves as the deposit portal and retains unspent test UTXOs, while the full reserve remains secured across the vault&apos;s active keypool.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Ledger Item: November 7th, 2026 - Annual Infrastructure Runway */}
               <div className="relative pl-8 md:pl-10">
                 <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-cyan-400 border-4 border-[#11141A]" />
@@ -176,6 +237,49 @@ export default function TransparencyPage() {
                 </div>
               </div>
 
+              {/* Ledger Item: October 13th, 2026 - CryptoJar Community Tip & Rain Pool */}
+              <div className="relative pl-8 md:pl-10">
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-emerald-400 border-4 border-[#11141A]" />
+                
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+                  <div>
+                    <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase">October 13, 2026 &middot; Discord Community Rains</span>
+                    <h3 className="text-xl font-bold text-white mt-1">CryptoJar Community Tipping &amp; Rain Pool Allocation</h3>
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg font-mono font-bold">
+                    - 61,000 TAR
+                  </div>
+                </div>
+
+                <div className="bg-[#1A1E26] rounded-xl p-5 border border-gray-800/50 mb-6">
+                  <h4 className="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Purpose of Funds</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    Ecosystem reserve allocation deposited directly into the official CryptoJar Discord tipbot to fund active community tipping, member airdrops, and interactive rains across community Discord servers (1,000 TAR test deposit + 60,000 TAR rain pool). Over 59,750+ TAR was successfully distributed directly to active community members.
+                  </p>
+                  
+                  <div className="space-y-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">TxID (60k TAR):</span>
+                      <a href="https://explorer.tarcoin.org/tx/47556b097d7e6aab14c99b1f28638134929863061d744bd3b77927d608a0f6d8" target="_blank" rel="noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        47556b097d7e6aab14c99b1f28638134929863061d744bd3b77927d608a0f6d8 <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">TxID (1k TAR):</span>
+                      <a href="https://explorer.tarcoin.org/tx/68b4047429496680009f954ca7b7b8f45af79c754c96a41836a10a046ae6b037" target="_blank" rel="noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 font-mono flex items-center gap-1 transition-colors break-all">
+                        68b4047429496680009f954ca7b7b8f45af79c754c96a41836a10a046ae6b037 <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Recipient:</span>
+                      <span className="text-xs text-gray-300 font-mono break-all">
+                        tar1qmd0uutemthuyk27arw2anncx9cdy76s85dtqct (CryptoJar Official Bot Wallet)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Ledger Item: October 12th, 2026 - CryptoJar Tipbot Milestone 1 */}
               <div className="relative pl-8 md:pl-10">
                 <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-purple-400 border-4 border-[#11141A]" />
@@ -243,6 +347,7 @@ export default function TransparencyPage() {
                   </div>
                 </div>
               </div>
+
 
               {/* Ledger Item: August 4th, 2026 */}
               <div className="relative pl-8 md:pl-10">

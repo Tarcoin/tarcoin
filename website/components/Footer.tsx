@@ -7,7 +7,9 @@ const footerLinks = {
   blockchain: [
     { name: "Explorer", href: "/explorer" },
     { name: "Whitepaper", href: "/whitepaper" },
-    { name: "You Need To Know", href: "/you-need-to-know" },
+    { name: "wTAR (DeFi Gateway)", href: "/wtar" },
+    { name: "QuickSwap DEX", href: "https://dapp.quickswap.exchange/swap?type=best&from=0xc2132D05D31c914a87C6611C10748AEb04B58e8F&to=0x92204EA1106fb83025aF2435f2A0bE2eFFB83e80&chainId=137" },
+    { name: "DexScreener Chart", href: "https://dexscreener.com/polygon/0x92204ea1106fb83025af2435f2a0be2effb83e80" },
     { name: "Network Status", href: "/network" },
     { name: "Rich List", href: "/richlist" },
     { name: "Verify Signature", href: "/verify" },
@@ -68,6 +70,14 @@ export default function Footer() {
                 <BsDiscord size={18} />
               </a>
             </div>
+            <div className="mt-4 pt-3 border-t border-tarcoin-gold/10">
+              <p className="text-xs text-gray-400">
+                <span className="text-tarcoin-gold font-semibold">Contact:</span>{" "}
+                <a href="mailto:tarcoin@atomicmail.io" className="hover:text-white transition-colors">
+                  tarcoin@atomicmail.io
+                </a>
+              </p>
+            </div>
           </div>
 
           {/* Link Columns */}
@@ -114,6 +124,16 @@ export default function Footer() {
             <span>RPC Port: 19332</span>
             <span className="w-1 h-1 rounded-full bg-gray-600 hidden sm:inline-block" />
             <span>bech32: tar1</span>
+            <span className="w-1 h-1 rounded-full bg-gray-600 hidden sm:inline-block" />
+            <a
+              href="https://polygonscan.com/token/0x92204ea1106fb83025af2435f2a0be2effb83e80"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-tarcoin-gold hover:text-white transition-colors font-mono"
+              title="Official Wrapped TARCOIN (wTAR) Polygon PoS Contract"
+            >
+              wTAR (Polygon): 0x92204ea1106fb83025af2435f2a0be2effb83e80
+            </a>
           </div>
         </div>
       </div>
