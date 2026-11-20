@@ -43,11 +43,23 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-5xl lg:text-6xl font-orbitron font-black mb-3"
+          className="text-4xl md:text-5xl lg:text-6xl font-orbitron font-black mb-2"
         >
           <span className="text-white">TAR</span>
           <span className="text-tarcoin-gold ">COIN</span>
         </motion.h1>
+
+        {/* Official Tagline */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.25 }}
+          className="mb-6 flex justify-center items-center"
+        >
+          <span className="font-orbitron font-black text-2xl sm:text-3xl md:text-4xl tracking-[0.25em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-400 to-yellow-500 drop-shadow-[0_0_30px_rgba(212,168,67,0.5)]">
+            Hold The Gold
+          </span>
+        </motion.div>
 
         {/* Industry Pioneer Headline */}
         <motion.h2

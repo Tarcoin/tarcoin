@@ -180,6 +180,24 @@ export default function BrandPage() {
             ))}
           </motion.div>
 
+          {/* Official Tagline Banner */}
+          <div className="p-8 rounded-2xl border border-tarcoin-gold/30 bg-gradient-to-r from-tarcoin-gold/10 via-amber-500/5 to-transparent backdrop-blur-md text-left mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <span className="text-xs font-orbitron text-tarcoin-gold tracking-[0.25em] uppercase font-bold block mb-1">
+                Official Brand Tagline &amp; Motto
+              </span>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-tarcoin-gold to-amber-500 tracking-wider">
+                HOLD THE GOLD
+              </h2>
+              <p className="text-xs text-gray-400 font-space mt-2 max-w-xl">
+                The official slogan representing Tarcoin&apos;s digital scarcity, sovereign SHA-256d Proof-of-Work backing, and long-term value preservation.
+              </p>
+            </div>
+            <div className="flex-shrink-0 px-4 py-2 rounded-xl border border-tarcoin-gold/20 bg-tarcoin-gold/10 text-xs font-mono text-tarcoin-gold">
+              Motto: &quot;Hold The Gold&quot;
+            </div>
+          </div>
+
           {/* Brand Usage Guidelines */}
           <div className="p-8 rounded-2xl border border-white/10 bg-tarcoin-black-2/60 backdrop-blur-md text-left mb-12">
             <h3 className="text-lg font-orbitron font-bold text-white mb-3 flex items-center gap-2">

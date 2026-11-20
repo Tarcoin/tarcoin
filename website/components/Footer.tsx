@@ -54,7 +54,12 @@ export default function Footer() {
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center space-x-3 mb-4">
               <img src="/logo.png" alt="TARCOIN" className="w-14 h-14" />
-              <span className="font-orbitron font-bold text-xl text-white">TARCOIN</span>
+              <div>
+                <span className="font-orbitron font-bold text-xl text-white block">TARCOIN</span>
+                <span className="font-orbitron text-[10px] text-tarcoin-gold font-bold tracking-[0.2em] uppercase block -mt-1">
+                  Hold The Gold
+                </span>
+              </div>
             </Link>
             <p className="text-sm text-gray-500 mb-6">
               A decentralized SHA-256 proof-of-work blockchain built for secure peer-to-peer value transfer, fixed digital scarcity, and long-term network sustainability.
