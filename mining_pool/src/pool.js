@@ -575,6 +575,12 @@ const soloStratumServer = net.createServer((socket) => {
 
           case 'mining.authorize':
             workerName = message.params[0];
+            // FIX: Strip any "solo:" prefix some miners erroneously add to their username.
+            // A miner connecting to port 3334 should just use "tar1q..." or "domain.tar",
+            // not "solo:tar1q..." — that string is not a valid address and breaks coinbase.
+            if (workerName && workerName.toLowerCase().startsWith('solo:')) {
+              workerName = workerName.slice(5); // strip the "solo:" prefix
+            }
             const password = message.params[1] || '';
             const overrideDiff = parseDiffOverride(password);
             if (overrideDiff !== null) {
@@ -886,13 +892,31 @@ async function handleBlockFound(headerBuffer, coinbaseHex, workerName) {
     // submitblock requires the raw hex of the full block
     const result = await rpcCall('submitblock', [blockHex]);
     if (result === null) {
-      console.log('[PPLNS] Block accepted by network! ðŸŽ‰');
+      console.log('[PPLNS] Block accepted by network! 🎉');
       if (redis) {
+        // Resolve .tar domain → tar1q... address at block-found time so the
+        // dashboard can match blocks to miners regardless of whether they use
+        // a TNS domain or a raw wallet address.
+        const minerState = poolState.miners.get(workerName);
+        const parsedWallet = parseMinerWorker(workerName).wallet;
+        let resolvedWallet = parsedWallet;
+        if (minerState?.resolvedAddress) {
+          resolvedWallet = minerState.resolvedAddress;
+        } else if (parsedWallet.endsWith('.tar')) {
+          try { resolvedWallet = await resolveTnsToAddress(parsedWallet) || parsedWallet; } catch (_) {}
+        }
+        const tmpl = poolState.blockTemplate || {};
         await redis.lPush('pool:blocks', JSON.stringify({
-          worker: workerName,
+          worker: workerName,                       // e.g. "iamlucky.tar.bitaxe1"
+          wallet: resolvedWallet,                   // e.g. "tar1q...abc" — resolved tar1q address
           height: height,
+          hash:   tmpl.previousblockhash || '',     // best available hash at submit time
+          difficulty: tmpl.difficulty || 0,
+          shares: poolState.currentRoundShares || 0,
+          reward: 50000,
           time: Date.now(),
         }));
+        await redis.lTrim('pool:blocks', 0, 99); // keep last 100 PPLNS blocks
       }
     } else {
       console.error(`[PPLNS] NETWORK REJECTED BLOCK at height ${height}: ${result}`);
@@ -943,9 +967,14 @@ async function handleSoloBlockFound(headerBuffer, coinbaseHex, workerName) {
       console.log('[SOLO] 49,500 TAR paid DIRECTLY to %s via coinbase - no extra tx needed!', safeWorker);
       // Store accepted solo block record in Redis
       if (redis) {
+        const tmplSolo = poolState.blockTemplate || {};
         await redis.lPush('solo:blocks', JSON.stringify({
-          worker: workerName,
-          height: height,
+          worker:     workerName,
+          height:     height,
+          hash:       tmplSolo.previousblockhash || '',
+          difficulty: tmplSolo.difficulty || 0,
+          shares:     1,
+          reward:     49500,
           time: Date.now(),
         }));
         await redis.lTrim('solo:blocks', 0, 99);
@@ -1155,6 +1184,29 @@ async function processPayouts() {
   if (!redis) return;
 
   try {
+    // ── MEMPOOL GUARD ────────────────────────────────────────────────────────
+    // If our last payout tx is still unconfirmed in the mempool, do NOT send
+    // another sendmany against the same UTXO — that would create a conflict.
+    const lastPayoutRaw = await redis.lIndex('pool:payout:history', 0);
+    if (lastPayoutRaw) {
+      try {
+        const lastPayout = JSON.parse(lastPayoutRaw);
+        if (lastPayout.txid) {
+          const txInfo = await rpcCall('gettransaction', [lastPayout.txid]).catch(() => null);
+          if (txInfo && txInfo.confirmations === 0) {
+            console.log(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is still unconfirmed (0 conf). Skipping this run to avoid UTXO conflict.`);
+            return;
+          }
+          if (txInfo && txInfo.confirmations < 0) {
+            console.warn(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is CONFLICTED (conf: ${txInfo.confirmations}). The UTXO may have been double-spent by an external process. Manual investigation required.`);
+          }
+        }
+      } catch (e) {
+        console.warn('[PAYOUT GUARD] Could not check last payout tx status:', e.message);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // 1. Get mature, spendable balance
     let balance = 0;
     try {
@@ -1908,6 +1960,38 @@ cron.schedule('30 0 * * *', async () => {
   // path is already required at the top of the file
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+  });
+
+  // ---- MiningPoolStats-compatible /api/blocks endpoint ----
+  // Returns pool-found blocks in a format MiningPoolStats can parse to fill the "Blocks" column
+  app.get('/api/blocks', async (req, res) => {
+    try {
+      let blocks = [];
+      if (redis) {
+        const pplnsRaw = await redis.lRange('pool:blocks', 0, 99);
+        const soloRaw  = await redis.lRange('solo:blocks',  0, 99);
+        blocks = [
+          ...pplnsRaw.map(b => { try { return { ...JSON.parse(b), pool_type: 'PPLNS' }; } catch(e){ return null; } }).filter(Boolean),
+          ...soloRaw.map(b  => { try { return { ...JSON.parse(b), pool_type: 'SOLO'  }; } catch(e){ return null; } }).filter(Boolean)
+        ]
+        .sort((a, b) => (b.height || 0) - (a.height || 0))
+        .map(b => ({
+          height:     b.height     || 0,
+          hash:       b.hash       || '',
+          time:       Math.floor((b.time && b.time > 1e11) ? b.time / 1000 : (b.time || Math.floor(Date.now()/1000))),
+          difficulty: b.difficulty || 0,
+          shares:     b.shares     || 0,
+          reward:     b.reward     || 50000,
+          pool_type:  b.pool_type,
+          worker:     b.worker     || b.wallet || '',
+          orphan:     false,
+          confirmed:  true
+        }));
+      }
+      res.json({ data: blocks, count: blocks.length });
+    } catch (e) {
+      res.status(500).json({ error: 'Internal server error', data: [], count: 0 });
+    }
   });
 
 app.get('/health', (_req, res) => {
