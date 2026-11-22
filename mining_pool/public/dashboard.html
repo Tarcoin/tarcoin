@@ -668,8 +668,18 @@ function blocksByMiner(d){
   map = {};
   for(const b of (d.blocksFound||[])){
     const { addr, name } = splitMinerWorker(b.worker);
-    const e = map[addr] || (map[addr] = { count:0, workers:{}, list:[] });
-    e.count++; e.workers[name] = (e.workers[name]||0) + 1; e.list.push(b);
+    // b.wallet holds the resolved tar1q... address stored at block-found time.
+    // Index under BOTH the raw parsed addr (e.g. "iamlucky.tar") AND the
+    // resolved wallet (e.g. "tar1q...abc") so every lookup format matches,
+    // including miners who connect with a .tar TNS domain or a raw address.
+    const keys = new Set([addr.toLowerCase()]);
+    if(b.wallet) keys.add(String(b.wallet).toLowerCase());
+    keys.forEach(k => {
+      const e = map[k] || (map[k] = { count:0, workers:{}, list:[] });
+      if(e.list.indexOf(b) === -1){
+        e.count++; e.workers[name] = (e.workers[name]||0) + 1; e.list.push(b);
+      }
+    });
   }
   blocksCache.set(d, map);
   return map;

@@ -22,12 +22,13 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://tarcoin.org'),
-  title: "TARCOIN | The Future of Decentralized Digital Currency",
+  title: "TARCOIN — Hold The Gold | Decentralized PoW Digital Currency",
   description:
-    "TARCOIN (TAR) is a UTXO-based, SHA256d proof-of-work blockchain with a 50 billion supply cap. Mine, trade, and build on the most secure decentralized ecosystem.",
+    "TARCOIN (TAR) — Hold The Gold. A UTXO-based, SHA256d proof-of-work blockchain with a 50 billion supply cap. Mine, trade, and build on the most secure decentralized ecosystem.",
   keywords: [
     "TARCOIN",
     "TAR",
+    "Hold The Gold",
     "cryptocurrency",
     "blockchain",
     "bitcoin fork",
@@ -35,14 +36,15 @@ export const metadata: Metadata = {
     "mining",
     "decentralized",
     "digital currency",
+    "digital gold",
   ],
   icons: {
     icon: "/favicon.png",
   },
   openGraph: {
-    title: "TARCOIN - Decentralized Digital Currency",
+    title: "TARCOIN — Hold The Gold",
     description:
-      "UTXO-based, SHA256d proof-of-work blockchain. 50 billion supply. Public ASIC mining.",
+      "Hold The Gold. UTXO-based, SHA256d proof-of-work blockchain. 50 billion supply. Public ASIC mining.",
     url: "https://tarcoin.org",
     siteName: "TARCOIN",
     images: [
