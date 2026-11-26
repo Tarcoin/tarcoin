@@ -305,7 +305,7 @@ let poolState = {
   blocksFound: 0,
   activeWorkers: 0,
   poolWallet: process.env.POOL_WALLET || '',
-  fee: parseFloat(process.env.POOL_FEE || '1'),
+  fee: parseFloat(process.env.POOL_FEE || '0'),
   startTime: Date.now(),
 };
 
@@ -314,7 +314,7 @@ const activeSoloSockets = new Set();
 let soloState = {
   miners: new Map(),
   blocksFound: 0,
-  fee: 1, // 1% solo fee
+  fee: parseFloat(process.env.SOLO_FEE !== undefined ? process.env.SOLO_FEE : (process.env.POOL_FEE || '0')),
 };
 
 // ====== Stratum TCP Server (port 3333) ======
@@ -834,12 +834,7 @@ async function handleSubmit(socket, message, workerName, extraNonce1) {
       if (worker && wallet) worker.resolvedAddress = wallet.toLowerCase();
       const effectiveWallet = worker.resolvedAddress || rawWallet;
 
-      await redis.lPush('pool:shares', JSON.stringify({
-        worker: workerName,
-        wallet: effectiveWallet,                       // resolved tar1... address stored here
-        difficulty: Number(worker.difficulty) || 5000, // FIX 3: store difficulty for weighted PPLNS
-        time: Date.now(),
-      }));
+      await redis.lPush('pool:shares', JSON.stringify({ worker: workerName, time: Date.now() }));
       // PPLNS: rolling window of 1,000,000 shares (approx. 24+ hours)
       await redis.lTrim('pool:shares', 0, 999999);
       const hashSnapshot = Math.round(minerHashrate(worker));
@@ -1033,22 +1028,29 @@ async function buildSoloCoinbase(minerAddress, template) {
   scriptSigLen[0] = (heightScript.length / 2) + 8;
   const coinbase1 = '01000000' + '01' + '0000000000000000000000000000000000000000000000000000000000000000' + 'ffffffff' + scriptSigLen.toString('hex') + heightScript;
 
-  // Build coinbase2 outputs: miner (99%) + pool fee (1%) + optional witness
+  // Build coinbase2 outputs: miner (100% or 100-fee%) + pool fee (if > 0) + optional witness
   const minerAmountBuf = Buffer.alloc(8);
   minerAmountBuf.writeBigUInt64LE(BigInt(minerAmount), 0);
-  const feeAmountBuf = Buffer.alloc(8);
-  feeAmountBuf.writeBigUInt64LE(BigInt(feeAmount), 0);
-
   const minerOutput = minerAmountBuf.toString('hex') + encodeVarInt(minerScriptPubKey.length / 2) + minerScriptPubKey;
-  const feeOutput = feeAmountBuf.toString('hex') + encodeVarInt(feeScriptPubKey.length / 2) + feeScriptPubKey;
+
+  let feeOutput = '';
+  let outputCount = 1;
+
+  if (feeAmount > 0) {
+    const feeAmountBuf = Buffer.alloc(8);
+    feeAmountBuf.writeBigUInt64LE(BigInt(feeAmount), 0);
+    feeOutput = feeAmountBuf.toString('hex') + encodeVarInt(feeScriptPubKey.length / 2) + feeScriptPubKey;
+    outputCount++;
+  }
 
   let witnessOutput = '';
   if (template.default_witness_commitment) {
     const witValBuf = Buffer.alloc(8, 0);
     witnessOutput = witValBuf.toString('hex') + encodeVarInt(template.default_witness_commitment.length / 2) + template.default_witness_commitment;
+    outputCount++;
   }
 
-  const numOutputs = witnessOutput ? '03' : '02'; // miner + fee + optional witness
+  const numOutputs = outputCount.toString(16).padStart(2, '0');
   const coinbase2 = 'ffffffff' + numOutputs + minerOutput + feeOutput + witnessOutput + '00000000';
 
   return { coinbase1, coinbase2 };
@@ -1185,20 +1187,32 @@ async function processPayouts() {
 
   try {
     // ── MEMPOOL GUARD ────────────────────────────────────────────────────────
-    // If our last payout tx is still unconfirmed in the mempool, do NOT send
-    // another sendmany against the same UTXO — that would create a conflict.
+    // If our last payout tx is still unconfirmed in the mempool, check its age.
+    // If stuck at 0 confirmations for > 2 hours, auto-abandon it to unfreeze payouts!
     const lastPayoutRaw = await redis.lIndex('pool:payout:history', 0);
     if (lastPayoutRaw) {
       try {
         const lastPayout = JSON.parse(lastPayoutRaw);
         if (lastPayout.txid) {
           const txInfo = await rpcCall('gettransaction', [lastPayout.txid]).catch(() => null);
+          const ageMs = Date.now() - (lastPayout.time || 0);
+
           if (txInfo && txInfo.confirmations === 0) {
-            console.log(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is still unconfirmed (0 conf). Skipping this run to avoid UTXO conflict.`);
-            return;
+            if (ageMs > 2 * 60 * 60 * 1000) {
+              console.warn(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is stuck at 0 conf for >2 hours. Auto-abandoning to unfreeze payouts!`);
+              await rpcCall('abandontransaction', [lastPayout.txid]).catch(() => null);
+              await redis.del('pool:payout:pending');
+              await redis.lPop('pool:payout:history');
+            } else {
+              console.log(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is still unconfirmed (0 conf, age: ${Math.round(ageMs / 60000)}m). Waiting for next hourly run.`);
+              return;
+            }
           }
           if (txInfo && txInfo.confirmations < 0) {
-            console.warn(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is CONFLICTED (conf: ${txInfo.confirmations}). The UTXO may have been double-spent by an external process. Manual investigation required.`);
+            console.warn(`[PAYOUT GUARD] Previous payout tx ${lastPayout.txid} is CONFLICTED (conf: ${txInfo.confirmations}). Auto-abandoning.`);
+            await rpcCall('abandontransaction', [lastPayout.txid]).catch(() => null);
+            await redis.del('pool:payout:pending');
+            await redis.lPop('pool:payout:history');
           }
         }
       } catch (e) {
@@ -1222,75 +1236,41 @@ async function processPayouts() {
     }
 
     // 2. Fetch shares
-    const allShares = await redis.lRange('pool:shares', 0, -1);
-    if (allShares.length === 0) {
+    const shares = await redis.lRange('pool:shares', 0, -1);
+    if (shares.length === 0) {
       console.log('No shares found to payout.');
       return;
     }
 
-    // PPLNS: Only count shares from miners active within last 7 days
-    // Miners idle for 7+ days are excluded so active small miners get fair rewards
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    const cutoffTime = Date.now() - SEVEN_DAYS_MS;
-    const shares = allShares.filter(s => {
-      try { return JSON.parse(s).time > cutoffTime; } catch { return false; }
-    });
-    console.log(`[PPLNS] Active shares (7d window): ${shares.length} / ${allShares.length} total`);
-
-    if (shares.length === 0) {
-      console.log('[PPLNS] No shares in 7-day window. Skipping payout.');
-      return;
-    }
-
-    // FIX 2: Collect all unique raw wallets from shares first,
-    // then resolve .tar domains ONCE in parallel — never per-share.
-    // This prevents the timeout cascade that caused .tar miners to lose their rewards.
-    const rawWalletSet = new Set();
-    for (const s of shares) {
-      try {
-        const data = JSON.parse(s);
-        // New shares have data.wallet (resolved tar1...); old shares only have data.worker
-        const w = data.wallet || parseMinerWorker(data.worker).wallet;
-        rawWalletSet.add(w);
-      } catch (e) {}
-    }
-
-    // Resolve all unique .tar domains in parallel (one HTTP call per unique domain, not per share)
-    const resolvedMap = {};
-    await Promise.all([...rawWalletSet].map(async (w) => {
-      if (w.endsWith('.tar')) {
-        try {
-          const r = await resolveTnsToAddress(w);
-          resolvedMap[w] = (r && r.startsWith('tar1')) ? r : null; // null = unresolvable this run
-        } catch (e) {
-          resolvedMap[w] = null;
-        }
-      } else {
-        resolvedMap[w] = w; // already a tar1... address, no resolution needed
-      }
-    }));
-
-    // FIX 3: Aggregate shares weighted by difficulty (not flat +1 per share)
     const workerShares = {};
     let totalShares = 0;
+    const workerCache = new Map();
+
     for (const s of shares) {
       try {
         const data = JSON.parse(s);
-        const rawW = data.wallet || parseMinerWorker(data.worker).wallet;
-        const finalWallet = resolvedMap[rawW];
-        if (!finalWallet) continue; // unresolvable this run: skip (not counted, not donated)
-        const diff = Number(data.difficulty) || 5000; // weight by difficulty for true PPLNS
-        workerShares[finalWallet] = (workerShares[finalWallet] || 0) + diff;
-        totalShares += diff;
+        const rawW = data.wallet || (data.worker ? parseMinerWorker(data.worker).wallet : '');
+        if (!rawW) continue;
+
+        let walletAddress = workerCache.get(rawW);
+        if (!walletAddress) {
+          walletAddress = await resolveTnsToAddress(rawW);
+          if (walletAddress) workerCache.set(rawW, walletAddress);
+        }
+
+        if (walletAddress && (walletAddress.startsWith('tar1') || walletAddress.startsWith('1') || walletAddress.startsWith('3'))) {
+          workerShares[walletAddress] = (workerShares[walletAddress] || 0) + 1;
+          totalShares++;
+        }
       } catch (e) {}
     }
 
     if (totalShares === 0) {
-      console.log('[PPLNS] All shares unresolvable this run. Skipping payout — will retry next hour.');
+      console.log('No valid miner shares found to payout.');
       return;
     }
 
-    console.log(`[PPLNS] Calculating payouts for ${totalShares} difficulty-weighted shares across ${Object.keys(workerShares).length} workers.`);
+    console.log(`Calculating payouts for ${totalShares} shares across ${Object.keys(workerShares).length} workers.`);
 
     // Reserve 0.1 TAR for network transaction fees
     const sendableBalance = balance - 0.1;
@@ -1454,30 +1434,6 @@ async function processPayouts() {
 
 cron.schedule('0 * * * *', processPayouts);
 
-// Daily cleanup: remove shares older than 7 days from Redis to keep window fair
-cron.schedule('30 0 * * *', async () => {
-  if (!redis) return;
-  try {
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    const cutoff = Date.now() - SEVEN_DAYS_MS;
-    const all = await redis.lRange('pool:shares', 0, -1);
-    const fresh = all.filter(s => {
-      try { return JSON.parse(s).time > cutoff; } catch { return false; }
-    });
-    if (fresh.length < all.length) {
-      await redis.del('pool:shares');
-      const BATCH = 5000;
-      for (let i = 0; i < fresh.length; i += BATCH) {
-        await redis.rPush('pool:shares', ...fresh.slice(i, i + BATCH));
-      }
-      console.log(`[PPLNS Cleanup] Removed ${all.length - fresh.length} expired shares (>7d). Kept ${fresh.length}.`);
-    } else {
-      console.log('[PPLNS Cleanup] No expired shares to remove.');
-    }
-  } catch (e) {
-    console.error('[PPLNS Cleanup] Error:', e.message);
-  }
-});
 
     // ====== HTTP API ======
 
@@ -1592,7 +1548,7 @@ cron.schedule('30 0 * * *', async () => {
         coin: "TARCOIN",
         symbol: "TAR",
         algorithm: "SHA256d",
-        fee: 1.0, // 1% pool fee
+        fee: poolState.fee, // dynamic pool fee from POOL_FEE
         stratum_port: 3333,
         stratum_host: "stratum.tarcoin.org",
         hashrate: combinedHashrate,
@@ -1676,13 +1632,13 @@ cron.schedule('30 0 * * *', async () => {
         }
       }
 
-      // Filter: Keep only valid Tarcoin addresses with >= 2000 shares (or currently active)
+      // Keep all valid Tarcoin addresses (tar1... or .tar) with shares or currently active
       const cleanWorkers = {};
       let cleanTotalShares = 0;
       for (const [w, data] of Object.entries(workers)) {
         const isValidTar = w.startsWith('tar1') || w.endsWith('.tar');
         const isActive = liveWallets.has(w);
-        if (isValidTar && (data.shares >= 2000 || isActive)) {
+        if (isValidTar && (data.shares > 0 || isActive)) {
           cleanWorkers[w] = data;
           cleanTotalShares += data.shares;
         }
@@ -1821,7 +1777,7 @@ cron.schedule('30 0 * * *', async () => {
 
       // 3. Estimated share of next block payout
       const sharePercent = totalShares > 0 ? ((walletShares / totalShares) * 100).toFixed(2) : '0.00';
-      const BLOCK_REWARD = 49500; // 99% of 50,000 TAR after 1% fee
+      const BLOCK_REWARD = Math.floor(50000 * (1 - (poolState.fee / 100))); // Dynamic: 50,000 at 0%, 49,500 at 1%
       const estimatedPayout = totalShares > 0 ? ((walletShares / totalShares) * BLOCK_REWARD).toFixed(2) : '0.00';
 
       // 4. Blocks found by this wallet

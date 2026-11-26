@@ -78,8 +78,8 @@ export default function Footer() {
             <div className="mt-4 pt-3 border-t border-tarcoin-gold/10">
               <p className="text-xs text-gray-400">
                 <span className="text-tarcoin-gold font-semibold">Contact:</span>{" "}
-                <a href="mailto:tarcoin@atomicmail.io" className="hover:text-white transition-colors">
-                  tarcoin@atomicmail.io
+                <a href="mailto:contact@tarcoin.org" className="hover:text-white transition-colors">
+                  contact@tarcoin.org
                 </a>
               </p>
             </div>

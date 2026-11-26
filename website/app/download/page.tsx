@@ -16,6 +16,7 @@ interface Download {
   desc: string;
   file: string;
   size: string;
+  version?: string;
   // "local" = served from /api/download (file exists in public/downloads)
   // "github" = redirect to GitHub release asset
   // "external" = generic external link
@@ -30,6 +31,7 @@ const downloads: Download[] = [
     desc: "100% Censorship-Resistant • Access via Tor Browser without DNS",
     file: "http://ipgjxmhpfgtjgenlx6xuwxd4mrvk6usvilqcs5l3ezg6lqexvnl5z7yd.onion",
     size: "Tor v3",
+    version: "v1.4.3",
     source: "external",
   },
   {
@@ -39,6 +41,7 @@ const downloads: Download[] = [
     desc: "No install required · Works on iOS, Android, Windows, Mac",
     file: "https://my-wallet.tarcoin.org",
     size: "PWA App",
+    version: "v1.4.3",
     source: "external",
   },
   {
@@ -47,7 +50,8 @@ const downloads: Download[] = [
     icon: "📱",
     desc: "Android 8.0+ · APK direct download for mobile devices",
     file: "tarcoin-wallet.apk",
-    size: "~15 MB",
+    size: "~13 MB",
+    version: "v1.4.3",
     source: "local",
   },
   {
@@ -235,7 +239,7 @@ export default function DownloadPage() {
                         <p className="text-xs text-gray-500 mt-0.5">{d.desc}</p>
                       </div>
                     </div>
-                    <span className="text-xs font-mono text-tarcoin-gold shrink-0 ml-2">{VERSION}</span>
+                    <span className="text-xs font-mono text-tarcoin-gold shrink-0 ml-2">{d.version || VERSION}</span>
                   </div>
 
                   <div className="flex items-end justify-between mt-4 gap-4">
