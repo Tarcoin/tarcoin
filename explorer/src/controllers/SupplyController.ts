@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import { RpcClient } from '../services/RpcClient';
 import { CacheManager } from '../services/CacheManager';
 
+const COLD_STORAGE_BALANCE = 9742439000;
+const FALLBACK_TOTAL_MINTED = 10717500000;
+const MAX_SUPPLY = 50000000000;
+
 export class SupplyController {
   constructor(
     private rpc: RpcClient,
@@ -14,21 +18,25 @@ export class SupplyController {
       if (cached) return res.json(cached);
 
       const info = await this.rpc.getBlockchainInfo();
-      let circulating: number | null = null;
+      let totalMinted: number = FALLBACK_TOTAL_MINTED;
       try {
         const txoutset = await this.rpc.getTxOutSetInfo();
         if (txoutset && txoutset.total_amount != null) {
-          circulating = Math.floor(txoutset.total_amount);
+          totalMinted = Math.floor(txoutset.total_amount);
         }
       } catch {
-        // gettxoutsetinfo can be slow or fail — circulating will be null
+        // gettxoutsetinfo can be slow or fail
       }
 
+      const circulating = Math.max(0, totalMinted - COLD_STORAGE_BALANCE);
+
       const supply = {
-        totalSupply: 50000000000,
+        totalSupply: MAX_SUPPLY,
+        totalMinted,
+        circulating,
+        coldStorageLocked: COLD_STORAGE_BALANCE,
         ecosystemTreasuryAllocation: 10000000000,
         publicMiningSupply: 40000000000,
-        circulating,
         blockHeight: info.blocks,
         lastUpdated: Date.now(),
       };
@@ -40,14 +48,56 @@ export class SupplyController {
     }
   }
 
+  async getTotal(req: Request, res: Response) {
+    try {
+      let totalAmount = FALLBACK_TOTAL_MINTED;
+      try {
+        const txoutset = await this.rpc.getTxOutSetInfo();
+        if (txoutset && txoutset.total_amount != null) {
+          totalAmount = Math.floor(txoutset.total_amount);
+        }
+      } catch {
+        // Fallback to latest known minted if txoutset times out
+      }
+
+      if (req.query.format === 'plain' || req.query.format === 'text' || req.headers['accept']?.includes('text/plain')) {
+        return res.setHeader('Content-Type', 'text/plain').send(totalAmount.toString());
+      }
+
+      res.json({
+        total: totalAmount,
+        totalSupply: totalAmount,
+        maxSupply: MAX_SUPPLY,
+        units: 'TAR',
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to fetch total supply' });
+    }
+  }
+
   async getCirculating(req: Request, res: Response) {
     try {
-      const txoutset = await this.rpc.getTxOutSetInfo();
-      const circulating = txoutset && txoutset.total_amount != null
-        ? Math.floor(txoutset.total_amount)
-        : null;
+      let totalAmount = FALLBACK_TOTAL_MINTED;
+      try {
+        const txoutset = await this.rpc.getTxOutSetInfo();
+        if (txoutset && txoutset.total_amount != null) {
+          totalAmount = Math.floor(txoutset.total_amount);
+        }
+      } catch {
+        // Fallback to latest known minted if txoutset times out
+      }
+
+      const circulating = Math.max(0, totalAmount - COLD_STORAGE_BALANCE);
+
+      if (req.query.format === 'plain' || req.query.format === 'text' || req.headers['accept']?.includes('text/plain')) {
+        return res.setHeader('Content-Type', 'text/plain').send(circulating.toString());
+      }
+
       res.json({
         circulating,
+        circulatingSupply: circulating,
+        totalMinted: totalAmount,
+        coldStorageLocked: COLD_STORAGE_BALANCE,
         units: 'TAR',
       });
     } catch (error: any) {

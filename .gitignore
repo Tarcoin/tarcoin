@@ -91,8 +91,10 @@ website/public/downloads/temp-linux-full/
 
 # Internal VPS and bridge server daemons (Keep private)
 vps-deploy/
-layer2/gateway/
-mining_pool/src/pool-working.js
+layer2/
+explorer/frontend_v2_customized/
+mining_pool/src/pool-*.js
+mining_pool/src/sunday-loyalty-drop.js
 
 
 

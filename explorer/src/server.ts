@@ -170,6 +170,7 @@ async function initialize() {
 
     // Supply / network routes
     app.get('/api/supply', supplyController.getSupply.bind(supplyController));
+    app.get('/api/supply/total', supplyController.getTotal.bind(supplyController));
     app.get('/api/supply/circulating', supplyController.getCirculating.bind(supplyController));
     app.get('/api/network/stats', supplyController.getNetworkStats.bind(supplyController));
     app.get('/api/richlist', supplyController.getRichList.bind(supplyController));
