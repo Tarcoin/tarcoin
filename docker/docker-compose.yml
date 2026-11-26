@@ -34,8 +34,8 @@ services:
     networks:
       - tarcoin-net
     ports:
-      - "19333:19333"   # P2P
-      - "19332:19332"   # RPC
+      - "19333:19333"             # P2P (Public - required for network sync)
+      - "127.0.0.1:19332:19332"   # RPC (Localhost only - protected from internet)
     volumes:
       - tarcoin-data:/home/tarcoin/.tarcoin
       - ./config/tarcoin.conf:/home/tarcoin/.tarcoin/tarcoin.conf:ro
